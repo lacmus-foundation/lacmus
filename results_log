@@ -1,0 +1,50 @@
+
+
+Using pretrained coco model
+
+
+Training
+
+Version 2
+Images: Training: 777, Test: 326
+Annotations: Training: 12703, Test: 5327
+Trained for 8 epochs
+Results on test set
+Biker: 0.4879
+Car:0.9528
+Bus: 0.8571
+Cart:0.1957
+Skater:0.0170
+Pedestrian: 0.500
+Weighted: 0.5048
+
+Version 3 - More data
+Images: Training: 2246, Test: 1032
+Annotations: Training: 30566, Test: 14195
+Trained for 25 epochs
+Results on test set
+Biker: 0.4825
+Car:0.9576
+Bus: 0.8896
+Cart:0.1974
+Skater:0.0848
+Pedestrian: 0.6428
+Weighted: 0.5964
+
+
+Version 4 - Changing anchor sizes
+
+Images: Training: 2246, Test: 1032
+Annotations: Training: 30566, Test: 14195
+Trained for 17 epochs
+Results on test set
+Biker: 0.4862
+Car:0.9363
+Bus: 0.7892
+Cart:0.1510
+Skater:0.0807
+Pedestrian: 0.7059
+Weighted: 0.6376
+
+Version 4 - using data from previous frames to fix class mismatch between biker and pedestrian
+
