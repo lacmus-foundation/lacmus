@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+.vscode/
+data/
+
+.ipynb_checkpoints/
+
+*.h5
+RetinaNet/logs/
