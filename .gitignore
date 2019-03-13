@@ -105,4 +105,7 @@ venv.bak/
 
 .vscode/
 data/
-..ipynb_checkpoints/
+.ipynb_checkpoints/
+
+*.h5
+RetinaNet/logs/
