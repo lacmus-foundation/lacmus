@@ -105,6 +105,7 @@ venv.bak/
 
 .vscode/
 data/
+
 .ipynb_checkpoints/
 
 *.h5
