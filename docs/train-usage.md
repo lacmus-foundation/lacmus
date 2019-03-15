@@ -36,14 +36,16 @@ keras_retinanet/bin/train.py --weights snapshots/resnet50_base_best.h5 --freeze-
 *Second step to train on LADD dataset and fine-tuning model*
 
 *Running directly from `RetinaNet` folder in the repository*
+
 Here 
 * weights: Path to the weights for initializing training
 * csv indicates retinanet is trained on a custom data set
 * train_annotations.csv is path to training annotations
 * labels.csv are the labels in the format class_name, class_id with 0 reserved for background class
 * val_annotations is path to validation annotations 
-* config.ini configuration files
-If your dataset is small, you can also use the --freeze-backbone argument to freeze the backbone layers.
+* config.ini configuration file
+
+If your dataset is small, you can also use the `--freeze-backbone argument` to freeze the backbone layers.
 
 ### Training Set
 I uploaded the images used for training and validation to the yandex disk link below. Please download the same:
@@ -99,4 +101,3 @@ The notebooks are:
 * ResNet50RetinaNet-Image.ipynb : For inference on a batch of images
 * ResNet50RetinaNet-Video.ipynb : For inference on a video
 
-I ran inference on one of the videos from Stanford Drone Data Set and shared here as death_circle_output.mp4.
