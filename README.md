@@ -7,13 +7,13 @@ The project is being developed by a non-profit organization Liza Alert.
 
 ## Demonstration
 
-![01](imgs/examples/02.png)
+![01](docs/imgs/examples/02.png)
 
-![02](imgs/examples/08.png)
+![02](docs/imgs/examples/08.png)
 
 [![vidio](http://img.youtube.com/vi/9pVtPM4bzww/0.jpg)](http://www.youtube.com/watch?v=9pVtPM4bzww)
 
-[More demonstrations](docs/work-demo.md)
+See [more examples](docs/work-demo.md).
 
 ## Training data
 
