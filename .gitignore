@@ -110,3 +110,7 @@ data/
 
 *.h5
 RetinaNet/logs/
+/RescuerLaApp/.vs/
+/RescuerLaApp/bin/
+/RescuerLaApp/obj/
+.vs/
