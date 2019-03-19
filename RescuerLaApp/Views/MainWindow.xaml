@@ -7,7 +7,92 @@
   <Design.DataContext>
     <vm:MainWindowViewModel/>
   </Design.DataContext>
-  
-  <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-  
+
+  <Grid Name="Main">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="auto"></RowDefinition>
+      <RowDefinition/>
+      <RowDefinition Height="auto"></RowDefinition>
+    </Grid.RowDefinitions>
+
+    <!-- Grid 0 -->
+    <StackPanel Grid.Row="0">
+      <Menu>
+        <MenuItem Name="mFile" Header="Файл">
+          <MenuItem Name="mFileOpen" Header="Открыть..."/>
+          <MenuItem Name="mFileScan" Header="Сканировать"/>
+          <MenuItem Name="mFileSave" Header="Сохранить"/>
+          <MenuItem Name="mFilePrint" Header="Печать..."/>
+          <Separator></Separator>
+          <MenuItem Name="mFileExit" Header="Выход"/>
+        </MenuItem>
+        <MenuItem Name="mDocument" Header="Документ">
+          <MenuItem Name="mDocumentConvert" Header="Конвертировать"/>
+          <Separator></Separator>
+          <MenuItem Name="mDocumentIncrease" Header="Увеличить"/>
+          <MenuItem Name="mDocumentShrink" Header="Уменьшить"/>
+        </MenuItem>
+        <MenuItem Name="mHelp" Header="Справка">
+          <MenuItem Name="mHelpOpen" Header="Открыть Справку"/>
+          <Separator></Separator>
+          <MenuItem Name="mHelpAbout" Header="О программе"/>
+        </MenuItem>
+      </Menu>
+      <ToolTip>
+        <StackPanel Orientation="Horizontal">
+          <Button Name="bOpen">Открыть</Button>
+          <Button Name="bScan">Сканировать</Button>
+          <Separator/>
+          <Button Name="bConvert">Конвертировать</Button>
+          <Button Name="bSave">Сохранить</Button>
+          <Button Name="bPrint">Печать</Button>
+          <Separator/>
+          <Button Name="bDocumentIncrease">Увеличить</Button>
+          <Button Name="bDocumentShrink">Уменьшить</Button>
+        </StackPanel>
+      </ToolTip>
+    </StackPanel>
+    <!-- Grid 1 -->
+    <Grid Name="ViewPort" Grid.Row="1" Background="Gray">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="auto" MinWidth="100"/>
+        <ColumnDefinition/>
+      </Grid.ColumnDefinitions>
+
+      <Grid Name="PageView" Grid.Column="0" Grid.Row="0" Background="White">
+        <Grid.RowDefinitions>
+          <RowDefinition/>
+          <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+          <ListBox x:Name="PagesList">
+            <DataTemplate>
+              <StackPanel Margin="25,5" Orientation="Vertical">
+                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch"/>
+                <Label VerticalContentAlignment="Center" HorizontalAlignment="Center">1</Label>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox>
+
+        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
+          <Button Width="39" Margin="5,5,2.5,5">Up</Button>
+          <Button Width="39" Margin="2.5,5,2.5,5">Dwn</Button>
+          <Button Width="39" Margin="2.5,5,2.5,5">Add</Button>
+          <Button Width="39" Margin="2.5,5,5,5">Rem</Button>
+        </StackPanel>
+
+      </Grid>
+
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Canvas
+            Name="ScannerImage"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+                    />
+      </ScrollViewer>
+    </Grid>
+    <!-- Grid 2 -->
+    <Grid Name="Footer" Grid.Row="2">
+      <TextBlock Name="tbStatusBar" Margin="5" Text="{Binding Greeting}"></TextBlock>
+    </Grid>
+  </Grid>  
 </Window>
