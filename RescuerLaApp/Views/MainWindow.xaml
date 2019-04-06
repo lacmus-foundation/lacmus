@@ -2,7 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RescuerLaApp.ViewModels;assembly=RescuerLaApp"
         Icon="resm:RescuerLaApp.Assets.avalonia-logo.ico"
-        Title="RescuerLaApp">
+        Title="RescuerLaApp"
+        Width = "800"
+        Height = "600">
 
   <Design.DataContext>
     <vm:MainWindowViewModel/>
@@ -71,12 +73,12 @@
         </Grid.RowDefinitions>
         
         <ListBox Grid.Column="0" Grid.Row="0" Name="ImageList">
-          <!-- <DataTemplate>
+          <ListBoxItem>
             <StackPanel Margin="25,5" Orientation="Vertical">
               <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="Red"/>
-              <Label VerticalContentAlignment="Center" HorizontalAlignment="Center">1</Label>
+              <TextBlock Margin="0,5" HorizontalAlignment="Center">1</TextBlock>
             </StackPanel>
-          </DataTemplate> -->
+          </ListBoxItem>
         </ListBox>
 
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
