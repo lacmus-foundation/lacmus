@@ -28,6 +28,7 @@
         </MenuItem>
         <MenuItem Name="mImage" Header="Image">
           <MenuItem Name="mImagePredict" Header="Predict this"/>
+          <MenuItem Name="mImagePredictAll" Header="Predict all"/>
           <Separator></Separator>
           <MenuItem Name="mImageIncrease" Header="Increase"/>
           <MenuItem Name="mImageShrink" Header="Shrink"/>
@@ -63,28 +64,29 @@
         <ColumnDefinition/>
       </Grid.ColumnDefinitions>
 
-      <Grid Name="PageView" Grid.Column="0" Grid.Row="0" Background="White">
+      <Grid Name="ImageView" Grid.Column="0" Grid.Row="0" Background="White">
         <Grid.RowDefinitions>
           <RowDefinition/>
           <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
-          <ListBox x:Name="PagesList">
-            <DataTemplate>
-              <StackPanel Margin="25,5" Orientation="Vertical">
-                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch"/>
-                <Label VerticalContentAlignment="Center" HorizontalAlignment="Center">1</Label>
-              </StackPanel>
-            </DataTemplate>
-          </ListBox>
+        
+        <ListBox Grid.Column="0" Grid.Row="0" Name="ImageList">
+          <!-- <DataTemplate>
+            <StackPanel Margin="25,5" Orientation="Vertical">
+              <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="Red"/>
+              <Label VerticalContentAlignment="Center" HorizontalAlignment="Center">1</Label>
+            </StackPanel>
+          </DataTemplate> -->
+        </ListBox>
 
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
           <CheckBox Name="cbShowAll" Content="Show all" Margin="5,0,2.5,0"/>
-          <CheckBox Name="cbSort" Content="Sort by name" Margin="5,0,2.5,0"/>
+          <CheckBox Name="cbShowIcons" Content="Show icons" Margin="5,0,2.5,0"/>
         </StackPanel>
       </Grid>
       <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
         <Canvas
-            Name="ScannerImage"
+            Name="ShowedImage"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
                     />
