@@ -38,12 +38,10 @@ namespace RescuerLaApp.Models
             this._bitmap = new Bitmap(ingFileName);
         }
         
-        public void Load(string ingFileName, string annatationFileName)
+        public void Load(string ingFileName, string annotationFileName)
         {
             this._bitmap = new Bitmap(ingFileName);
-            this._annotation.Patch = annatationFileName;
-            // TODO: create annotation xml parser
-            //this._annotation = Annotation.ParseFromXml(annotationFileName)
+            this._annotation = Annotation.ParseFromXml(annotationFileName);
         }
 
         public void Load(Bitmap bitmap)
@@ -53,9 +51,7 @@ namespace RescuerLaApp.Models
         
         public void LoadFromAnnotation(string annotationFileName)
         {
-            this._annotation.Patch = annotationFileName;
-            // TODO: create annotation xml parser
-            //this._annotation = Annotation.ParseFromXml(annotationFileName)
+            this._annotation = Annotation.ParseFromXml(annotationFileName);
         }
         public void LoadFromAnnotation(Annotation annotation)
         {

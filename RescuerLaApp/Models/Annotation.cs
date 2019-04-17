@@ -1,4 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+using RescuerLaApp.Models.Exceptions;
 
 namespace RescuerLaApp.Models
 {
@@ -11,13 +15,37 @@ namespace RescuerLaApp.Models
         public int Segmented { get; set; }
         public List<TObject> Objects { get; set; }
         
-        // TODO: create annotation xml parser
-        /*
         public static Annotation ParseFromXml(string annotationFileName)
         {
-            
+            var formatter = new XmlSerializer(type:typeof(Annotation));
+            try
+            {
+                using (var fs = new FileStream(annotationFileName, FileMode.Open))
+                {
+                    return (Annotation)formatter.Deserialize(fs);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new AnnotationException("unable to create annotation! " + e.Message);
+            }
         }
-        */
+
+        public void SaveToXml(string annotationFileName)
+        {
+            try
+            {
+                var formatter = new XmlSerializer(type:typeof(Annotation));
+                using (var fs = new FileStream(annotationFileName, FileMode.Create))
+                {
+                    formatter.Serialize(fs, this);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new AnnotationException("unable to save annotation! " + e.Message);
+            }
+        }
     }
 
     public struct TObject
