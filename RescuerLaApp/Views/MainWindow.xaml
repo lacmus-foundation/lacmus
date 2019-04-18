@@ -21,7 +21,7 @@
     <StackPanel Grid.Row="0">
       <Menu>
         <MenuItem Name="mFile" Header="File">
-          <MenuItem Name="mFileOpen" Header="Open directory..."/>
+          <MenuItem Name="mFileOpen" Header="Open directory..." Command="{Binding OpenFileCommand}"/>
           <MenuItem Name="mFilePredict" Header="Predict all"/>
           <MenuItem Name="mFileSave" Header="Save"/>
           <MenuItem Name="mFileShowAll" Header="Show all"/>
@@ -75,7 +75,7 @@
         <ListBox Grid.Column="0" Grid.Row="0" Name="ImageList">
           <ListBoxItem>
             <StackPanel Margin="25,5" Orientation="Vertical">
-              <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="Red"/>
+              <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
               <TextBlock Margin="0,5" HorizontalAlignment="Center">1</TextBlock>
             </StackPanel>
           </ListBoxItem>
@@ -91,6 +91,7 @@
             Name="ShowedImage"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
+            Background="{Binding ImageBrush}"
                     />
       </ScrollViewer>
     </Grid>

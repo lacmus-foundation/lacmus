@@ -6,14 +6,14 @@ using static RescuerLaApp.Models.Enums;
 
 namespace RescuerLaApp.Models
 {
-    public struct AppStatus
+    public class AppStatus
     {
         private TStatus _status;
 
         public TStatus Status
         {
             get { return _status; }
-            internal set
+            set
             {
                 this._status = value;
                 this.StringStatus = this.Status.ToString();
