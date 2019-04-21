@@ -1,6 +1,7 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RescuerLaApp.ViewModels;assembly=RescuerLaApp"
+        xmlns:models="clr-namespace:RescuerLaApp.Models"
         Icon="resm:RescuerLaApp.Assets.avalonia-logo.ico"
         Title="RescuerLaApp"
         Width = "800"
@@ -30,13 +31,13 @@
         </MenuItem>
         <MenuItem Name="mImage" Header="Image">
           <MenuItem Name="mImagePredict" Header="Predict this"/>
-          <MenuItem Name="mImagePredictAll" Header="Predict all"/>
+          <MenuItem Name="mImagePredictAll" Header="Predict all" Command="{Binding PredictAllCommand}"/>
           <Separator></Separator>
-          <MenuItem Name="mImageIncrease" Header="Increase"/>
-          <MenuItem Name="mImageShrink" Header="Shrink"/>
+          <MenuItem Name="mImageIncrease" Header="Increase" Command="{Binding IncreaseCanvasCommand}"/>
+          <MenuItem Name="mImageShrink" Header="Shrink" Command="{Binding ShrinkCanvasCommand}"/>
           <Separator></Separator>
-          <MenuItem Name="mImageNext" Header="Next"/>
-          <MenuItem Name="mImagePrev" Header="Prev"/>
+          <MenuItem Name="mImageNext" Header="Next" Command="{Binding NextImageCommand}"/>
+          <MenuItem Name="mImagePrev" Header="Prev" Command="{Binding PrevImageCommand}"/>
         </MenuItem>
         <MenuItem Name="mHelp" Header="Help">
           <MenuItem Name="mHelpOpen" Header="Open user guide"/>
@@ -46,16 +47,16 @@
       </Menu>
       <ToolTip>
         <StackPanel Orientation="Horizontal">
-          <Button Name="bOpen">Open</Button>
-          <Button Name="bPredict">Predict all</Button>
+          <Button Name="bOpen" Command="{Binding OpenFileCommand}">Open</Button>
+          <Button Name="bPredict" Command="{Binding PredictAllCommand}">Predict all</Button>
           <Separator/>
           <Button Name="bSave">Save all</Button>
           <Separator/>
-          <Button Name="bImageIncrease">Increase</Button>
-          <Button Name="bImageShrink">Shrink</Button>
+          <Button Name="bImageIncrease" Command="{Binding IncreaseCanvasCommand}">Increase</Button>
+          <Button Name="bImageShrink" Command="{Binding ShrinkCanvasCommand}">Shrink</Button>
           <Separator/>
-          <Button Name="bImageNext">Next</Button>
-          <Button Name="bImagePrev">Prev</Button>
+          <Button Name="bImagePrev" Command="{Binding PrevImageCommand}">Prev</Button>
+          <Button Name="bImageNext" Command="{Binding NextImageCommand}">Next</Button>
         </StackPanel>
       </ToolTip>
     </StackPanel>
@@ -72,13 +73,18 @@
           <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
         
-        <ListBox Grid.Column="0" Grid.Row="0" Name="ImageList">
-          <ListBoxItem>
-            <StackPanel Margin="25,5" Orientation="Vertical">
-              <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
-              <TextBlock Margin="0,5" HorizontalAlignment="Center">1</TextBlock>
-            </StackPanel>
-          </ListBoxItem>
+        <ListBox Grid.Column="0" Grid.Row="0" 
+                 x:Name="ImageList" 
+                 Items="{Binding Frames}"
+                 SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+          <ListBox.DataTemplates>
+            <DataTemplate DataType="{x:Type models:Frame}">
+              <StackPanel Margin="25,5" Orientation="Vertical">
+                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
+                <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.DataTemplates>
         </ListBox>
 
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
@@ -87,12 +93,37 @@
         </StackPanel>
       </Grid>
       <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <Canvas
-            Name="ShowedImage"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Background="{Binding ImageBrush}"
-                    />
+        <!--
+        
+            </DataTemplate>
+         -->
+        <ItemsControl 
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Items="{Binding BoundBoxes}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <Canvas
+                Name="ShowedImage"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Background="{Binding ImageBrush}"
+                Height="{Binding CanvasHeight, Mode=TwoWay}"
+                Width="{Binding CanvasWidth, Mode=TwoWay}"
+              />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type models:BoundBox}">
+              <Rectangle
+                Width="{Binding Width}"
+                Height="{Binding Height}"
+                Stroke="Blue" StrokeThickness="2"
+                Canvas.Left="{Binding Y}"
+                Canvas.Top="{Binding X}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
       </ScrollViewer>
     </Grid>
     <!-- Grid 2 -->

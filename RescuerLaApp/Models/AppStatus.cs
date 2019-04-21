@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Avalonia.Styling;
 using static RescuerLaApp.Models.Enums;
 
 namespace RescuerLaApp.Models
@@ -20,7 +21,7 @@ namespace RescuerLaApp.Models
                 this.StatusColor = GetColor();
             }
         }
-        public string StringStatus { get; private set; }
+        public string StringStatus { get; set; }
         public ISolidColorBrush StatusColor { get; private set; }
 
         private ISolidColorBrush GetColor()

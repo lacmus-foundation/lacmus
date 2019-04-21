@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
@@ -16,15 +17,16 @@ namespace RescuerLaApp.Models
             
         }
 
-        public Rectangle Predict(Bitmap bitmap)
+        public List<BoundBox> Predict(Bitmap bitmap)
         {
-            return new Rectangle()
-            {
-                X = bitmap.PixelSize.Width / 2,
-                Y = bitmap.PixelSize.Height / 2,
-                Width = 10,
-                Height = 10
-            };
+            var list = new List<BoundBox>();
+            var rect = new BoundBox(
+                bitmap.PixelSize.Width / 2,
+                bitmap.PixelSize.Height / 2,
+                10,
+                10);
+            list.Add(rect);
+            return list;
         }
 
         public void Dispose()
