@@ -45,7 +45,7 @@ namespace RescuerLaApp.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _selectedIndex, value);
-                ImageBrush = Frames[SelectedIndex].ImageBrush;
+                ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Patch);
                 CanvasHeight = CanvasWidth * ImageBrush.Source.PixelSize.Height / ImageBrush.Source.PixelSize.Width;
                 this.BoundBoxes = Frames[SelectedIndex].Rectangles;
                 if(this.Status.Status != Enums.TStatus.Error)
@@ -207,7 +207,7 @@ namespace RescuerLaApp.ViewModels
                 {
                     Console.WriteLine(fileName);
                     var frame = new Frame();
-                    frame.Load(fileName);
+                    frame.Load(fileName, Enums.TImageLoadMode.Miniature);
                     _frames.Add(frame);
                 }
                 Frames = new List<Frame>(_frames);

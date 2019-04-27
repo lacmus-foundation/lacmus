@@ -1,10 +1,17 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using Avalonia.Skia;
+using SkiaSharp;
+using Bitmap = Avalonia.Media.Imaging.Bitmap;
+using ImageBrush = Avalonia.Media.ImageBrush;
 
 namespace RescuerLaApp.Models
 {
@@ -61,9 +68,26 @@ namespace RescuerLaApp.Models
             _annotation = new Annotation();
         }
 
-        public void Load(string imgFileName)
+        public void Load(string imgFileName, Enums.TImageLoadMode loadMode)
         {
-            this._bitmap = new Bitmap(imgFileName);
+            if(loadMode == Enums.TImageLoadMode.Miniature)
+            using (SKStream stream = new SKFileStream(imgFileName))
+            using (SKBitmap src = SKBitmap.Decode(stream))
+            {
+                float scale = 100f / src.Width;
+                SKBitmap resized = new SKBitmap(
+                    (int)(src.Width * scale),
+                    (int)(src.Height * scale), src.ColorType, src.AlphaType);
+                SKBitmap.Resize(resized, src, SKBitmapResizeMethod.Hamming);
+                this._bitmap = new Bitmap(
+                    resized.ColorType.ToPixelFormat(),
+                    resized.GetPixels(),
+                    new PixelSize(resized.Width, resized.Height), 
+                    SkiaPlatform.DefaultDpi, 
+                    resized.RowBytes);
+            }
+            else
+                this._bitmap = new Bitmap(imgFileName);
             this._imageBrush.Source = _bitmap;
             this.Name = imgFileName;
         }

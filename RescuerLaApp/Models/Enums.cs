@@ -13,5 +13,11 @@ namespace RescuerLaApp.Models
             Success,
             Error
         }
+        
+        public enum TImageLoadMode
+        {
+            Miniature,
+            Full
+        }
     }
 }
