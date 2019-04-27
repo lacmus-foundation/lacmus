@@ -1,9 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using RescuerLaApp.Models;
 
@@ -14,19 +9,12 @@ namespace RescuerLaApp.ViewModels
         private readonly Action _execute;
         private readonly Func<bool> _canExecute;
 
-        public RelayCommand(Action execute)
-            : this(execute, null)
-        { }
-
-        public RelayCommand(Action execute, Func<bool> canExecute)
+        public RelayCommand(Action execute, Func<bool> canExecute = null)
         {
-            if (execute == null)
-                throw new ArgumentNullException("execute is null.");
-
-            this._execute = execute;
-            this._canExecute = canExecute;
-            this.RaiseCanExecuteChangedAction = RaiseCanExecuteChanged;
-            SimpleCommandManager.AddRaiseCanExecuteChangedAction(ref RaiseCanExecuteChangedAction);
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+            _raiseCanExecuteChangedAction = RaiseCanExecuteChanged;
+            SimpleCommandManager.AddRaiseCanExecuteChangedAction(ref _raiseCanExecuteChangedAction);
         }
 
         ~RelayCommand()
@@ -36,7 +24,7 @@ namespace RescuerLaApp.ViewModels
 
         public void RemoveCommand()
         {
-            SimpleCommandManager.RemoveRaiseCanExecuteChangedAction(RaiseCanExecuteChangedAction);
+            SimpleCommandManager.RemoveRaiseCanExecuteChangedAction(_raiseCanExecuteChangedAction);
         }
 
         bool ICommand.CanExecute(object parameter)
@@ -50,21 +38,15 @@ namespace RescuerLaApp.ViewModels
             SimpleCommandManager.RefreshCommandStates();
         }
 
-        public bool CanExecute
-        {
-            get { return _canExecute == null || _canExecute(); }
-        }
+        public bool CanExecute => _canExecute == null || _canExecute();
 
         public void RaiseCanExecuteChanged()
         {
             var handler = CanExecuteChanged;
-            if (handler != null)
-            {
-                handler(this, new EventArgs());
-            }
+            handler?.Invoke(this, new EventArgs());
         }
 
-        private readonly Action RaiseCanExecuteChangedAction;
+        private readonly Action _raiseCanExecuteChangedAction;
 
         public event EventHandler CanExecuteChanged;
     }

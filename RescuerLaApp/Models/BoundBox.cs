@@ -41,7 +41,7 @@ namespace RescuerLaApp.Models
 
         public void Update(double canvasWidth, double canvasHeight)
         {
-            
+            /*TODO: написать изенения координат при изменении размеров изображения*/
         }
     }
 }

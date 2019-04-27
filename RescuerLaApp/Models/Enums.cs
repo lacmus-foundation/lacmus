@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RescuerLaApp.Models
+﻿namespace RescuerLaApp.Models
 {
-    public class Enums
+    public static class Enums
     {
-        public enum TStatus        
+        public enum Status        
         {
             Ready,
             Working,
@@ -14,7 +10,7 @@ namespace RescuerLaApp.Models
             Error
         }
         
-        public enum TImageLoadMode
+        public enum ImageLoadMode
         {
             Miniature,
             Full

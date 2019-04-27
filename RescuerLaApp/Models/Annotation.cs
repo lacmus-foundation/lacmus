@@ -6,6 +6,7 @@ using RescuerLaApp.Models.Exceptions;
 
 namespace RescuerLaApp.Models
 {
+    [Serializable]
     public class Annotation
     {
         public string Folder { get; set; }
@@ -13,7 +14,7 @@ namespace RescuerLaApp.Models
         public Sourse Source { get; set; }
         public Size Size { get; set; }
         public int Segmented { get; set; }
-        public List<TObject> Objects { get; set; }
+        public List<Object> Objects { get; set; }
         
         public static Annotation ParseFromXml(string annotationFileName)
         {
@@ -48,7 +49,7 @@ namespace RescuerLaApp.Models
         }
     }
 
-    public struct TObject
+    public struct Object
     {
         public string Name { get; set; }
         public Box Box { get; set; }

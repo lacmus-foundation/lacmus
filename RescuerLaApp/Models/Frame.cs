@@ -1,20 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Media;
-using Avalonia.Platform;
 using Avalonia.Skia;
 using Avalonia.Threading;
 using SkiaSharp;
-using Bitmap = Avalonia.Media.Imaging.Bitmap;
-using ImageBrush = Avalonia.Media.ImageBrush;
+using Avalonia.Media.Imaging;
 
 namespace RescuerLaApp.Models
 {
@@ -71,55 +63,62 @@ namespace RescuerLaApp.Models
             _annotation = new Annotation();
         }
 
-        public void Load(string imgFileName, Enums.TImageLoadMode loadMode)
+        public void Load(string imgFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
             ThreadPool.QueueUserWorkItem(o =>
             {
-                this.Name = imgFileName;
-                if(loadMode == Enums.TImageLoadMode.Miniature)
-                    using (SKStream stream = new SKFileStream(imgFileName))
-                    using (SKBitmap src = SKBitmap.Decode(stream))
-                    {
-                        float scale = 100f / src.Width;
-                        SKBitmap resized = new SKBitmap(
-                            (int)(src.Width * scale),
-                            (int)(src.Height * scale), 
-                            src.ColorType, 
-                            src.AlphaType);
-                        SKBitmap.Resize(resized, src, SKBitmapResizeMethod.Hamming);
-                        this._bitmap = new Bitmap(
-                            resized.ColorType.ToPixelFormat(),
-                            resized.GetPixels(),
-                            new PixelSize(resized.Width, resized.Height), 
-                            SkiaPlatform.DefaultDpi, 
-                            resized.RowBytes);
-                    }
-                else
-                    this._bitmap = new Bitmap(imgFileName);
-
-                Dispatcher.UIThread.InvokeAsync((Action)(() => this._imageBrush.Source = _bitmap));
+                _name = imgFileName;
+                switch (loadMode)
+                {
+                    case Enums.ImageLoadMode.Full:
+                        _bitmap = new Bitmap(imgFileName);
+                        break;
+                    case Enums.ImageLoadMode.Miniature:
+                        using (SKStream stream = new SKFileStream(imgFileName))
+                        using (SKBitmap src = SKBitmap.Decode(stream))
+                        {
+                            float scale = 100f / src.Width;
+                            SKBitmap resized = new SKBitmap(
+                                (int)(src.Width * scale),
+                                (int)(src.Height * scale), 
+                                src.ColorType, 
+                                src.AlphaType);
+                            SKBitmap.Resize(resized, src, SKBitmapResizeMethod.Hamming);
+                            _bitmap = new Bitmap(
+                                resized.ColorType.ToPixelFormat(),
+                                resized.GetPixels(),
+                                new PixelSize(resized.Width, resized.Height), 
+                                SkiaPlatform.DefaultDpi, 
+                                resized.RowBytes);
+                        }
+                        break;
+                    default:
+                        throw new Exception($"invalid ImageLoadMode:{loadMode.ToString()}");
+                }
+                Dispatcher.UIThread.InvokeAsync((Action)(() => _imageBrush.Source = _bitmap));
             });
         }
         
-        public void Load(string ingFileName, string annotationFileName)
+        public void Load(string imgFileName, string annotationFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
-            this._bitmap = new Bitmap(ingFileName);
-            this._annotation = Annotation.ParseFromXml(annotationFileName);
+            Load(imgFileName, loadMode);
+            _annotation = Annotation.ParseFromXml(annotationFileName);
         }
 
         public void Load(Bitmap bitmap)
         {
-            this._bitmap = bitmap;
+            _bitmap = bitmap;
         }
         
-        public void LoadFromAnnotation(string annotationFileName)
+        public void LoadFromAnnotation(string annotationFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
-            this._annotation = Annotation.ParseFromXml(annotationFileName);
+            _annotation = Annotation.ParseFromXml(annotationFileName);
+            Load(_annotation.Patch, loadMode);
         }
-        public void LoadFromAnnotation(Annotation annotation)
+        public void LoadFromAnnotation(Annotation annotation, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
-            this._annotation = annotation;
-            this._bitmap = new Bitmap(_annotation.Patch);
+            _annotation = annotation;
+            Load(annotation.Patch, loadMode);
         }
     }
 }

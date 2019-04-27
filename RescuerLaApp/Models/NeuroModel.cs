@@ -7,6 +7,7 @@ namespace RescuerLaApp.Models
 {
     public class NeuroModel : IDisposable
     {
+        /*TODO: реализовать логику*/
         public void Initialize()
         {
             
