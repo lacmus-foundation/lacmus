@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Skia;
+using Avalonia.Threading;
 using SkiaSharp;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 using ImageBrush = Avalonia.Media.ImageBrush;
@@ -70,26 +73,32 @@ namespace RescuerLaApp.Models
 
         public void Load(string imgFileName, Enums.TImageLoadMode loadMode)
         {
-            if(loadMode == Enums.TImageLoadMode.Miniature)
-            using (SKStream stream = new SKFileStream(imgFileName))
-            using (SKBitmap src = SKBitmap.Decode(stream))
+            ThreadPool.QueueUserWorkItem(o =>
             {
-                float scale = 100f / src.Width;
-                SKBitmap resized = new SKBitmap(
-                    (int)(src.Width * scale),
-                    (int)(src.Height * scale), src.ColorType, src.AlphaType);
-                SKBitmap.Resize(resized, src, SKBitmapResizeMethod.Hamming);
-                this._bitmap = new Bitmap(
-                    resized.ColorType.ToPixelFormat(),
-                    resized.GetPixels(),
-                    new PixelSize(resized.Width, resized.Height), 
-                    SkiaPlatform.DefaultDpi, 
-                    resized.RowBytes);
-            }
-            else
-                this._bitmap = new Bitmap(imgFileName);
-            this._imageBrush.Source = _bitmap;
-            this.Name = imgFileName;
+                this.Name = imgFileName;
+                if(loadMode == Enums.TImageLoadMode.Miniature)
+                    using (SKStream stream = new SKFileStream(imgFileName))
+                    using (SKBitmap src = SKBitmap.Decode(stream))
+                    {
+                        float scale = 100f / src.Width;
+                        SKBitmap resized = new SKBitmap(
+                            (int)(src.Width * scale),
+                            (int)(src.Height * scale), 
+                            src.ColorType, 
+                            src.AlphaType);
+                        SKBitmap.Resize(resized, src, SKBitmapResizeMethod.Hamming);
+                        this._bitmap = new Bitmap(
+                            resized.ColorType.ToPixelFormat(),
+                            resized.GetPixels(),
+                            new PixelSize(resized.Width, resized.Height), 
+                            SkiaPlatform.DefaultDpi, 
+                            resized.RowBytes);
+                    }
+                else
+                    this._bitmap = new Bitmap(imgFileName);
+
+                Dispatcher.UIThread.InvokeAsync((Action)(() => this._imageBrush.Source = _bitmap));
+            });
         }
         
         public void Load(string ingFileName, string annotationFileName)
