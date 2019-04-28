@@ -22,6 +22,7 @@ namespace RescuerLaApp.ViewModels
         private List<BoundBox> _boundBoxes = new List<BoundBox>();
         private ImageBrush _imageBrush =  new ImageBrush() { Stretch = Stretch.Uniform };
         private AppStatusInfo _status = new AppStatusInfo() { Status = Enums.Status.Ready };
+        private int _frameLoadProgressIndex;
         
         private RelayCommand _openFieCommand;
         private RelayCommand _increaseCanvasCommand;
@@ -154,11 +155,13 @@ namespace RescuerLaApp.ViewModels
                     return;
                 }
                 var fileNames = Directory.GetFiles(dirName);
+                _frameLoadProgressIndex = 0;
                 _frames = new List<Frame>();
                 foreach (var fileName in fileNames)
                 {
                     Console.WriteLine(fileName);
                     var frame = new Frame();
+                    frame.onLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
                     _frames.Add(frame);
                 }
@@ -173,6 +176,24 @@ namespace RescuerLaApp.ViewModels
                 {
                     Status = Enums.Status.Error, 
                     StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
+                };
+            }
+        }
+
+        private void FrameLoadingProgressUpdate()
+        {
+            _frameLoadProgressIndex++;
+            if(_frameLoadProgressIndex < Frames.Count)
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Working, 
+                    StringStatus = $"Working | loading images: {_frameLoadProgressIndex} / {Frames.Count}"
+                };
+            else
+            {
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Ready
                 };
             }
         }

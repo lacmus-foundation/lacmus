@@ -32,7 +32,7 @@ namespace RescuerLaApp.Models
                 case Status.Success: return new SolidColorBrush(Color.FromRgb(0, 135, 60));
                 case Status.Working: return new SolidColorBrush(Color.FromRgb(226, 90, 0));
                 case Status.Error: return new SolidColorBrush(Color.FromRgb(216, 14, 0)); 
-                default: throw new Exception($"Invalid app status {_status}");
+                default: throw new Exception($"Invalid app status {_status.ToString()}");
             }
         }
     }

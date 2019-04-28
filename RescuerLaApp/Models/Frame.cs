@@ -62,6 +62,10 @@ namespace RescuerLaApp.Models
         {
             _annotation = new Annotation();
         }
+        
+        public delegate void MethodContainer();
+
+        public event MethodContainer onLoad;
 
         public void Load(string imgFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
@@ -95,7 +99,11 @@ namespace RescuerLaApp.Models
                     default:
                         throw new Exception($"invalid ImageLoadMode:{loadMode.ToString()}");
                 }
-                Dispatcher.UIThread.InvokeAsync((Action)(() => _imageBrush.Source = _bitmap));
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    _imageBrush.Source = _bitmap;
+                    onLoad?.Invoke();
+                });
             });
         }
         
