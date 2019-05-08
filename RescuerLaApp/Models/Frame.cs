@@ -128,5 +128,15 @@ namespace RescuerLaApp.Models
             _annotation = annotation;
             Load(annotation.Patch, loadMode);
         }
+
+        public void Resize(double width, double height)
+        {
+            var scaleX = width / _bitmap.PixelSize.Width;
+            var scaleY = height / _bitmap.PixelSize.Height;
+            foreach (var rectangle in _rectangles)
+            {
+                rectangle.Update(scaleX, scaleY);
+            }
+        }
     }
 }

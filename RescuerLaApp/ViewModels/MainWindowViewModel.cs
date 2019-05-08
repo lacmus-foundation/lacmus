@@ -130,12 +130,16 @@ namespace RescuerLaApp.ViewModels
         {
             CanvasWidth -= CanvasWidth * 0.25;
             CanvasHeight -= CanvasHeight * 0.25;
+            Frames[SelectedIndex].Resize(CanvasWidth, CanvasHeight);
+            BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
         }
         
         private void IncreaseCanvas()
         {
             CanvasWidth += CanvasWidth * 0.25;
             CanvasHeight += CanvasHeight * 0.25;
+            Frames[SelectedIndex].Resize(CanvasWidth, CanvasHeight);
+            BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
         }
 
         
@@ -165,7 +169,7 @@ namespace RescuerLaApp.ViewModels
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
                     _frames.Add(frame);
                 }
-                Frames = new List<Frame>(_frames);
+                  Frames = new List<Frame>(_frames);
                 Status = new AppStatusInfo() {Status = Enums.Status.Ready};
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
@@ -196,6 +200,11 @@ namespace RescuerLaApp.ViewModels
                     Status = Enums.Status.Ready
                 };
             }
+        }
+
+        public void UpdateUI()
+        {
+            /*TODO: Вынести сюда все функции обновления UI*/
         }
 
         #endregion      

@@ -1,3 +1,5 @@
+using System;
+
 namespace RescuerLaApp.Models
 {
     public class BoundBox
@@ -6,13 +8,17 @@ namespace RescuerLaApp.Models
         private int _y;
         private int _height;
         private int _width;
+        private readonly int _xBase;
+        private readonly int _yBase;
+        private readonly int _heightBase;
+        private readonly int _widthBase; 
 
         public BoundBox(int x, int y, int height, int width)
         {
-            _x = x;
-            _y = y;
-            _width = width;
-            _height = height;
+            _x = _xBase = x;
+            _y = _yBase = y;
+            _width = _widthBase = width;
+            _height = _heightBase = height;
         }
 
         public int X
@@ -39,9 +45,12 @@ namespace RescuerLaApp.Models
             set => _width = value;
         }
 
-        public void Update(double canvasWidth, double canvasHeight)
+        public void Update(double scaleX, double scaleY)
         {
-            /*TODO: написать изенения координат при изменении размеров изображения*/
+            _x = (int)(_xBase * scaleX);
+            _width = (int)(_widthBase * scaleX);
+            _y = (int)(_yBase * scaleY);
+            _height = (int)(_heightBase * scaleY);
         }
     }
 }
