@@ -59,15 +59,14 @@ namespace RescuerLaApp.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _selectedIndex, value);
-                ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Patch);
-                CanvasHeight = CanvasWidth * ImageBrush.Source.PixelSize.Height / ImageBrush.Source.PixelSize.Width;
-                BoundBoxes = Frames[SelectedIndex].Rectangles;
-                if(Status.Status != Enums.Status.Error)
+                
+                if(Status.Status == Enums.Status.Ready)
                     Status = new AppStatusInfo()
                     {
                         Status = Enums.Status.Ready, 
                         StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Patch}"
                     };
+                UpdateUi();
             }
         }
         public List<Frame> Frames
@@ -101,18 +100,37 @@ namespace RescuerLaApp.ViewModels
 
         #region metods
 
-        private void PredictAll()
+        private async void PredictAll()
         {
             using (var model = new NeuroModel())
             {
                 model.Initialize();
+                var index = 0;
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Working, 
+                    StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                };
                 foreach (var frame in _frames)
                 {
-                    frame.Rectangles = model.Predict(frame.Bitmap);
+                    index++;
+                    frame.Rectangles = await model.Predict(frame);
+                    if(index < Frames.Count)
+                        Status = new AppStatusInfo()
+                        {
+                            Status = Enums.Status.Working, 
+                            StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                        };
+                    else
+                    {
+                        Status = new AppStatusInfo()
+                        {
+                            Status = Enums.Status.Ready
+                        };
+                    }
                 }
             }
-
-            BoundBoxes = Frames[SelectedIndex].Rectangles;
+            UpdateUi();
         }
         
         private void NextImage()
@@ -130,16 +148,14 @@ namespace RescuerLaApp.ViewModels
         {
             CanvasWidth -= CanvasWidth * 0.25;
             CanvasHeight -= CanvasHeight * 0.25;
-            Frames[SelectedIndex].Resize(CanvasWidth, CanvasHeight);
-            BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
+            UpdateUi();
         }
         
         private void IncreaseCanvas()
         {
             CanvasWidth += CanvasWidth * 0.25;
             CanvasHeight += CanvasHeight * 0.25;
-            Frames[SelectedIndex].Resize(CanvasWidth, CanvasHeight);
-            BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
+            UpdateUi();
         }
 
         
@@ -163,14 +179,12 @@ namespace RescuerLaApp.ViewModels
                 _frames = new List<Frame>();
                 foreach (var fileName in fileNames)
                 {
-                    Console.WriteLine(fileName);
                     var frame = new Frame();
                     frame.onLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
                     _frames.Add(frame);
                 }
-                  Frames = new List<Frame>(_frames);
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                Frames = new List<Frame>(_frames);
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
             }
@@ -202,9 +216,28 @@ namespace RescuerLaApp.ViewModels
             }
         }
 
-        public void UpdateUI()
+        private void UpdateUi()
         {
             /*TODO: Вынести сюда все функции обновления UI*/
+            ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Patch); //replace to frame.load(...)
+            CanvasHeight = CanvasWidth * ImageBrush.Source.PixelSize.Height / ImageBrush.Source.PixelSize.Width;
+            //Frames[SelectedIndex].Resize(CanvasWidth, CanvasHeight);
+            if (Frames[SelectedIndex].Rectangles != null && Frames[SelectedIndex].Rectangles.Count > 0)
+            {
+                var scaleX = CanvasWidth / ImageBrush.Source.PixelSize.Width;
+                var scaleY = CanvasHeight / ImageBrush.Source.PixelSize.Height;
+                Console.WriteLine($"{ImageBrush.Source.PixelSize.Width} x {ImageBrush.Source.PixelSize.Height}");
+                Console.WriteLine($"{CanvasWidth} x {CanvasHeight}");
+                foreach (var box in Frames[SelectedIndex].Rectangles)
+                {
+                    box.Update(scaleX, scaleY);
+                }
+                BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
+            }
+            else
+            {
+                BoundBoxes = null;
+            }    
         }
 
         #endregion      

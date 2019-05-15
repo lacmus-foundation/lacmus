@@ -115,12 +115,9 @@
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="{x:Type models:BoundBox}">
-              <Rectangle
-                Width="{Binding Width}"
-                Height="{Binding Height}"
-                Stroke="Blue" StrokeThickness="2"
-                Canvas.Left="{Binding Y}"
-                Canvas.Top="{Binding X}" />
+              <Polygon
+                Points="{Binding Points}"
+                Stroke="Blue" StrokeThickness="2" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>

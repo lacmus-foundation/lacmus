@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Avalonia;
 
 namespace RescuerLaApp.Models
 {
@@ -21,6 +23,17 @@ namespace RescuerLaApp.Models
             _height = _heightBase = height;
         }
 
+        public List<Point> Points
+        {
+            get
+            {
+                var p1 = new Point(_x, _y);
+                var p2 = new Point(_x, _y + _height);
+                var p3 = new Point(_x + _width, _y);
+                var p4 = new Point(_x + _width, _y + _height);
+                return new List<Point>() {p1, p3, p4, p2};
+            }
+        }
         public int X
         {
             get => _x;
@@ -47,10 +60,12 @@ namespace RescuerLaApp.Models
 
         public void Update(double scaleX, double scaleY)
         {
+            Console.WriteLine($"{_xBase} {_yBase}");
             _x = (int)(_xBase * scaleX);
             _width = (int)(_widthBase * scaleX);
             _y = (int)(_yBase * scaleY);
             _height = (int)(_heightBase * scaleY);
+            Console.WriteLine($"{_x} {_y}");
         }
     }
 }

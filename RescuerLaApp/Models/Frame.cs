@@ -133,6 +133,7 @@ namespace RescuerLaApp.Models
         {
             var scaleX = width / _bitmap.PixelSize.Width;
             var scaleY = height / _bitmap.PixelSize.Height;
+            if (_rectangles == null || _rectangles.Count <= 0) return;
             foreach (var rectangle in _rectangles)
             {
                 rectangle.Update(scaleX, scaleY);
