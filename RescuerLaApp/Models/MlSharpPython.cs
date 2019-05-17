@@ -30,6 +30,7 @@ namespace RescuerLaApp.Models
             {
                 using (var process = new Process())
                 {
+                    Console.WriteLine($">>>{_filePythonExePath} {filePythonScript}");
                     process.StartInfo = new ProcessStartInfo(_filePythonExePath)
                     {
                         Arguments = filePythonScript,
@@ -42,6 +43,9 @@ namespace RescuerLaApp.Models
                     outputText = process.StandardOutput.ReadToEnd();
                     standardError = process.StandardError.ReadToEnd();
                     process.WaitForExit();
+                    
+                    Console.WriteLine($"<<<{sucsess}\nout:{outputText}\nErr:{standardError}");
+                    
                     if(!sucsess)
                         throw new Exception(standardError);
                 }
@@ -51,10 +55,6 @@ namespace RescuerLaApp.Models
                 /*TODO: Сделать нормальный exception*/
                 Console.WriteLine(ex.Message);
             }
-            //Console.WriteLine(filePythonScript + filePythonScript);
-            //Console.WriteLine("txt = "+outputText);
-            //Console.WriteLine("err = "+standardError);
-            //Console.WriteLine("DONE");
             return outputText;
         }
     }

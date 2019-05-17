@@ -102,6 +102,7 @@ namespace RescuerLaApp.ViewModels
 
         private async void PredictAll()
         {
+            if (_frames == null || _frames.Count < 1) return;
             using (var model = new NeuroModel())
             {
                 model.Initialize();
@@ -168,7 +169,7 @@ namespace RescuerLaApp.ViewModels
                 {
                     Title = "Choose a directory with images"
                 };
-                var dirName = await openDig.ShowAsync();
+                var dirName = await openDig.ShowAsync(new Window());
                 if (string.IsNullOrEmpty(dirName))
                 {
                     Status = new AppStatusInfo() {Status = Enums.Status.Ready};
