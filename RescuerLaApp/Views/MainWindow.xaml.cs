@@ -1,23 +1,19 @@
-﻿using System.Collections.Generic;
-using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia;
 using Avalonia.Markup.Xaml;
+using RescuerLaApp.ViewModels;
+using ReactiveUI;
 
 namespace RescuerLaApp.Views
 {
-    public class MainWindow : Window
+    public sealed class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
         public MainWindow()
         {
-            InitializeComponent();
+            AvaloniaXamlLoader.Load(this);
+            this.WhenActivated(disposables => { });
 #if DEBUG
             this.AttachDevTools();
 #endif
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
         }
     }
 }
