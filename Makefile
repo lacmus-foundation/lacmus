@@ -17,6 +17,7 @@ build-gpu:
 build:
 	docker build -t rescuer_la:$(RLA_VERSION) .
 
+# Build and run docker image. Application using CPU
 .PHONY: run
 run: build
 	docker run --rm \
@@ -30,6 +31,7 @@ run: build
 	--volume="/etc/sudoers.d:/etc/sudoers.d:ro" \
 	rescuer_la:$(RLA_VERSION)
 
+# Build and run docker image. Application using GPU
 run-gpu: build-gpu
 	docker run --rm \
 	--runtime=nvidia \
