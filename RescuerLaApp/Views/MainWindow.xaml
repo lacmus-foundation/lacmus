@@ -7,10 +7,6 @@
         Width = "800"
         Height = "600">
 
-  <Design.DataContext>
-    <vm:MainWindowViewModel/>
-  </Design.DataContext>
-
   <Grid Name="Main">
     <Grid.RowDefinitions>
       <RowDefinition Height="auto"></RowDefinition>
