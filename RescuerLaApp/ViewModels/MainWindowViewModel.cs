@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
@@ -93,7 +92,17 @@ namespace RescuerLaApp.ViewModels
             if (Frames == null || Frames.Count < 1) return;
             using (var model = new NeuroModel())
             {
-                model.Initialize();
+                var isLoaded = await model.Load();
+                if (!isLoaded)
+                {
+                    Status = new AppStatusInfo()
+                    {
+                        Status = Enums.Status.Error, 
+                        StringStatus = $"Error: unable to load model"
+                    };
+                    return;
+                }
+                    
                 var index = 0;
                 Status = new AppStatusInfo()
                 {

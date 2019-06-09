@@ -52,7 +52,7 @@ COPY ./RetinaNet ./RetinaNet
 RUN cd RetinaNet \
     && pip3 install opencv-python \
     && pip3 install numpy --user && pip3 install . --user \
-    && python3 setup.py build_ext --inplace
+    && python3 setup.py build_ext --inplace && pip3 install flask
 
 COPY ./RescuerLaApp ./RescuerLaApp
 

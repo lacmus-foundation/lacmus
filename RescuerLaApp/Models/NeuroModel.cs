@@ -1,41 +1,48 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Threading.Tasks;
-using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
 namespace RescuerLaApp.Models
 {
     public class NeuroModel : IDisposable
     {
         /*TODO: реализовать логику*/
-        public void Initialize()
+        private readonly string _pythonExecName;
+        private readonly string _fileNameParameter;
+        private readonly RestApiClient _client;
+        private MlSharpPython _mlSharpPython;
+        
+        
+        public NeuroModel()
         {
+            _pythonExecName = "python3";
+            var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var modelName = "resnet50_liza_alert_v1_interface.h5";
+            var modelPatch = $"{appPath}/python/snapshots/{modelName}";
+            _fileNameParameter = $"{appPath}/python/inference.py --model {modelPatch}";
             
+            _client = new RestApiClient("http://127.0.0.1:5000/");
         }
 
-        public void Load(string fileName)
+        public async Task<bool> Load()
         {
-            
+            _mlSharpPython = new MlSharpPython(_pythonExecName);
+            return await Task.Run(() => _mlSharpPython.Run(_fileNameParameter));
         }
 
         public async Task<List<BoundBox>> Predict(Frame frame)
         {
             var list = new List<BoundBox>();
+            var status = await _client.GetAsync();
+            if (status == null || !status.Contains("server is running"))
+            {
+                Console.WriteLine("server is not active");
+                return list;
+            }
+            
+            string json = "{\"imagePatch\": \"" + $"{frame.Patch}" + "\"}";
 
-            // Instantiate Machine Learning C# - Python class object            
-            IMlSharpPython mlSharpPython = new MlSharpPython("python3");
-
-            // Test image
-            string imagePathName = "";
-            var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var modelPatch = $"{appPath}/python/snapshots/resnet50_liza_alert_v1_interface.h5";
-
-            // Define Python script file and input parameter name
-            string fileNameParameter = $"{appPath}/python/inference.py --model {modelPatch} --image {frame.Patch}";
-
-            // Execute the python script file 
-            var outputText = await Task.Run(() => mlSharpPython.ExecutePythonScript(fileNameParameter));
+            string outputText = await _client.PostAsync(json, "image");
              
             if (!string.IsNullOrEmpty(outputText))
             {
@@ -63,6 +70,16 @@ namespace RescuerLaApp.Models
 
         public void Dispose()
         {
+            try
+            {
+                _mlSharpPython.Stop();
+                _client.Get("exit");
+            }
+            catch
+            {
+                // ignored
+            }
+            
         }
     }
 }
