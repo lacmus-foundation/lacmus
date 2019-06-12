@@ -52,15 +52,16 @@ def parse_args(args):
     """ Parse the arguments.
     """
     parser = argparse.ArgumentParser(description='Evaluation script for a RetinaNet network.')
-    parser.add_argument('--model',              help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.h5'))
+    parser.add_argument('--model', help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.h5'))
+    parser.add_argument('--capture', help='capture Id', default=0, type=int)
     return parser.parse_args(args)
 
 def main(args=None):
     args = parse_args(args)
     load_model(args)
-    video_capture = cv2.VideoCapture(0)
-    while True:
-        ret, frame = video_capture.read()
+    cap = cv2.VideoCapture(args.capture)
+    while(cap.isOpened()):
+        ret, frame = cap.read()
 
         draw = frame.copy()
         draw = cv2.cvtColor(draw, cv2.COLOR_BGR2RGB)
@@ -81,7 +82,8 @@ def main(args=None):
             draw_caption(draw, b, caption)
 
         # Display the resulting frame
-        cv2.imshow('Video', draw)
+        resized_image = cv2.resize(frame, (1280, 820))
+        cv2.imshow('Video', resized_image)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
