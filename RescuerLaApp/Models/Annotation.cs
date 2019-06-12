@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 using RescuerLaApp.Models.Exceptions;
+using Newtonsoft.Json;
 
 namespace RescuerLaApp.Models
 {
@@ -49,17 +50,25 @@ namespace RescuerLaApp.Models
         }
     }
 
+    [JsonObject]
     public struct Object
     {
+        [JsonProperty("name")]
         public string Name { get; set; }
+        [JsonProperty("box")]
         public Box Box { get; set; }
     }
 
+    [JsonObject]
     public struct Box
     {
+        [JsonProperty("ymin")]
         public int Ymin { get; set; }
+        [JsonProperty("xmin")]
         public int Xmin { get; set; }
+        [JsonProperty("ymax")]
         public int Ymax { get; set; }
+        [JsonProperty("xmax")]
         public int Xmax { get; set; }
     }
 

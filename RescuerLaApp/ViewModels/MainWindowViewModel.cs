@@ -9,6 +9,7 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using Newtonsoft.Json;
 
 namespace RescuerLaApp.ViewModels
 {
@@ -166,10 +167,12 @@ namespace RescuerLaApp.ViewModels
                 foreach (var fileName in fileNames)
                 {
                     var frame = new Frame();
-                    frame.onLoad += FrameLoadingProgressUpdate;
+                    frame.OnLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
                     Frames.Add(frame);
                 }
+                
+                
                 Frames = new List<Frame>(Frames);
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
@@ -223,7 +226,7 @@ namespace RescuerLaApp.ViewModels
             else
             {
                 BoundBoxes = null;
-            }    
+            }
         }
     }
 }
