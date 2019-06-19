@@ -5,17 +5,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using Newtonsoft.Json;
 
 namespace RescuerLaApp.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject
     {
         private int _frameLoadProgressIndex;
+        private NeuroModel _model = null;
         
         public MainWindowViewModel()
         {
@@ -91,32 +92,51 @@ namespace RescuerLaApp.ViewModels
         private async void PredictAll()
         {
             if (Frames == null || Frames.Count < 1) return;
-            using (var model = new NeuroModel())
+            Status = new AppStatusInfo()
             {
-                model.Initialize();
-                var index = 0;
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | loading model..."
+            };
+            
+            if (_model == null)
+            {
+                _model = new NeuroModel();
+            }
+            var isLoaded = await _model.Load();
+            if (!isLoaded)
+            {
                 Status = new AppStatusInfo()
                 {
-                    Status = Enums.Status.Working, 
-                    StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error: unable to load model"
                 };
-                foreach (var frame in Frames)
-                {
-                    index++;
-                    frame.Rectangles = await model.Predict(frame);
-                    if(index < Frames.Count)
-                        Status = new AppStatusInfo()
-                        {
-                            Status = Enums.Status.Working, 
-                            StringStatus = $"Working | processing images: {index} / {Frames.Count}"
-                        };
-                    else
+                _model.Dispose();
+                _model = null;
+                return;
+            }
+                    
+            var index = 0;
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+            };
+            foreach (var frame in Frames)
+            {
+                index++;
+                frame.Rectangles = await _model.Predict(frame);
+                if(index < Frames.Count)
+                    Status = new AppStatusInfo()
                     {
-                        Status = new AppStatusInfo()
-                        {
-                            Status = Enums.Status.Ready
-                        };
-                    }
+                        Status = Enums.Status.Working, 
+                        StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                    };
+                else
+                {
+                    Status = new AppStatusInfo()
+                    {
+                        Status = Enums.Status.Ready
+                    };
                 }
             }
             UpdateUi();
@@ -157,10 +177,12 @@ namespace RescuerLaApp.ViewModels
                 foreach (var fileName in fileNames)
                 {
                     var frame = new Frame();
-                    frame.onLoad += FrameLoadingProgressUpdate;
+                    frame.OnLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
                     Frames.Add(frame);
                 }
+                
+                
                 Frames = new List<Frame>(Frames);
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
@@ -214,7 +236,7 @@ namespace RescuerLaApp.ViewModels
             else
             {
                 BoundBoxes = null;
-            }    
+            }
         }
     }
 }

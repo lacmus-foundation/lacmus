@@ -14,24 +14,21 @@ namespace RescuerLaApp.Models
     {
         private ImageBrush _imageBrush = new ImageBrush() { Stretch = Stretch.Uniform };
         private Bitmap _bitmap;
-        private Annotation _annotation;
         private List<BoundBox> _rectangles;
-        private string _name;
 
-        public string Patch => _name;
+        public string Patch { get; set; }
 
         public string Name
         {
             get
             {
-                var name = System.IO.Path.GetFileName(_name);
+                var name = System.IO.Path.GetFileName(Patch);
                 if (name.Length > 10)
                 {
                     name = name.Substring(0, 3) + "{~}" + name.Substring(name.Length - 5);
                 }
                 return name;
             }
-            set => _name = value;
         }
 
         public ImageBrush ImageBrush
@@ -46,32 +43,21 @@ namespace RescuerLaApp.Models
             set => _bitmap = value;
         }
 
-        public Annotation Annotation
-        {
-            get => _annotation;
-            set => _annotation = value;
-        }
-        
         public List<BoundBox> Rectangles
         {
             get => _rectangles;
             set => _rectangles = value;
         }
-
-        public Frame()
-        {
-            _annotation = new Annotation();
-        }
         
         public delegate void MethodContainer();
 
-        public event MethodContainer onLoad;
+        public event MethodContainer OnLoad;
 
         public void Load(string imgFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
             ThreadPool.QueueUserWorkItem(o =>
             {
-                _name = imgFileName;
+                Patch = imgFileName;
                 switch (loadMode)
                 {
                     case Enums.ImageLoadMode.Full:
@@ -87,7 +73,7 @@ namespace RescuerLaApp.Models
                                 (int)(src.Height * scale), 
                                 src.ColorType, 
                                 src.AlphaType);
-                            SKBitmap.Resize(resized, src, SKBitmapResizeMethod.Hamming);
+                            src.ScalePixels(resized, SKFilterQuality.Low);
                             _bitmap = new Bitmap(
                                 resized.ColorType.ToPixelFormat(),
                                 resized.GetPixels(),
@@ -102,42 +88,9 @@ namespace RescuerLaApp.Models
                 Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     _imageBrush.Source = _bitmap;
-                    onLoad?.Invoke();
+                    OnLoad?.Invoke();
                 });
             });
-        }
-        
-        public void Load(string imgFileName, string annotationFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
-        {
-            Load(imgFileName, loadMode);
-            _annotation = Annotation.ParseFromXml(annotationFileName);
-        }
-
-        public void Load(Bitmap bitmap)
-        {
-            _bitmap = bitmap;
-        }
-        
-        public void LoadFromAnnotation(string annotationFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
-        {
-            _annotation = Annotation.ParseFromXml(annotationFileName);
-            Load(_annotation.Patch, loadMode);
-        }
-        public void LoadFromAnnotation(Annotation annotation, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
-        {
-            _annotation = annotation;
-            Load(annotation.Patch, loadMode);
-        }
-
-        public void Resize(double width, double height)
-        {
-            var scaleX = width / _bitmap.PixelSize.Width;
-            var scaleY = height / _bitmap.PixelSize.Height;
-            if (_rectangles == null || _rectangles.Count <= 0) return;
-            foreach (var rectangle in _rectangles)
-            {
-                rectangle.Update(scaleX, scaleY);
-            }
         }
     }
 }
