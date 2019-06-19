@@ -1,9 +1,0 @@
-# Set default behavior to automatically normalize line endings.
-* inguist-language=auto
-
-*.cs inguist-language=csharp
-*.pxd inguist-language=python
-*.py inguist-language=python
-*.py3 inguist-language=python
-*.pyw inguist-language=python
-*.pyx inguist-language=python
