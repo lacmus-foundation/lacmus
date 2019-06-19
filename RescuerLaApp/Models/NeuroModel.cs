@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using  Newtonsoft.Json;
 
@@ -18,6 +19,9 @@ namespace RescuerLaApp.Models
         public NeuroModel()
         {
             _pythonExecName = "python3";
+            #if DEBUG
+            _pythonExecName = "/home/gosha20777/anaconda3/bin/python";
+            #endif
             var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             var modelName = "resnet50_liza_alert_v1_interface.h5";
             var modelPatch = $"{appPath}/python/snapshots/{modelName}";
@@ -28,14 +32,34 @@ namespace RescuerLaApp.Models
 
         public async Task<bool> Load()
         {
+            var status = await _client.GetStatusAsync();
+            if (status != null && status.Contains("server is running"))
+            {
+                return true;
+            }
+            
             _mlSharpPython = new MlSharpPython(_pythonExecName);
-            return await Task.Run(() => _mlSharpPython.Run(_fileNameParameter));
+            if (await Task.Run(() => _mlSharpPython.Run(_fileNameParameter)))
+            {
+                var startTime = DateTime.Now;
+                TimeSpan waitingTime = new TimeSpan(0, 0, 0, 2);
+                while (DateTime.Now - startTime < waitingTime)
+                {
+                    Thread.Sleep(100);
+                    status = await _client.GetStatusAsync();
+                    if (status != null && status.Contains("server is running"))
+                    {
+                        return true;
+                    }   
+                }
+            }
+            return false;
         }
 
         public async Task<List<BoundBox>> Predict(Frame frame)
         {
             var list = new List<BoundBox>();
-            var status = await _client.GetAsync();
+            var status = await _client.GetStatusAsync();
             if (status == null || !status.Contains("server is running"))
             {
                 Console.WriteLine("server is not active");
@@ -65,7 +89,7 @@ namespace RescuerLaApp.Models
                         y2-y1,
                         x2-x1);
                     list.Add(rect);
-                    Console.WriteLine($"{label}: {score}");
+                    Console.WriteLine($">{label}: {score}");
                 }
             }
             return list;

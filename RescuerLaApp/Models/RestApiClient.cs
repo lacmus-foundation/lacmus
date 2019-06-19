@@ -108,6 +108,30 @@ namespace RescuerLaApp.Models
                 throw new WebException();
             }
         }
+        
+        /// <summary>
+        /// async GET request
+        /// </summary>
+        /// <param name="subUrl">sub url. default = ""</param>
+        /// <returns>response string</returns>
+        public async Task<string> GetStatusAsync()
+        {
+            try
+            {
+                var webRequest = WebRequest.Create(_baseUrl);
+
+                using (var resp = webRequest.GetResponse())
+                using (var stream = resp.GetResponseStream())
+                using (var sr = new StreamReader(stream ?? throw new Exception("stream is null")))
+                {
+                    return await sr.ReadToEndAsync();
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
         #endregion
         
         #region Post

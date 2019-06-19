@@ -89,7 +89,6 @@ def load_model(args):
     labels_to_names = {0: 'Pedestrian'}
     global graph
     graph = tf.get_default_graph()
-    print('model loaded')
     return model, labels_to_names
 
 def parse_args(args):
@@ -102,7 +101,8 @@ def parse_args(args):
 def main(args=None):
     args = parse_args(args)
     load_model(args)
-    app.run(debug=True, host='0.0.0.0')
+    print('model loaded')
+    app.run(debug=False, host='0.0.0.0')    
 
 if __name__ == '__main__':
     main()

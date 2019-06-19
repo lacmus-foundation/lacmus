@@ -16,6 +16,7 @@ namespace RescuerLaApp.ViewModels
     public class MainWindowViewModel : ReactiveObject
     {
         private int _frameLoadProgressIndex;
+        private NeuroModel _model = null;
         
         public MainWindowViewModel()
         {
@@ -91,42 +92,51 @@ namespace RescuerLaApp.ViewModels
         private async void PredictAll()
         {
             if (Frames == null || Frames.Count < 1) return;
-            using (var model = new NeuroModel())
+            Status = new AppStatusInfo()
             {
-                var isLoaded = await model.Load();
-                if (!isLoaded)
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | loading model..."
+            };
+            
+            if (_model == null)
+            {
+                _model = new NeuroModel();
+            }
+            var isLoaded = await _model.Load();
+            if (!isLoaded)
+            {
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error: unable to load model"
+                };
+                _model.Dispose();
+                _model = null;
+                return;
+            }
+                    
+            var index = 0;
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+            };
+            foreach (var frame in Frames)
+            {
+                index++;
+                frame.Rectangles = await _model.Predict(frame);
+                if(index < Frames.Count)
+                    Status = new AppStatusInfo()
+                    {
+                        Status = Enums.Status.Working, 
+                        StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                    };
+                else
                 {
                     Status = new AppStatusInfo()
                     {
-                        Status = Enums.Status.Error, 
-                        StringStatus = $"Error: unable to load model"
+                        Status = Enums.Status.Ready
                     };
-                    return;
-                }
-                    
-                var index = 0;
-                Status = new AppStatusInfo()
-                {
-                    Status = Enums.Status.Working, 
-                    StringStatus = $"Working | processing images: {index} / {Frames.Count}"
-                };
-                foreach (var frame in Frames)
-                {
-                    index++;
-                    frame.Rectangles = await model.Predict(frame);
-                    if(index < Frames.Count)
-                        Status = new AppStatusInfo()
-                        {
-                            Status = Enums.Status.Working, 
-                            StringStatus = $"Working | processing images: {index} / {Frames.Count}"
-                        };
-                    else
-                    {
-                        Status = new AppStatusInfo()
-                        {
-                            Status = Enums.Status.Ready
-                        };
-                    }
                 }
             }
             UpdateUi();
