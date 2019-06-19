@@ -1,4 +1,6 @@
 # Set default behavior to automatically normalize line endings.
+static/* linguist-vendored
+
 *            text=auto
 
 *.cs         text diff=csharp
