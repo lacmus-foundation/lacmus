@@ -39,7 +39,7 @@ namespace RescuerLaApp.Models
                 };
                 var success = _process.Start();
                 if(!success)
-                    throw new Exception();
+                    throw new Exception("can not start process.");
                 var startTime = DateTime.Now;
                 TimeSpan waitingTime = new TimeSpan(0, 0, 0, 20);
                 var sr = _process.StandardOutput;
@@ -60,7 +60,6 @@ namespace RescuerLaApp.Models
                         Console.WriteLine("timeout");
                         return false;
                     }
-                        
                 }
             }
             catch (Exception ex)
@@ -73,6 +72,7 @@ namespace RescuerLaApp.Models
 
         public void Stop()
         {
+            Console.WriteLine($"<<<\nout:{_process.StandardOutput.ReadToEnd()}\nErr:{_process.StandardError.ReadToEnd()}");
             _process.Kill();
             _process.Dispose();
             Console.Write("killed");

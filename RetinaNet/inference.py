@@ -8,6 +8,9 @@ from keras_retinanet.utils.colors import label_color
 # import miscellaneous modules
 import matplotlib.pyplot as plt
 import cv2
+from PIL import Image
+from io import BytesIO
+import base64
 import argparse
 import sys
 import os
@@ -27,21 +30,23 @@ def stop():
 
 @app.route('/image', methods=['POST'])
 def predict_image():
-    if not request.json or not 'imagePatch' in request.json:
+    if not request.json or not 'data' in request.json:
         abort(400)
     
     
-    caption = run_detection_image(model, labels_to_names, request.json['imagePatch'])
+    caption = run_detection_image(model, labels_to_names, request.json['data'])
     return caption, 200
 
 
-def run_detection_image(model, labels_to_names, filepath):
-    print("start predict {}", filepath)
+def run_detection_image(model, labels_to_names, data):
+    print("start predict {}")
     with graph.as_default():
-        image = read_image_bgr(filepath)
+        imgdata = base64.b64decode(data)
+        npImage = np.asarray(Image.open(BytesIO(imgdata)).convert('RGB'))
+        image = npImage[:, :, ::-1].copy()
 
         # copy to draw on
-        draw = image.copy()
+        draw = image
         draw = cv2.cvtColor(draw, cv2.COLOR_BGR2RGB)
 
         # preprocess image for network

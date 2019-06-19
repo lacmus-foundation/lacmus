@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
+using  Newtonsoft.Json;
 
 namespace RescuerLaApp.Models
 {
@@ -40,9 +42,10 @@ namespace RescuerLaApp.Models
                 return list;
             }
             
-            string json = "{\"imagePatch\": \"" + $"{frame.Patch}" + "\"}";
-
-            string outputText = await _client.PostAsync(json, "image");
+            var jsonImg = new JsonImage();
+            jsonImg.Load(frame.Patch);
+            var json = JsonConvert.SerializeObject(jsonImg);
+            var outputText = await _client.PostAsync(json, "image");
              
             if (!string.IsNullOrEmpty(outputText))
             {
