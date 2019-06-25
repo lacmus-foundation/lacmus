@@ -1,7 +1,8 @@
 namespace RescuerLaApp.Models
 {
-    public interface IMlSharpPython
+    public interface IMlPythonServer
     {
-        string ExecutePythonScript(string filePythonScript);
+        bool Run(string filePythonScript);
+        void Stop();
     }
 }

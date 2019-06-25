@@ -3,146 +3,143 @@ using RescuerLaApp.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Windows.Input;
+using System.Reactive;
+using System.Reactive.Linq;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
+using Newtonsoft.Json;
 
 namespace RescuerLaApp.ViewModels
 {
-    /*TODO: Отрефакторить и разделить класс*/
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : ReactiveObject
     {
-        #region filds
-        
-        private double _canvasHeight = 500;
-        private double _canvasWidth = 500;
-        private int _selectedIndex;
-        private List<Frame> _frames = new List<Frame>();
-        private List<BoundBox> _boundBoxes = new List<BoundBox>();
-        private ImageBrush _imageBrush =  new ImageBrush() { Stretch = Stretch.Uniform };
-        private AppStatusInfo _status = new AppStatusInfo() { Status = Enums.Status.Ready };
         private int _frameLoadProgressIndex;
+        private NeuroModel _model = null;
         
-        private RelayCommand _openFieCommand;
-        private RelayCommand _increaseCanvasCommand;
-        private RelayCommand _shrinkCanvasCommand;
-        private RelayCommand _nextImageCommand;
-        private RelayCommand _prevImageCommand;
-        private RelayCommand _predictAllCommand;
+        public MainWindowViewModel()
+        {
+            var canGoNext = this
+                .WhenAnyValue(x => x.SelectedIndex)
+                .Select(index => index < Frames.Count - 1);
+            
+            // The bound button will stay disabled, when
+            // there is no more frames left.
+            NextImageCommand = ReactiveCommand.Create(
+                () => { SelectedIndex++; },
+                canGoNext);
 
+            var canGoBack = this
+                .WhenAnyValue(x => x.SelectedIndex)
+                .Select(index => index > 0);
+            
+            // The bound button will stay disabled, when
+            // there are no frames before the current one.
+            PrevImageCommand = ReactiveCommand.Create(
+                () => { SelectedIndex--; }, 
+                canGoBack);
+            
+            IncreaseCanvasCommand = ReactiveCommand.Create(IncreaseCanvas);
+            ShrinkCanvasCommand = ReactiveCommand.Create(ShrinkCanvas);
+            PredictAllCommand = ReactiveCommand.Create(PredictAll);
+            OpenFileCommand = ReactiveCommand.Create(OpenFile);
+
+            this.WhenAnyValue(x => x.SelectedIndex)
+                .Skip(1)
+                .Subscribe(x =>
+                {
+                    if (Status.Status == Enums.Status.Ready)
+                        Status = new AppStatusInfo
+                        {
+                            Status = Enums.Status.Ready, 
+                            StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Patch}"
+                        };
+                    UpdateUi();
+                });
+        }
+        
+        #region Public API
+
+        [Reactive] public List<BoundBox> BoundBoxes { get; set; } = new List<BoundBox>();
+        
+        [Reactive] public double CanvasWidth { get; set; } = 500;
+        
+        [Reactive] public double CanvasHeight { get; set; } = 500;
+        
+        [Reactive] public int SelectedIndex { get; set; } = 0;
+        
+        [Reactive] public List<Frame> Frames { get; set; } = new List<Frame>();
+        
+        [Reactive] public AppStatusInfo Status { get; set; } = new AppStatusInfo { Status = Enums.Status.Ready };
+        
+        [Reactive] public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
+        
+        public ReactiveCommand<Unit, Unit> PredictAllCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> NextImageCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> PrevImageCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> ShrinkCanvasCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> IncreaseCanvasCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
+        
         #endregion
-
-        #region properies
-
-        public List<BoundBox> BoundBoxes
-        {
-            get => _boundBoxes; 
-            set => this.RaiseAndSetIfChanged(ref _boundBoxes, value);
-        }
-
-        public double CanvasWidth
-        {
-            get => _canvasWidth;
-            set => this.RaiseAndSetIfChanged(ref _canvasWidth, value);
-        }
-
-        public double CanvasHeight
-        {
-            get => _canvasHeight;
-            set => this.RaiseAndSetIfChanged(ref _canvasHeight, value);
-        }
-
-        public int SelectedIndex
-        {
-            get => _selectedIndex;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _selectedIndex, value);
-                
-                if(Status.Status == Enums.Status.Ready)
-                    Status = new AppStatusInfo()
-                    {
-                        Status = Enums.Status.Ready, 
-                        StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Patch}"
-                    };
-                UpdateUi();
-            }
-        }
-        public List<Frame> Frames
-        {
-            get => _frames;
-            set => this.RaiseAndSetIfChanged(ref _frames, value);
-        }
-        public AppStatusInfo Status
-        {
-            get => _status;
-            set => this.RaiseAndSetIfChanged(ref _status, value);
-        }
-        public ImageBrush ImageBrush
-        {
-            get => _imageBrush;
-            set => this.RaiseAndSetIfChanged(ref _imageBrush, value);
-        }
-
-        #endregion
-
-        #region commands
-
-        public ICommand PredictAllCommand => _predictAllCommand ?? (_predictAllCommand = new RelayCommand(PredictAll));
-        public ICommand NextImageCommand => _nextImageCommand ?? (_nextImageCommand = new RelayCommand(NextImage));
-        public ICommand PrevImageCommand => _prevImageCommand ?? (_prevImageCommand = new RelayCommand(PrevImage));
-        public ICommand ShrinkCanvasCommand => _shrinkCanvasCommand ?? (_shrinkCanvasCommand = new RelayCommand(ShrinkCanvas));
-        public ICommand IncreaseCanvasCommand => _increaseCanvasCommand ?? (_increaseCanvasCommand = new RelayCommand(IncreaseCanvas));
-        public ICommand OpenFileCommand => _openFieCommand ?? (_openFieCommand = new RelayCommand(OpenFile));
-
-        #endregion
-
-        #region metods
 
         private async void PredictAll()
         {
-            if (_frames == null || _frames.Count < 1) return;
-            using (var model = new NeuroModel())
+            if (Frames == null || Frames.Count < 1) return;
+            Status = new AppStatusInfo()
             {
-                model.Initialize();
-                var index = 0;
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | loading model..."
+            };
+            
+            if (_model == null)
+            {
+                _model = new NeuroModel();
+            }
+            var isLoaded = await _model.Load();
+            if (!isLoaded)
+            {
                 Status = new AppStatusInfo()
                 {
-                    Status = Enums.Status.Working, 
-                    StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error: unable to load model"
                 };
-                foreach (var frame in _frames)
-                {
-                    index++;
-                    frame.Rectangles = await model.Predict(frame);
-                    if(index < Frames.Count)
-                        Status = new AppStatusInfo()
-                        {
-                            Status = Enums.Status.Working, 
-                            StringStatus = $"Working | processing images: {index} / {Frames.Count}"
-                        };
-                    else
+                _model.Dispose();
+                _model = null;
+                return;
+            }
+                    
+            var index = 0;
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+            };
+            foreach (var frame in Frames)
+            {
+                index++;
+                frame.Rectangles = await _model.Predict(frame);
+                if(index < Frames.Count)
+                    Status = new AppStatusInfo()
                     {
-                        Status = new AppStatusInfo()
-                        {
-                            Status = Enums.Status.Ready
-                        };
-                    }
+                        Status = Enums.Status.Working, 
+                        StringStatus = $"Working | processing images: {index} / {Frames.Count}"
+                    };
+                else
+                {
+                    Status = new AppStatusInfo()
+                    {
+                        Status = Enums.Status.Ready
+                    };
                 }
             }
             UpdateUi();
-        }
-        
-        private void NextImage()
-        {
-            if (SelectedIndex < Frames.Count - 1)
-                SelectedIndex++;
-        }
-        private void PrevImage()
-        {
-            if (SelectedIndex > 0)
-                SelectedIndex--;
         }
         
         private void ShrinkCanvas()
@@ -159,7 +156,6 @@ namespace RescuerLaApp.ViewModels
             UpdateUi();
         }
 
-        
         private async void OpenFile()
         {
             Status = new AppStatusInfo() {Status = Enums.Status.Working};
@@ -177,15 +173,17 @@ namespace RescuerLaApp.ViewModels
                 }
                 var fileNames = Directory.GetFiles(dirName);
                 _frameLoadProgressIndex = 0;
-                _frames = new List<Frame>();
+                Frames = new List<Frame>();
                 foreach (var fileName in fileNames)
                 {
                     var frame = new Frame();
-                    frame.onLoad += FrameLoadingProgressUpdate;
+                    frame.OnLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
-                    _frames.Add(frame);
+                    Frames.Add(frame);
                 }
-                Frames = new List<Frame>(_frames);
+                
+                
+                Frames = new List<Frame>(Frames);
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
             }
@@ -238,9 +236,7 @@ namespace RescuerLaApp.ViewModels
             else
             {
                 BoundBoxes = null;
-            }    
+            }
         }
-
-        #endregion      
     }
 }

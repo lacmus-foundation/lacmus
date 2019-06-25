@@ -16,5 +16,8 @@
     <PackageReference Include="Avalonia" Version="0.8.0" />
     <PackageReference Include="Avalonia.Desktop" Version="0.8.0" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.8.0" />
+    <PackageReference Include="Avalonia.Skia.Linux.Natives" Version="1.68" />
+    <PackageReference Include="NewtonSoft.Json" Version="12.0.2" />
+    <PackageReference Include="ReactiveUI.Fody" Version="9.16.3" />
   </ItemGroup>
 </Project>

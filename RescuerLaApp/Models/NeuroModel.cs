@@ -1,41 +1,75 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-using Bitmap = Avalonia.Media.Imaging.Bitmap;
+using  Newtonsoft.Json;
 
 namespace RescuerLaApp.Models
 {
     public class NeuroModel : IDisposable
     {
         /*TODO: реализовать логику*/
-        public void Initialize()
+        private readonly string _pythonExecName;
+        private readonly string _fileNameParameter;
+        private readonly RestApiClient _client;
+        private MlSharpPython _mlSharpPython;
+        
+        
+        public NeuroModel()
         {
+            _pythonExecName = "python3";
+            #if DEBUG
+            _pythonExecName = "/home/gosha20777/anaconda3/bin/python";
+            #endif
+            var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var modelName = "resnet50_liza_alert_v1_interface.h5";
+            var modelPatch = $"{appPath}/python/snapshots/{modelName}";
+            _fileNameParameter = $"{appPath}/python/inference.py --model {modelPatch}";
             
+            _client = new RestApiClient("http://127.0.0.1:5000/");
         }
 
-        public void Load(string fileName)
+        public async Task<bool> Load()
         {
+            var status = await _client.GetStatusAsync();
+            if (status != null && status.Contains("server is running"))
+            {
+                return true;
+            }
             
+            _mlSharpPython = new MlSharpPython(_pythonExecName);
+            if (await Task.Run(() => _mlSharpPython.Run(_fileNameParameter)))
+            {
+                var startTime = DateTime.Now;
+                TimeSpan waitingTime = new TimeSpan(0, 0, 0, 2);
+                while (DateTime.Now - startTime < waitingTime)
+                {
+                    Thread.Sleep(100);
+                    status = await _client.GetStatusAsync();
+                    if (status != null && status.Contains("server is running"))
+                    {
+                        return true;
+                    }   
+                }
+            }
+            return false;
         }
 
         public async Task<List<BoundBox>> Predict(Frame frame)
         {
             var list = new List<BoundBox>();
-
-            // Instantiate Machine Learning C# - Python class object            
-            IMlSharpPython mlSharpPython = new MlSharpPython("python3");
-
-            // Test image
-            string imagePathName = "";
-            var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var modelPatch = $"{appPath}/python/snapshots/resnet50_liza_alert_v1_interface.h5";
-
-            // Define Python script file and input parameter name
-            string fileNameParameter = $"{appPath}/python/inference.py --model {modelPatch} --image {frame.Patch}";
-
-            // Execute the python script file 
-            var outputText = await Task.Run(() => mlSharpPython.ExecutePythonScript(fileNameParameter));
+            var status = await _client.GetStatusAsync();
+            if (status == null || !status.Contains("server is running"))
+            {
+                Console.WriteLine("server is not active");
+                return list;
+            }
+            
+            var jsonImg = new JsonImage();
+            jsonImg.Load(frame.Patch);
+            var json = JsonConvert.SerializeObject(jsonImg);
+            var outputText = await _client.PostAsync(json, "image");
              
             if (!string.IsNullOrEmpty(outputText))
             {
@@ -55,7 +89,7 @@ namespace RescuerLaApp.Models
                         y2-y1,
                         x2-x1);
                     list.Add(rect);
-                    Console.WriteLine($"{label}: {score}");
+                    Console.WriteLine($">{label}: {score}");
                 }
             }
             return list;
@@ -63,6 +97,16 @@ namespace RescuerLaApp.Models
 
         public void Dispose()
         {
+            try
+            {
+                _mlSharpPython.Stop();
+                _client.Get("exit");
+            }
+            catch
+            {
+                // ignored
+            }
+            
         }
     }
 }

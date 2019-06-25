@@ -1,14 +1,13 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Logging.Serilog;
 using RescuerLaApp.ViewModels;
 using RescuerLaApp.Views;
 
 namespace RescuerLaApp
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             BuildAvaloniaApp().Start<MainWindow>(() => new MainWindowViewModel());
         }
