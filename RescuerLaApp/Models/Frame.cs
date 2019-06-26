@@ -48,6 +48,8 @@ namespace RescuerLaApp.Models
             get => _rectangles;
             set => _rectangles = value;
         }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
         
         public delegate void MethodContainer();
 
@@ -62,11 +64,15 @@ namespace RescuerLaApp.Models
                 {
                     case Enums.ImageLoadMode.Full:
                         _bitmap = new Bitmap(imgFileName);
+                        Width = _bitmap.PixelSize.Width;
+                        Height = _bitmap.PixelSize.Height;
                         break;
                     case Enums.ImageLoadMode.Miniature:
                         using (SKStream stream = new SKFileStream(imgFileName))
                         using (SKBitmap src = SKBitmap.Decode(stream))
                         {
+                            Width = src.Width;
+                            Height = src.Height;
                             float scale = 100f / src.Width;
                             SKBitmap resized = new SKBitmap(
                                 (int)(src.Width * scale),
