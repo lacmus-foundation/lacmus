@@ -40,10 +40,12 @@ namespace RescuerLaApp.ViewModels
                 () => { SelectedIndex--; }, 
                 canGoBack);
             
+            // Add here newer commands
             IncreaseCanvasCommand = ReactiveCommand.Create(IncreaseCanvas);
             ShrinkCanvasCommand = ReactiveCommand.Create(ShrinkCanvas);
             PredictAllCommand = ReactiveCommand.Create(PredictAll);
             OpenFileCommand = ReactiveCommand.Create(OpenFile);
+            SaveAllCommand = ReactiveCommand.Create(SaveAll);
 
             this.WhenAnyValue(x => x.SelectedIndex)
                 .Skip(1)
@@ -86,6 +88,8 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> IncreaseCanvasCommand { get; }
         
         public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> SaveAllCommand { get; }
         
         #endregion
 
@@ -166,7 +170,7 @@ namespace RescuerLaApp.ViewModels
                     Title = "Choose a directory with images"
                 };
                 var dirName = await openDig.ShowAsync(new Window());
-                if (string.IsNullOrEmpty(dirName))
+                if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
                     Status = new AppStatusInfo() {Status = Enums.Status.Ready};
                     return;
@@ -186,6 +190,70 @@ namespace RescuerLaApp.ViewModels
                 Frames = new List<Frame>(Frames);
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
+                };
+            }
+        }
+
+        private async void SaveAll()
+        {
+            try
+            {
+                if (Frames == null || Frames.Count < 1)
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                Status = new AppStatusInfo() {Status = Enums.Status.Working};
+                var openDig = new OpenFolderDialog()
+                {
+                    Title = "Choose a directory to save annotations"
+                };
+                var dirName = await openDig.ShowAsync(new Window());
+                if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                
+                foreach (var frame in Frames)
+                {
+                    if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
+                        continue;
+                    var annotation = new Annotation();
+                    annotation.Filename = Path.GetFileNameWithoutExtension(frame.Patch);
+                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Patch));
+                    annotation.Segmented = 0;
+                    frame.Load(frame.Patch);
+                    annotation.Size = new Models.Size()
+                    {
+                        Depth = 3,
+                        Height = frame.Height,
+                        Width = frame.Width
+                    };
+                    foreach (var rectangle in frame.Rectangles)
+                    {
+                        var o = new Models.Object();
+                        o.Name = "Pedestrian";
+                        o.Box = new Box()
+                        {
+                            Xmax = rectangle.XBase + rectangle.WidthBase,
+                            Ymax = rectangle.YBase + rectangle.HeightBase,
+                            Xmin = rectangle.XBase,
+                            Ymin = rectangle.YBase
+                        };
+                        annotation.Objects.Add(o);
+                    }
+
+                    annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                }
             }
             catch (Exception ex)
             {

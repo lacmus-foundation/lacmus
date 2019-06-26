@@ -19,7 +19,7 @@
       <Menu>
         <MenuItem Name="mFile" Header="File">
           <MenuItem Name="mFileOpen" Header="Open directory..." Command="{Binding OpenFileCommand}"/>
-          <MenuItem Name="mFilePredict" Header="Predict all"/>
+          <MenuItem Name="mFilePredict" Header="Predict all" Command="{Binding SaveAllCommand}"/>
           <MenuItem Name="mFileSave" Header="Save"/>
           <MenuItem Name="mFileShowAll" Header="Show all"/>
           <Separator></Separator>
@@ -46,7 +46,7 @@
           <Button Name="bOpen" Command="{Binding OpenFileCommand}">Open</Button>
           <Button Name="bPredict" Command="{Binding PredictAllCommand}">Predict all</Button>
           <Separator/>
-          <Button Name="bSave">Save all</Button>
+          <Button Name="bSave" Command="{Binding SaveAllCommand}">Save all</Button>
           <Separator/>
           <Button Name="bImageIncrease" Command="{Binding IncreaseCanvasCommand}">Increase</Button>
           <Button Name="bImageShrink" Command="{Binding ShrinkCanvasCommand}">Shrink</Button>
