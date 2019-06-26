@@ -58,6 +58,11 @@ namespace RescuerLaApp.Models
             set => _width = value;
         }
 
+        public int HeightBase => _heightBase;
+        public int WidthBase => _widthBase;
+        public int XBase => _xBase;
+        public int YBase => _yBase;
+
         public void Update(double scaleX, double scaleY)
         {
             Console.WriteLine($"{_xBase} {_yBase}");

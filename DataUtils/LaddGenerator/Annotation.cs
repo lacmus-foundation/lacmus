@@ -19,7 +19,7 @@ namespace LaddGenerator
         public Sourse Source { get; set; } = new Sourse();
         [XmlElement("size")]
         public Size Size { get; set; }
-        [XmlElement("Segmented")]
+        [XmlElement("segmented")]
         public int Segmented { get; set; } = 0;
         [XmlElement("object")]
         public List<Object> Objects { get; set; } = new List<Object>();

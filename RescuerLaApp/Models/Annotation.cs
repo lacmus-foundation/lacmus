@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 using RescuerLaApp.Models.Exceptions;
-using Newtonsoft.Json;
 
 namespace RescuerLaApp.Models
 {
     [Serializable]
+    [XmlRoot("annotation")]
     public class Annotation
     {
-        public string Folder { get; set; }
-        public string Patch { get; set; }
-        public Sourse Source { get; set; }
-        public Size Size { get; set; }
-        public int Segmented { get; set; }
-        public List<Object> Objects { get; set; }
+        [XmlElement("folder")] public string Folder { get; set; } = "VocGalsTfl";
+        [XmlElement("filename")] public string Filename { get; set; }
+        [XmlElement("source")] public Source Source { get; set; } = new Source();
+        [XmlElement("size")] public Size Size { get; set; }
+        [XmlElement("segmented")] public int Segmented { get; set; } = 0;
+        [XmlElement("object")] public List<Object> Objects { get; set; } = new List<Object>();
         
         public static Annotation ParseFromXml(string annotationFileName)
         {
@@ -49,38 +49,33 @@ namespace RescuerLaApp.Models
             }
         }
     }
-
-    [JsonObject]
-    public struct Object
+    
+    public class Object
     {
-        [JsonProperty("name")]
-        public string Name { get; set; }
-        [JsonProperty("box")]
-        public Box Box { get; set; }
+        [XmlElement("name")] public string Name { get; set; } 
+        [XmlElement("pose")] public string Pose { get; set; } = "Unspecified";
+        [XmlElement("truncated")] public int Truncated { get; set; } = 0;
+        [XmlElement("difficult")] public int Difficult { get; set; } = 0;
+        [XmlElement("bndbox")] public Box Box { get; set; }
+    }
+    
+    public class Box
+    {
+        [XmlElement("ymin")] public int Ymin { get; set; }
+        [XmlElement("xmin")] public int Xmin { get; set; }
+        [XmlElement("ymax")] public int Ymax { get; set; }
+        [XmlElement("xmax")] public int Xmax { get; set; }
     }
 
-    [JsonObject]
-    public struct Box
+    public class Size
     {
-        [JsonProperty("ymin")]
-        public int Ymin { get; set; }
-        [JsonProperty("xmin")]
-        public int Xmin { get; set; }
-        [JsonProperty("ymax")]
-        public int Ymax { get; set; }
-        [JsonProperty("xmax")]
-        public int Xmax { get; set; }
+        [XmlElement("height")] public int Height { get; set; }
+        [XmlElement("width")] public int Width { get; set; }
+        [XmlElement("depth")] public byte Depth { get; set; } = 3;
     }
 
-    public struct Size
+    public class Source
     {
-        public uint Height { get; set; }
-        public uint Width { get; set; }
-        public byte Depth { get; set; }
-    }
-
-    public struct Sourse
-    {
-        public string DtatBase { get; set; }
+        [XmlElement("database")] public string DataBase { get; set; } = "Unknown";
     }
 }
