@@ -148,16 +148,12 @@ namespace RescuerLaApp.ViewModels
         
         private void ShrinkCanvas()
         {
-            CanvasWidth -= CanvasWidth * 0.25;
-            CanvasHeight -= CanvasHeight * 0.25;
-            UpdateUi();
+            Zoomer.Zoom(0.8);
         }
         
         private void IncreaseCanvas()
         {
-            CanvasWidth += CanvasWidth * 0.25;
-            CanvasHeight += CanvasHeight * 0.25;
-            UpdateUi();
+            Zoomer.Zoom(1.2);
         }
 
         private async void OpenFile()
@@ -287,18 +283,10 @@ namespace RescuerLaApp.ViewModels
         {
             /*TODO: Вынести сюда все функции обновления UI*/
             ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Patch); //replace to frame.load(...)
-            CanvasHeight = CanvasWidth * ImageBrush.Source.PixelSize.Height / ImageBrush.Source.PixelSize.Width;
-            //Frames[SelectedIndex].Resize(CanvasWidth, CanvasHeight);
+            CanvasHeight = ImageBrush.Source.PixelSize.Height;
+            CanvasWidth = ImageBrush.Source.PixelSize.Width;
             if (Frames[SelectedIndex].Rectangles != null && Frames[SelectedIndex].Rectangles.Count > 0)
             {
-                var scaleX = CanvasWidth / ImageBrush.Source.PixelSize.Width;
-                var scaleY = CanvasHeight / ImageBrush.Source.PixelSize.Height;
-                Console.WriteLine($"{ImageBrush.Source.PixelSize.Width} x {ImageBrush.Source.PixelSize.Height}");
-                Console.WriteLine($"{CanvasWidth} x {CanvasHeight}");
-                foreach (var box in Frames[SelectedIndex].Rectangles)
-                {
-                    box.Update(scaleX, scaleY);
-                }
                 BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
             }
             else
