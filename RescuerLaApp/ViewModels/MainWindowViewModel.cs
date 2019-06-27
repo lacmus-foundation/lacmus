@@ -48,7 +48,7 @@ namespace RescuerLaApp.ViewModels
             SaveAllCommand = ReactiveCommand.Create(SaveAll);
         }
 
-        public void UbdateFramesRepo()
+        public void UpdateFramesRepo()
         {
             this.WhenAnyValue(x => x.SelectedIndex)
                 .Skip(1)
