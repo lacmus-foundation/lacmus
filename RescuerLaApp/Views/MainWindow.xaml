@@ -90,10 +90,12 @@
           <CheckBox Name="cbShowIcons" Content="Show icons" Margin="5,0,2.5,0"/>
         </StackPanel>
       </Grid>
-      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden">
         <paz:ZoomBorder Name="zoomBorder" Stretch="None" ZoomSpeed="1.2" 
-                        ClipToBounds="True" Focusable="True"
+                        ClipToBounds="False" Focusable="True"
                         VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                        MinZoomX="0.05"
+                        MinZoomY="0.05"
                         >
           <ItemsControl 
             HorizontalAlignment="Center"

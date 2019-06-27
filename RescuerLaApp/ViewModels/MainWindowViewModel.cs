@@ -46,7 +46,10 @@ namespace RescuerLaApp.ViewModels
             PredictAllCommand = ReactiveCommand.Create(PredictAll);
             OpenFileCommand = ReactiveCommand.Create(OpenFile);
             SaveAllCommand = ReactiveCommand.Create(SaveAll);
+        }
 
+        public void UbdateFramesRepo()
+        {
             this.WhenAnyValue(x => x.SelectedIndex)
                 .Skip(1)
                 .Subscribe(x =>
@@ -173,19 +176,20 @@ namespace RescuerLaApp.ViewModels
                 }
                 var fileNames = Directory.GetFiles(dirName);
                 _frameLoadProgressIndex = 0;
-                Frames = new List<Frame>();
+                Frames.Clear();
+                var loadingFrames = new List<Frame>();
                 foreach (var fileName in fileNames)
                 {
                     var frame = new Frame();
                     frame.OnLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
-                    Frames.Add(frame);
+                    loadingFrames.Add(frame);
                 }
-                
-                
-                Frames = new List<Frame>(Frames);
+                Frames = loadingFrames;
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
+                UbdateFramesRepo();
+                UpdateUi();
             }
             catch (Exception ex)
             {
