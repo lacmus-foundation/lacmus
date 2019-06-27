@@ -20,7 +20,7 @@ namespace RescuerLaApp.Models
 
         public static void MoveTo(double x, double y)
         {
-            _zoomBorder?.PanTo(0.1,0);
+            _zoomBorder?.StartPan(x,y);
         }
 
         public static double GetZoomX()

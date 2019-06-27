@@ -11,7 +11,6 @@ namespace RescuerLaApp.Views
 {
     public sealed class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
-        ZoomBorder z = new ZoomBorder();
         public MainWindow()
         {
             AvaloniaXamlLoader.Load(this);
@@ -25,9 +24,23 @@ namespace RescuerLaApp.Views
 
         private void ZoomBorder_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.R)
+            switch (e.Key)
             {
-                Zoomer.Reset();
+                case Key.R:
+                    Zoomer.Reset();
+                    break;
+                case Key.Up:
+                    Zoomer.MoveTo(0, -0.5);
+                    break;
+                case Key.Down:
+                    Zoomer.MoveTo(0, 0.5);
+                    break;
+                case Key.Left:
+                    Zoomer.MoveTo(-0.5, 0);
+                    break;
+                case Key.Right:
+                    Zoomer.MoveTo(0.5, 0);
+                    break;
             }
         }
     }

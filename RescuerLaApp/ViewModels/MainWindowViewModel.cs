@@ -188,7 +188,7 @@ namespace RescuerLaApp.ViewModels
                 Frames = loadingFrames;
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
-                UbdateFramesRepo();
+                UpdateFramesRepo();
                 UpdateUi();
             }
             catch (Exception ex)
