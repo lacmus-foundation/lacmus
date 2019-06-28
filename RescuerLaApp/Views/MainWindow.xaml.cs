@@ -30,16 +30,16 @@ namespace RescuerLaApp.Views
                     Zoomer.Reset();
                     break;
                 case Key.Up:
-                    Zoomer.MoveTo(0, -0.5);
+                    Zoomer.MoveTo(0, 25);
                     break;
                 case Key.Down:
-                    Zoomer.MoveTo(0, 0.5);
+                    Zoomer.MoveTo(0, -25);
                     break;
                 case Key.Left:
-                    Zoomer.MoveTo(-0.5, 0);
+                    Zoomer.MoveTo(25, 0);
                     break;
                 case Key.Right:
-                    Zoomer.MoveTo(0.5, 0);
+                    Zoomer.MoveTo(-25, 0);
                     break;
             }
         }
