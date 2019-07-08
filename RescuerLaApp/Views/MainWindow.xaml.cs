@@ -1,22 +1,47 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.PanAndZoom;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using RescuerLaApp.ViewModels;
+using ReactiveUI;
+using RescuerLaApp.Models;
 
 namespace RescuerLaApp.Views
 {
-    public class MainWindow : Window
+    public sealed class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
         public MainWindow()
         {
-            InitializeComponent();
+            AvaloniaXamlLoader.Load(this);
+            this.WhenActivated(disposables => { });
 #if DEBUG
             this.AttachDevTools();
 #endif
+            Zoomer.Init(this.Find<ZoomBorder>("zoomBorder"));
+            Zoomer.KeyDown += ZoomBorder_KeyDown;
         }
 
-        private void InitializeComponent()
+        private void ZoomBorder_KeyDown(object sender, KeyEventArgs e)
         {
-            AvaloniaXamlLoader.Load(this);
+            switch (e.Key)
+            {
+                case Key.R:
+                    Zoomer.Reset();
+                    break;
+                case Key.Up:
+                    Zoomer.MoveTo(0, 25);
+                    break;
+                case Key.Down:
+                    Zoomer.MoveTo(0, -25);
+                    break;
+                case Key.Left:
+                    Zoomer.MoveTo(25, 0);
+                    break;
+                case Key.Right:
+                    Zoomer.MoveTo(-25, 0);
+                    break;
+            }
         }
     }
 }

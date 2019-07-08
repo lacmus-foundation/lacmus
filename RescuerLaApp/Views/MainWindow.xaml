@@ -1,12 +1,13 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RescuerLaApp.ViewModels;assembly=RescuerLaApp"
+        xmlns:models="clr-namespace:RescuerLaApp.Models"
+        xmlns:paz="clr-namespace:Avalonia.Controls.PanAndZoom;assembly=Avalonia.Controls.PanAndZoom"
+        UseLayoutRounding="True"
         Icon="resm:RescuerLaApp.Assets.avalonia-logo.ico"
-        Title="RescuerLaApp">
-
-  <Design.DataContext>
-    <vm:MainWindowViewModel/>
-  </Design.DataContext>
+        Title="RescuerLaApp"
+        Width = "800"
+        Height = "600">
 
   <Grid Name="Main">
     <Grid.RowDefinitions>
@@ -19,8 +20,8 @@
     <StackPanel Grid.Row="0">
       <Menu>
         <MenuItem Name="mFile" Header="File">
-          <MenuItem Name="mFileOpen" Header="Open directory..."/>
-          <MenuItem Name="mFilePredict" Header="Predict all"/>
+          <MenuItem Name="mFileOpen" Header="Open directory..." Command="{Binding OpenFileCommand}"/>
+          <MenuItem Name="mFilePredict" Header="Predict all" Command="{Binding SaveAllCommand}"/>
           <MenuItem Name="mFileSave" Header="Save"/>
           <MenuItem Name="mFileShowAll" Header="Show all"/>
           <Separator></Separator>
@@ -28,12 +29,13 @@
         </MenuItem>
         <MenuItem Name="mImage" Header="Image">
           <MenuItem Name="mImagePredict" Header="Predict this"/>
+          <MenuItem Name="mImagePredictAll" Header="Predict all" Command="{Binding PredictAllCommand}"/>
           <Separator></Separator>
-          <MenuItem Name="mImageIncrease" Header="Increase"/>
-          <MenuItem Name="mImageShrink" Header="Shrink"/>
+          <MenuItem Name="mImageIncrease" Header="Increase" Command="{Binding IncreaseCanvasCommand}"/>
+          <MenuItem Name="mImageShrink" Header="Shrink" Command="{Binding ShrinkCanvasCommand}"/>
           <Separator></Separator>
-          <MenuItem Name="mImageNext" Header="Next"/>
-          <MenuItem Name="mImagePrev" Header="Prev"/>
+          <MenuItem Name="mImageNext" Header="Next" Command="{Binding NextImageCommand}"/>
+          <MenuItem Name="mImagePrev" Header="Prev" Command="{Binding PrevImageCommand}"/>
         </MenuItem>
         <MenuItem Name="mHelp" Header="Help">
           <MenuItem Name="mHelpOpen" Header="Open user guide"/>
@@ -43,16 +45,16 @@
       </Menu>
       <ToolTip>
         <StackPanel Orientation="Horizontal">
-          <Button Name="bOpen">Open</Button>
-          <Button Name="bPredict">Predict all</Button>
+          <Button Name="bOpen" Command="{Binding OpenFileCommand}">Open</Button>
+          <Button Name="bPredict" Command="{Binding PredictAllCommand}">Predict all</Button>
           <Separator/>
-          <Button Name="bSave">Save all</Button>
+          <Button Name="bSave" Command="{Binding SaveAllCommand}">Save all</Button>
           <Separator/>
-          <Button Name="bImageIncrease">Increase</Button>
-          <Button Name="bImageShrink">Shrink</Button>
+          <Button Name="bImageIncrease" Command="{Binding IncreaseCanvasCommand}">Increase</Button>
+          <Button Name="bImageShrink" Command="{Binding ShrinkCanvasCommand}">Shrink</Button>
           <Separator/>
-          <Button Name="bImageNext">Next</Button>
-          <Button Name="bImagePrev">Prev</Button>
+          <Button Name="bImagePrev" Command="{Binding PrevImageCommand}">Prev</Button>
+          <Button Name="bImageNext" Command="{Binding NextImageCommand}">Next</Button>
         </StackPanel>
       </ToolTip>
     </StackPanel>
@@ -63,31 +65,63 @@
         <ColumnDefinition/>
       </Grid.ColumnDefinitions>
 
-      <Grid Name="PageView" Grid.Column="0" Grid.Row="0" Background="White">
+      <Grid Name="ImageView" Grid.Column="0" Grid.Row="0" Background="White">
         <Grid.RowDefinitions>
           <RowDefinition/>
           <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
-          <ListBox x:Name="PagesList">
-            <DataTemplate>
+        
+        <ListBox Grid.Column="0" Grid.Row="0" 
+                 x:Name="ImageList" 
+                 Items="{Binding Frames}"
+                 SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+          <ListBox.DataTemplates>
+            <DataTemplate DataType="{x:Type models:Frame}">
               <StackPanel Margin="25,5" Orientation="Vertical">
-                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch"/>
-                <Label VerticalContentAlignment="Center" HorizontalAlignment="Center">1</Label>
+                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
+                <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
               </StackPanel>
             </DataTemplate>
-          </ListBox>
+          </ListBox.DataTemplates>
+        </ListBox>
 
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
           <CheckBox Name="cbShowAll" Content="Show all" Margin="5,0,2.5,0"/>
-          <CheckBox Name="cbSort" Content="Sort by name" Margin="5,0,2.5,0"/>
+          <CheckBox Name="cbShowIcons" Content="Show icons" Margin="5,0,2.5,0"/>
         </StackPanel>
       </Grid>
-      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <Canvas
-            Name="ScannerImage"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-                    />
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden">
+        <paz:ZoomBorder Name="zoomBorder" Stretch="None" ZoomSpeed="1.2" 
+                        ClipToBounds="False" Focusable="True"
+                        VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                        MinZoomX="0.05"
+                        MinZoomY="0.05"
+                        >
+          <ItemsControl 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Items="{Binding BoundBoxes}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <Canvas
+                  Name="ShowedImage"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  Background="{Binding ImageBrush}"
+                  Height="{Binding CanvasHeight, Mode=TwoWay}"
+                  Width="{Binding CanvasWidth, Mode=TwoWay}"
+                />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type models:BoundBox}">
+                <Polygon
+                  Points="{Binding Points}"
+                  Stroke="Blue" StrokeThickness="2" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </paz:ZoomBorder>
       </ScrollViewer>
     </Grid>
     <!-- Grid 2 -->
