@@ -23,7 +23,9 @@ See [more examples](docs/work-demo.md).
 
 ## Training data
 
-You can download `Liza Alert Drone Dataset` [here](https://yadi.sk/d/4Hz_1qpiNbHhpQ)
+You can download `Liza Alert Drone Dataset` 
+- [LADDv1](https://yadi.sk/d/4Hz_1qpiNbHhpQ)
+- [LADDv2](https://yadi.sk/d/IBoACy3LOG8Cig)
 
 ## Usage
 
