@@ -46,7 +46,10 @@ namespace RescuerLaApp.ViewModels
             PredictAllCommand = ReactiveCommand.Create(PredictAll);
             OpenFileCommand = ReactiveCommand.Create(OpenFile);
             SaveAllCommand = ReactiveCommand.Create(SaveAll);
+        }
 
+        public void UpdateFramesRepo()
+        {
             this.WhenAnyValue(x => x.SelectedIndex)
                 .Skip(1)
                 .Subscribe(x =>
@@ -173,19 +176,35 @@ namespace RescuerLaApp.ViewModels
                 }
                 var fileNames = Directory.GetFiles(dirName);
                 _frameLoadProgressIndex = 0;
-                Frames = new List<Frame>();
+                Frames.Clear();
+                var loadingFrames = new List<Frame>();
                 foreach (var fileName in fileNames)
                 {
+                    // TODO: Проверка IsImage вне зависимости от расширений.
+                    if(!Path.HasExtension(fileName))
+                        continue;
+                    if (Path.GetExtension(fileName).ToLower() != ".jpg" &&
+                        Path.GetExtension(fileName).ToLower() != ".jpeg" &&
+                        Path.GetExtension(fileName).ToLower() != ".png" &&
+                        Path.GetExtension(fileName).ToLower() != ".bmp")
+                        continue;
+                    
                     var frame = new Frame();
                     frame.OnLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
-                    Frames.Add(frame);
+                    loadingFrames.Add(frame);
+                }
+                if(loadingFrames.Count == 0)
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
                 }
                 
-                
-                Frames = new List<Frame>(Frames);
+                Frames = loadingFrames;
                 if (SelectedIndex < 0)
                     SelectedIndex = 0;
+                UpdateFramesRepo();
+                UpdateUi();
             }
             catch (Exception ex)
             {
