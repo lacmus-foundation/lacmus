@@ -5,7 +5,7 @@ namespace API_Identity.Models
 {
     public class Repository <T> where T : IElement
     {
-        private readonly List<T> _elements;
+        protected readonly List<T> _elements;
 
         public Repository()
         {

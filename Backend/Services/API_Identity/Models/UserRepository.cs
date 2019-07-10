@@ -15,5 +15,10 @@ namespace API_Identity.Models
             
             base.Add(element);
         }
+
+        public User GetByEmail(string email)
+        {
+            return _elements.Find(x => x.Email == email);
+        }
     }
 }
