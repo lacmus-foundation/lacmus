@@ -52,7 +52,9 @@ namespace API_Identity.Controllers
         [Route("login")]
         [AllowAnonymous]
         [HttpPost]
-        public ActionResult Login([FromBody] LoginViewModel model, [FromServices] IJwtSigningEncodingKey signingEncodingKey)
+        public ActionResult Login([FromBody] LoginViewModel model, 
+            [FromServices] IJwtSigningEncodingKey signingEncodingKey,
+            [FromServices] IJwtEncryptingEncodingKey encryptingEncodingKey)
         {
             var user = _repository.GetByEmail(model.Email);
             if (user == null || !_passwordHasher.VerifyIdentityV3Hash(model.Password, user.PasswordHash))
@@ -64,7 +66,7 @@ namespace API_Identity.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
             
-            var jwtToken = _tokenService.GenerateAccessToken(usersClaims, signingEncodingKey);
+            var jwtToken = _tokenService.GenerateAccessToken(usersClaims, signingEncodingKey, encryptingEncodingKey);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             return Ok(

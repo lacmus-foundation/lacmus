@@ -30,6 +30,10 @@ namespace API_Identity
         {
             var signingKey = new SigningSymmetricKey(Configuration["Jwt:SigningKey"]);
             services.AddSingleton<IJwtSigningEncodingKey>(signingKey);
+            
+            var encryptionEncodingKey = new EncryptingSymmetricKey(Configuration["Jwt:EncodingKey"]);
+            services.AddSingleton<IJwtEncryptingEncodingKey>(encryptionEncodingKey);
+            
             services.AddTransient<ITokenService, TokenService>();
             services.AddTransient<IPasswordHasher, PasswordHasher>();
             
@@ -37,6 +41,7 @@ namespace API_Identity
             
             const string jwtSchemeName = "JwtBearer";
             var signingDecodingKey = (IJwtSigningDecodingKey)signingKey;
+            var encryptingDecodingKey = (IJwtEncryptingDecodingKey)encryptionEncodingKey;
             services
                 .AddAuthentication(options => {
                     options.DefaultAuthenticateScheme = jwtSchemeName;
@@ -46,6 +51,7 @@ namespace API_Identity
                     jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters {
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = signingDecodingKey.GetKey(),
+                        TokenDecryptionKey = encryptingDecodingKey.GetKey(),
  
                         ValidateIssuer = true,
                         ValidateAudience = true,
@@ -73,6 +79,11 @@ namespace API_Identity
             app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc();
+            
+#if DEBUG
+            /* show security key size in exceptions */ 
+            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+#endif
         }
     }
 }

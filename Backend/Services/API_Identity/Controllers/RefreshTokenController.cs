@@ -25,12 +25,14 @@ namespace API_Identity.Controllers
         
         // GET
         [HttpPost]
-        public IActionResult RefreshToken([FromBody] RefreshTokenViewModel model, [FromServices] IJwtSigningEncodingKey signingEncodingKey)
+        public IActionResult RefreshToken([FromBody] RefreshTokenViewModel model,
+            [FromServices] IJwtSigningEncodingKey signingEncodingKey,
+            [FromServices] IJwtEncryptingEncodingKey encryptingEncodingKey)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(model.Token);
             var username = principal.Identity.Name;
 
-            var newJwtToken = _tokenService.GenerateAccessToken(principal.Claims, signingEncodingKey);
+            var newJwtToken = _tokenService.GenerateAccessToken(principal.Claims, signingEncodingKey, encryptingEncodingKey);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
 
             return Ok(
