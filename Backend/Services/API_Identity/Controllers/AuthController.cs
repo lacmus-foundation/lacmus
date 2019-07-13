@@ -17,12 +17,16 @@ namespace API_Identity.Controllers
     {
         private static UserRepository _repository;
         private readonly IConfiguration _configuration;
+        private readonly IPasswordHasher _passwordHasher;
+        private readonly ITokenService _tokenService;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, IPasswordHasher passwordHasher, ITokenService tokenService)
         {
             if(_repository == null)
                 _repository = new UserRepository();
             _configuration = configuration;
+            _passwordHasher = passwordHasher;
+            _tokenService = tokenService;
         }
 
         [Route("register")]
@@ -30,13 +34,16 @@ namespace API_Identity.Controllers
         [HttpPost]
         public ActionResult InsertUser([FromBody] RegisterViewModel model)
         {
+            if (_repository.GetByEmail(model.Email) != null)
+                return BadRequest();
+            
             var user = new User()
             {
                 Email = model.Email,
                 Phone = model.Phone,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                PasswordHash = Crypto.GetMd5Hash(model.Password)
+                PasswordHash = _passwordHasher.GenerateIdentityV3Hash(model.Password)
             };
             _repository.Add(user);
             return Ok(user);
@@ -48,31 +55,23 @@ namespace API_Identity.Controllers
         public ActionResult Login([FromBody] LoginViewModel model, [FromServices] IJwtSigningEncodingKey signingEncodingKey)
         {
             var user = _repository.GetByEmail(model.Email);
-            if (user == null || !Crypto.VerifyMd5Hash(model.Password, user.PasswordHash))
+            if (user == null || !_passwordHasher.VerifyIdentityV3Hash(model.Password, user.PasswordHash))
                 return Unauthorized();
 
-            var claims = new Claim[]
+            var usersClaims = new [] 
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Email)
+                new Claim(ClaimTypes.Name, user.Email),                
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
             
-            var expiryInMinutes = Convert.ToInt32(_configuration["Jwt:ExpiryInMinutes"]);
-            
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Site"],
-                audience: _configuration["Jwt:Site"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expiryInMinutes),
-                signingCredentials: new SigningCredentials(
-                    signingEncodingKey.GetKey(),
-                    signingEncodingKey.SigningAlgorithm)
-            );
+            var jwtToken = _tokenService.GenerateAccessToken(usersClaims, signingEncodingKey);
+            var refreshToken = _tokenService.GenerateRefreshToken();
 
             return Ok(
                 new
                 {
-                    token = new JwtSecurityTokenHandler().WriteToken(token),
-                    expiration = token.ValidTo
+                    token = jwtToken,
+                    refreshToken = refreshToken
                 });
         }
     }

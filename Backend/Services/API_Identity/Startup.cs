@@ -30,6 +30,8 @@ namespace API_Identity
         {
             var signingKey = new SigningSymmetricKey(Configuration["Jwt:SigningKey"]);
             services.AddSingleton<IJwtSigningEncodingKey>(signingKey);
+            services.AddTransient<ITokenService, TokenService>();
+            services.AddTransient<IPasswordHasher, PasswordHasher>();
             
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             
