@@ -105,14 +105,17 @@ namespace LaddGenerator
             Ymax = ParseInt(Ymax);
         }
 
-        private string ParseInt(string str)
+        private string ParseInt(string str, int maxVal, int minVal = 0)
         {
-            if (str.StartsWith("-"))
-                return $"{0}";
             str = str.Split('.').First();
             if (int.TryParse(str, out var r))
             {
-                 return $"{r}";
+                if(r < minVal)
+                    r = minVal;
+                else if (r > maxVal)
+                    r = maxVal;
+                
+                return $"{r}";
             }
             throw new Exception();
         }

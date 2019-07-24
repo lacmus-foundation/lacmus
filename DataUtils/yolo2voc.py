@@ -5,7 +5,7 @@ from PIL import Image
 import argparse
 
 CLASS_MAPPING = {
-    '0': 'Pedestrean'
+    '0': 'Pedestrian'
     # Add remaining classes here.
 }
 
