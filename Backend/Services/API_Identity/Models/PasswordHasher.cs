@@ -7,7 +7,7 @@ namespace API_Identity.Models
 {
     public class PasswordHasher : IPasswordHasher
     {
-         public string GenerateIdentityV3Hash(string password, KeyDerivationPrf prf = KeyDerivationPrf.HMACSHA256, int iterationCount = 10000, int saltSize = 16)
+        public string GenerateIdentityV3Hash(string password, KeyDerivationPrf prf = KeyDerivationPrf.HMACSHA256, int iterationCount = 10000, int saltSize = 16)
         {
             using (var rng = RandomNumberGenerator.Create()){
                 var salt = new byte[saltSize];
