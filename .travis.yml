@@ -6,7 +6,7 @@ services:
 env:
   - DOCKER_IMAGE=rescuer/rescuer-la DOCKER_TAG=travis-$TRAVIS_BUILD_NUMBER
 
-before_install:
+script:
   - docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
 
 deploy:
