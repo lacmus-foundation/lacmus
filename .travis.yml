@@ -1,10 +1,14 @@
 language: minimal
 
+env:
+  - TARGET=build
+  - TARGET=build-gpu
+
 services:
   - docker
 
 script:
-  - docker build -t $TRAVIS_REPO_SLUG:travis-$TRAVIS_BUILD_NUMBER .
+  - make RLA_VERSION=travis-${TRAVIS_COMMIT:0:7} $TARGET
 
 deploy:
   provider: script
