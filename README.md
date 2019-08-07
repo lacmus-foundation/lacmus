@@ -1,6 +1,4 @@
-# The repository has moved to https://github.com/lizaalert/lacmus
-
-# rescuer-la
+# lacmus
 
 ![logo](docs/imgs/la-logo.jpg)
 
