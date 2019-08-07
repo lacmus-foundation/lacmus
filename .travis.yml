@@ -1,0 +1,13 @@
+language: minimal
+
+services:
+  - docker
+
+script:
+  - docker build -t rescuer/rescuer-la:travis-$TRAVIS_BUILD_NUMBER .
+
+deploy:
+  provider: script
+  script: bash ci/docker-push.sh
+  on:
+    all_branches: true
