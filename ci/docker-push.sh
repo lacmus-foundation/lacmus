@@ -19,7 +19,9 @@ if [ -n "$TRAVIS_TAG" ]; then
     docker push $IMAGE:$TRAVIS_TAG${TARGET#build}
 fi
 
-if [ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_REPO_SLUG" == "$IMAGE" && "$TRAVIS_BRANCH" == "master" ]; then
+if [[ "$TRAVIS_PULL_REQUEST" == "false" && \
+      "$TRAVIS_REPO_SLUG" == "$IMAGE" && \
+      "$TRAVIS_BRANCH" == "master" ]]; then
     docker tag $IMAGE:$TAG $IMAGE:latest
     docker push $IMAGE:latest
 fi
