@@ -10,12 +10,12 @@ build-all: build build-gpu
 # Build docker image. Application using GPU (nvidia docker needed)
 .PHONY: build-gpu
 build-gpu:
-	docker build --file Dockerfile.gpu -t rescuer_la:$(RLA_VERSION)-gpu .
+	docker build --file Dockerfile.gpu -t lizaalert/lacmus:$(RLA_VERSION)-gpu .
 
 # Build docker image. Application using CPU
 .PHONY: build
 build:
-	docker build -t rescuer_la:$(RLA_VERSION) .
+	docker build -t lizaalert/lacmus:$(RLA_VERSION) .
 
 # Build and run docker image. Application using CPU
 .PHONY: run
@@ -29,7 +29,7 @@ run: build
 	--volume="/etc/passwd:/etc/passwd:ro" \
 	--volume="/etc/shadow:/etc/shadow:ro" \
 	--volume="/etc/sudoers.d:/etc/sudoers.d:ro" \
-	rescuer_la:$(RLA_VERSION)
+	lizaalert/lacmus:$(RLA_VERSION)
 
 # Build and run docker image. Application using GPU
 run-gpu: build-gpu
@@ -43,5 +43,5 @@ run-gpu: build-gpu
 	--volume="/etc/passwd:/etc/passwd:ro" \
 	--volume="/etc/shadow:/etc/shadow:ro" \
 	--volume="/etc/sudoers.d:/etc/sudoers.d:ro" \
-	rescuer_la:$(RLA_VERSION)-gpu
+	lizaalert/lacmus:$(RLA_VERSION)-gpu
 
