@@ -34,4 +34,4 @@ Read this [train documentation](docs/train-usage.md) to learn how to train the m
 
 ## Pretrained models
 
-The models are avalable [here](https://github.com/gosha20777/rescuer-la/releases)
+The models are avalable [here](https://github.com/lizaalert/lacmus/releases)

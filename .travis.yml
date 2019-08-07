@@ -4,7 +4,7 @@ services:
   - docker
 
 script:
-  - docker build -t rescuer/rescuer-la:travis-$TRAVIS_BUILD_NUMBER .
+  - docker build -t $TRAVIS_REPO_SLUG:travis-$TRAVIS_BUILD_NUMBER .
 
 deploy:
   provider: script
