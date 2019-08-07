@@ -1,4 +1,7 @@
+# The repository has moved to https://github.com/lizaalert/lacmus
+
 # rescuer-la
+
 ![logo](docs/imgs/la-logo.jpg)
 
 The program for searching through photos from the air of lost people in the forest using Retina Net neural nwtwork.
