@@ -7,13 +7,13 @@ Lacmus is a cross-platform application that helps to find people who are lost in
 
 ### Conventions
 UAV - unmanned aerial vehicle;  
-
+SRS - software requirements specification
 
 
 ## 2. Scope
 #### 2.1 Software product name - Lacmus
 
-#### 2.2 Explaining what the software product(s) will do  
+#### 2.2 Explaining what the Lacmus will do  
 
 1. The operator determines the area of searching missing human and starts the UAV according to the prepared route.
 
@@ -24,11 +24,10 @@ UAV - unmanned aerial vehicle;
 4. In case of human detection, Lacmus gives coordinates of the image.
 
 
-#### 2.3 Describing the application of the software being specified, including relevant benefits, objectives, and
-goals  
+#### 2.3 Describing the application of the software being specified, including relevant benefits, objectives, and goals  
 
-Ближайшим аналогом является ПО, обрабатывающее снимки с БПЛА, оснащенных тепловизорами. Недостаток таких решений - высокая стоимость оборудования и отсутствие свободного ПО для анализа снимков.  
-Основными преимуществами RescuerLaApp является свободное использование и возможность использования совместно с недорогими моделями БПЛА, оснащенных камерами, снимающими в видимом диапазоне. Это позволит использовать RescuerLaApp в некоммерческом проекте Liza Alert.
+There is software that processes images from UAVs equipped with thermal imagers. The disadvantage of such solutions is the high cost of equipment and the lack of free SOFTWARE for image analysis.  
+The relevant benefits of Lacmus is the free usage and the ability to use in conjunction with low-cost models of UAVs equipped with cameras that shoot in the visible range. This allows to achive main goal of Lacmus - finding people who are lost by volunteers of the non-profit project Liza Alert.
 
 #### 2.4 Higher-level specifications 
 Not exists.
