@@ -13,7 +13,8 @@ namespace RescuerLaApp.Models
         private readonly string _pythonExecName;
         private readonly string _fileNameParameter;
         private readonly RestApiClient _client;
-        private MlSharpPython _mlSharpPython;
+        private Docker _docker;
+        private string _id = "";
         
         
         public NeuroModel()
@@ -23,32 +24,41 @@ namespace RescuerLaApp.Models
             _pythonExecName = "/home/gosha20777/anaconda3/bin/python";
             #endif
             var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var modelName = "resnet50_liza_alert_v1_interface.h5";
+            var modelName = "resnet50_liza_alert_v3_interface.h5";
             var modelPatch = $"{appPath}/python/snapshots/{modelName}";
             _fileNameParameter = $"{appPath}/python/inference.py --model {modelPatch}";
             
             _client = new RestApiClient("http://127.0.0.1:5000/");
+            _docker = new Docker();
         }
 
-        public async Task<bool> Load()
+        public async Task<bool> Run()
         {
+            Console.WriteLine("Checking reina-net service...");
             var status = await _client.GetStatusAsync();
             if (status != null && status.Contains("server is running"))
             {
+                Console.WriteLine("Reina-net is ready!");
                 return true;
             }
+            Console.WriteLine("Retina-net is not running: trying to run...");
+
+            await Load();
             
-            _mlSharpPython = new MlSharpPython(_pythonExecName);
-            if (await Task.Run(() => _mlSharpPython.Run(_fileNameParameter)))
+            
+            if (await _docker.Run(_id))
             {
+                Console.WriteLine("Container runs. Loading retina-net model...");
                 var startTime = DateTime.Now;
-                TimeSpan waitingTime = new TimeSpan(0, 0, 0, 2);
+                TimeSpan waitingTime = new TimeSpan(0, 0, 10, 0);
                 while (DateTime.Now - startTime < waitingTime)
                 {
-                    Thread.Sleep(100);
+                    // Provide a 100ms startup delay
+                    await Task.Delay(TimeSpan.FromMilliseconds(100));
                     status = await _client.GetStatusAsync();
                     if (status != null && status.Contains("server is running"))
                     {
+                        Console.WriteLine("Reina-net is ready!");
                         return true;
                     }   
                 }
@@ -95,12 +105,84 @@ namespace RescuerLaApp.Models
             return list;
         }
 
+        public async Task Stop()
+        {
+            if (!string.IsNullOrWhiteSpace(_id))
+            {
+                Console.WriteLine($"stopping retina-net... {_id}");
+                await _docker.Stop(_id);
+            }
+                
+        }
+
+        public async Task UpdateModel()
+        {   
+            Console.WriteLine("updating retina-net...");
+            var tags = await _docker.GetTags();
+            var maxTag = 1;
+            var curTag = await GetCurrentTag();
+            foreach (var t in tags)
+            {
+                if (int.TryParse(t, out var tag))
+                    maxTag = Math.Max(maxTag, tag);
+            }
+
+            if (maxTag <= curTag)
+            {
+                Console.WriteLine($"everything is up to date: your version v{curTag} last version v{maxTag}");
+                return;
+            }
+            
+            Console.WriteLine($"find new retina-net version: your version v{curTag} last version v{maxTag}");
+            Console.WriteLine("downloading new version...");
+            await _docker.Initialize(tag: maxTag.ToString());
+            Console.WriteLine("installing new version...");
+            _id = await _docker.CreateContainer(tag: maxTag.ToString());
+            Console.WriteLine("removing old version...");
+            await _docker.Remove(tag: curTag.ToString());
+            Console.WriteLine($"done! your version v{maxTag}");
+        }
+
+        public async Task<bool> CanUpdate()
+        {
+            var tags = await _docker.GetTags();
+            var maxTag = 1;
+            foreach (var t in tags)
+            {
+                if (int.TryParse(t, out var tag))
+                   maxTag = Math.Max(maxTag, tag);
+            }
+
+            return maxTag > await GetCurrentTag();
+        }
+
+        private async Task<int> GetCurrentTag()
+        {
+            var tags = await _docker.GetInstalledVersions();
+            var maxTag = 1;
+            foreach (var t in tags)
+            {
+                if (int.TryParse(t, out var tag))
+                    maxTag = Math.Max(maxTag, tag);
+            }
+            return maxTag;
+        }
+
+        public async Task Load()
+        {
+            var tag = await GetCurrentTag();
+            Console.WriteLine($"loading retina-net v{tag}...");
+            await _docker.Initialize(tag: tag.ToString());
+            Console.WriteLine($"installing retina-net v{tag}...");
+            _id = await _docker.CreateContainer(tag: tag.ToString());
+            Console.WriteLine("done!");
+        }
+
         public void Dispose()
         {
             try
             {
-                _mlSharpPython.Stop();
-                _client.Get("exit");
+                _docker.Dispose();
             }
             catch
             {
