@@ -27,6 +27,10 @@
           <Separator></Separator>
           <MenuItem Name="mFileExit" Header="Exit"/>
         </MenuItem>
+        <MenuItem Name="mModel" Header="Model">
+          <MenuItem Name="mModelLoad" Header="Load model..." Command="{Binding LoadModelCommand}"/>
+          <MenuItem Name="mModelUpdate" Header="Update model..." Command="{Binding UpdateModelCommand}"/>
+        </MenuItem>
         <MenuItem Name="mImage" Header="Image">
           <MenuItem Name="mImagePredict" Header="Predict this"/>
           <MenuItem Name="mImagePredictAll" Header="Predict all" Command="{Binding PredictAllCommand}"/>

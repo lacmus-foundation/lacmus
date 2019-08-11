@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
@@ -46,6 +47,8 @@ namespace RescuerLaApp.ViewModels
             PredictAllCommand = ReactiveCommand.Create(PredictAll);
             OpenFileCommand = ReactiveCommand.Create(OpenFile);
             SaveAllCommand = ReactiveCommand.Create(SaveAll);
+            LoadModelCommand = ReactiveCommand.Create(LoadModel);
+            UpdateModelCommand = ReactiveCommand.Create(UpdateModel);
         }
 
         public void UpdateFramesRepo()
@@ -94,7 +97,53 @@ namespace RescuerLaApp.ViewModels
         
         public ReactiveCommand<Unit, Unit> SaveAllCommand { get; }
         
+        public ReactiveCommand<Unit, Unit> LoadModelCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; }
+
         #endregion
+
+        private async void LoadModel()
+        {
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | loading model..."
+            };
+            
+            if (_model == null)
+            {
+                _model = new NeuroModel();
+            }
+
+            await _model.Load();
+            
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Ready
+            };
+        }
+        
+        private async void UpdateModel()
+        {
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Working, 
+                StringStatus = $"Working | updating model..."
+            };
+            
+            if (_model == null)
+            {
+                _model = new NeuroModel();
+            }
+            
+            await _model.UpdateModel();
+            
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Ready
+            };
+        }
 
         private async void PredictAll()
         {
@@ -109,7 +158,8 @@ namespace RescuerLaApp.ViewModels
             {
                 _model = new NeuroModel();
             }
-            var isLoaded = await _model.Load();
+
+            var isLoaded = await _model.Run();
             if (!isLoaded)
             {
                 Status = new AppStatusInfo()
@@ -146,6 +196,8 @@ namespace RescuerLaApp.ViewModels
                     };
                 }
             }
+
+            await _model.Stop();
             UpdateUi();
         }
         
