@@ -90,8 +90,8 @@
         </ListBox>
 
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
-          <CheckBox Name="cbShowAll" Content="Show all" Margin="5,0,2.5,0"/>
-          <CheckBox Name="cbShowIcons" Content="Show icons" Margin="5,0,2.5,0"/>
+          <CheckBox Name="cbShowPedestrians" Content="Show pedestrians" Margin="5,0,2.5,0"
+                    IsChecked="{Binding IsShowPedestrians}" Command="{Binding ShowPerestriansCommand}"/>
         </StackPanel>
       </Grid>
       <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden">

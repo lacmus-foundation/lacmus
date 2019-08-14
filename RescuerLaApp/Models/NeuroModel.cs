@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using  Newtonsoft.Json;
@@ -162,9 +163,10 @@ namespace RescuerLaApp.Models
             var maxTag = 1;
             foreach (var t in tags)
             {
-                if (int.TryParse(t, out var tag))
+                if (int.TryParse(t.Split(':').Last(), out var tag))
                     maxTag = Math.Max(maxTag, tag);
             }
+            Console.WriteLine(maxTag);
             return maxTag;
         }
 
