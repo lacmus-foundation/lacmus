@@ -18,6 +18,7 @@ namespace RescuerLaApp.ViewModels
     {
         private int _frameLoadProgressIndex;
         private NeuroModel _model = null;
+        private List<Frame> _frames = new List<Frame>();
         
         public MainWindowViewModel()
         {
@@ -34,6 +35,10 @@ namespace RescuerLaApp.ViewModels
             var canGoBack = this
                 .WhenAnyValue(x => x.SelectedIndex)
                 .Select(index => index > 0);
+
+            var canExecute = this
+                .WhenAnyValue(x => x.Status)
+                .Select(status => status.Status != Enums.Status.Working);
             
             // The bound button will stay disabled, when
             // there are no frames before the current one.
@@ -44,11 +49,12 @@ namespace RescuerLaApp.ViewModels
             // Add here newer commands
             IncreaseCanvasCommand = ReactiveCommand.Create(IncreaseCanvas);
             ShrinkCanvasCommand = ReactiveCommand.Create(ShrinkCanvas);
-            PredictAllCommand = ReactiveCommand.Create(PredictAll);
-            OpenFileCommand = ReactiveCommand.Create(OpenFile);
-            SaveAllCommand = ReactiveCommand.Create(SaveAll);
-            LoadModelCommand = ReactiveCommand.Create(LoadModel);
-            UpdateModelCommand = ReactiveCommand.Create(UpdateModel);
+            PredictAllCommand = ReactiveCommand.Create(PredictAll, canExecute);
+            OpenFileCommand = ReactiveCommand.Create(OpenFile, canExecute);
+            SaveAllCommand = ReactiveCommand.Create(SaveAll, canExecute);
+            LoadModelCommand = ReactiveCommand.Create(LoadModel, canExecute);
+            UpdateModelCommand = ReactiveCommand.Create(UpdateModel, canExecute);
+            ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
         }
 
         public void UpdateFramesRepo()
@@ -76,12 +82,14 @@ namespace RescuerLaApp.ViewModels
         [Reactive] public double CanvasHeight { get; set; } = 500;
         
         [Reactive] public int SelectedIndex { get; set; } = 0;
-        
+
         [Reactive] public List<Frame> Frames { get; set; } = new List<Frame>();
         
         [Reactive] public AppStatusInfo Status { get; set; } = new AppStatusInfo { Status = Enums.Status.Ready };
         
         [Reactive] public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
+
+        [Reactive] public bool IsShowPedestrians { get; set; } = false;
         
         public ReactiveCommand<Unit, Unit> PredictAllCommand { get; }
         
@@ -100,8 +108,22 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> LoadModelCommand { get; }
         
         public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> ShowPerestriansCommand { get; }
 
         #endregion
+
+        private void ShowPedestrians()
+        {
+            if (IsShowPedestrians)
+            {
+                Frames = Frames.FindAll(x => x.IsVisible);
+            }
+            else
+            {
+                Frames = new List<Frame>(_frames);
+            }
+        }
 
         private async void LoadModel()
         {
@@ -195,8 +217,11 @@ namespace RescuerLaApp.ViewModels
                         Status = Enums.Status.Ready
                     };
                 }
-            }
 
+                if (frame.Rectangles.Count > 0)
+                    frame.IsVisible = true;
+            }
+            _frames = new List<Frame>(Frames);
             await _model.Stop();
             UpdateUi();
         }
@@ -257,6 +282,7 @@ namespace RescuerLaApp.ViewModels
                     SelectedIndex = 0;
                 UpdateFramesRepo();
                 UpdateUi();
+                _frames = new List<Frame>(Frames);
             }
             catch (Exception ex)
             {
