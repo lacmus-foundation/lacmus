@@ -50,6 +50,8 @@ namespace RescuerLaApp.Models
         }
         public int Width { get; private set; }
         public int Height { get; private set; }
+
+        public bool IsVisible { get; set; } = false;
         
         public delegate void MethodContainer();
 
