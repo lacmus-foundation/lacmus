@@ -39,7 +39,7 @@ namespace RescuerLaApp.Models
             try
             {
                 var progressDictionary = new Dictionary<string, string>();
-                var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = imageName});
+                var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = $"{imageName}:{tag}"});
                 if (images.Count > 0)
                 {
                     Console.WriteLine($"such image already exists: {images.First().ID}");
