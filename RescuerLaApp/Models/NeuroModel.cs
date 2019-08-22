@@ -119,65 +119,66 @@ namespace RescuerLaApp.Models
         public async Task UpdateModel()
         {   
             Console.WriteLine("updating retina-net...");
-            var tags = await _docker.GetTags();
-            var maxTag = 1;
-            var curTag = await GetCurrentTag();
-            foreach (var t in tags)
-            {
-                if (int.TryParse(t, out var tag))
-                    maxTag = Math.Max(maxTag, tag);
-            }
+            var loadTag = await GetLoadCurrentTag();
+            var curTag = await GetInstalledCurrentTag();
 
-            if (maxTag <= curTag)
+            if (loadTag <= curTag)
             {
-                Console.WriteLine($"everything is up to date: your version v{curTag} last version v{maxTag}");
+                Console.WriteLine($"everything is up to date: your version v{curTag} last version v{loadTag}");
                 return;
             }
             
-            Console.WriteLine($"find new retina-net version: your version v{curTag} last version v{maxTag}");
+            Console.WriteLine($"find new retina-net version: your version v{curTag} last version v{loadTag}");
             Console.WriteLine("downloading new version...");
-            await _docker.Initialize(tag: maxTag.ToString());
+            await _docker.Initialize(tag: loadTag.ToString());
             Console.WriteLine("installing new version...");
-            _id = await _docker.CreateContainer(tag: maxTag.ToString());
+            _id = await _docker.CreateContainer(tag: loadTag.ToString());
             Console.WriteLine("removing old version...");
             await _docker.Remove(tag: curTag.ToString());
-            Console.WriteLine($"done! your version v{maxTag}");
+            Console.WriteLine($"done! your version v{loadTag}");
         }
 
         public async Task<bool> CanUpdate()
         {
-            var tags = await _docker.GetTags();
-            var maxTag = 1;
-            foreach (var t in tags)
-            {
-                if (int.TryParse(t, out var tag))
-                   maxTag = Math.Max(maxTag, tag);
-            }
-
-            return maxTag > await GetCurrentTag();
+            return await GetLoadCurrentTag() > await GetInstalledCurrentTag();
         }
-
-        private async Task<int> GetCurrentTag()
-        {
-            var tags = await _docker.GetInstalledVersions();
-            var maxTag = 1;
-            foreach (var t in tags)
-            {
-                if (int.TryParse(t.Split(':').Last(), out var tag))
-                    maxTag = Math.Max(maxTag, tag);
-            }
-            Console.WriteLine(maxTag);
-            return maxTag;
-        }
-
+        
         public async Task Load()
         {
-            var tag = await GetCurrentTag();
+            var tag = await GetInstalledCurrentTag();
+            if (tag < 0)
+                tag = await GetLoadCurrentTag();
             Console.WriteLine($"loading retina-net v{tag}...");
             await _docker.Initialize(tag: tag.ToString());
             Console.WriteLine($"installing retina-net v{tag}...");
             _id = await _docker.CreateContainer(tag: tag.ToString());
             Console.WriteLine("done!");
+        }
+
+        private async Task<int> GetInstalledCurrentTag()
+        {
+            var maxTag = 1;
+            var tags = await _docker.GetInstalledVersions();
+            if (tags.Count < 1)
+                return -1;
+            foreach (var t in tags)
+            {
+                if (int.TryParse(t.Split(':').Last(), out var tag))
+                    maxTag = Math.Max(maxTag, tag);
+            }
+            return maxTag;
+        }
+
+        private async Task<int> GetLoadCurrentTag()
+        {
+            var tags = await _docker.GetTags();
+            var maxTag = 1;
+            foreach (var t in tags)
+            {
+                if (int.TryParse(t, out var tag))
+                    maxTag = Math.Max(maxTag, tag);
+            }
+            return maxTag;
         }
 
         public void Dispose()
