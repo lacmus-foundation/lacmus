@@ -64,7 +64,7 @@ RUN cd RescuerLaApp \
 RUN cp -r /app/install/RetinaNet /app/python
 
 RUN cd /app/python/snapshots \
-    && wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/gosha20777/rescuer-la/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
+    && wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/lizaalert/lacmus/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
 
 RUN apt-get install -y libgtk-3-dev python3-tk
 
