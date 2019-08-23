@@ -5,7 +5,7 @@ from PIL import Image
 import argparse
 
 CLASS_MAPPING = {
-    '0': 'Pedestrean'
+    '0': 'Pedestrian'
     # Add remaining classes here.
 }
 
@@ -64,10 +64,10 @@ def read_file(filename, src_dir, dest_dir):
             bbox_height = float(data[4]) * h
             center_x = float(data[1]) * w
             center_y = float(data[2]) * h
-            voc.append(center_x - (bbox_width / 2))
-            voc.append(center_y - (bbox_height / 2))
-            voc.append(center_x + (bbox_width / 2))
-            voc.append(center_y + (bbox_height / 2))
+            voc.append(int(center_x - (bbox_width / 2)))
+            voc.append(int(center_y - (bbox_height / 2)))
+            voc.append(int(center_x + (bbox_width / 2)))
+            voc.append(int(center_y + (bbox_height / 2)))
             voc_labels.append(voc)
         create_file(file_prefix, w, h, voc_labels, dest_dir)
     print("Processing complete for file: {}".format(filename))

@@ -1,0 +1,17 @@
+language: minimal
+
+env:
+  - TARGET=build
+  - TARGET=build-gpu
+
+services:
+  - docker
+
+script:
+  - make RLA_VERSION=travis-${TRAVIS_COMMIT:0:7} $TARGET
+
+deploy:
+  provider: script
+  script: bash ci/docker-push.sh
+  on:
+    all_branches: true
