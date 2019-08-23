@@ -37,7 +37,7 @@ if [[ "$TRAVIS_PULL_REQUEST" == "false" && \
 fi
 
 if [[ "$BUILDKITE_PULL_REQUEST" == "false" && \
-      "$BUILDKITE_REPO" == "git@github.com:$IMAGE.git" && \
+      "$BUILDKITE_REPO" == "https://github.com/$IMAGE.git" && \
       "$BUILDKITE_BRANCH" == "master" ]]; then
     docker tag $IMAGE:$TAG $IMAGE:latest${TARGET#build}
     docker push $IMAGE:latest${TARGET#build}
