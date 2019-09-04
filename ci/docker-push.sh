@@ -16,7 +16,10 @@ elif [[ -n "$BUILDKITE" ]]; then
     TAG=bk-${BUILDKITE_COMMIT:0:7}${TARGET#build}
 fi
 
-docker login -u $SECRET_DOCKER_LOGIN -p $SECRET_DOCKER_PASSWORD
+if [[ -n "$TRAVIS" ]]; then
+    docker login -u $SECRET_DOCKER_LOGIN -p $SECRET_DOCKER_PASSWORD
+fi
+
 docker push $IMAGE:$TAG
 
 if [ -n "$TRAVIS_TAG" ]; then
