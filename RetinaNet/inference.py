@@ -16,6 +16,7 @@ import sys
 import os
 import numpy as np
 import time
+import json
 from flask import Flask, jsonify, request, abort
 
 app = Flask(__name__)
@@ -24,15 +25,11 @@ app = Flask(__name__)
 def index():
     return jsonify({'status': "server is running"}), 200
 
-@app.route('/exit')
-def stop():
-    exit()
 
 @app.route('/image', methods=['POST'])
 def predict_image():
     if not request.json or not 'data' in request.json:
         abort(400)
-    
     
     caption = run_detection_image(model, labels_to_names, request.json['data'])
     return caption, 200
@@ -54,12 +51,15 @@ def run_detection_image(model, labels_to_names, data):
         image, scale = resize_image(image)
 
         # process image
-        start = time.time()
         boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))
 
         # correct for image scale
         boxes /= scale
-        caption = ""
+        
+        objects = []
+        reaponse = {
+          'objects': objects
+        }
 
         # visualize detections
         for box, score, label in zip(boxes[0], scores[0], labels[0]):
@@ -68,9 +68,19 @@ def run_detection_image(model, labels_to_names, data):
                 break
             b = np.array(box.astype(int)).astype(int)
             # x1 y1 x2 y2
-            caption += "output= {} {} {} {} {} {:.3f}\n".format(b[0], b[1], b[2], b[3], labels_to_names[label], score)
-        print("done {}", caption)
-        return caption
+            obj = {
+              'name': labels_to_names[label],
+              'score': str(score),
+              'xmin': str(b[0]),
+              'ymin': str(b[1]),
+              'xmax': str(b[2]),
+              'ynax': str(b[3])
+            }
+            objects.append(obj)
+            #caption += "output= {} {} {} {} {} {:.3f}\n".format(b[0], b[1], b[2], b[3], labels_to_names[label], score)
+        reaponse_json = json.dumps(reaponse)
+        print("done {}", reaponse_json)
+        return reaponse_json
 
 def get_session():
     config = tf.ConfigProto()
@@ -102,7 +112,7 @@ def main(args=None):
     args = parse_args(args)
     load_model(args)
     print('model loaded')
-    app.run(debug=False, host='0.0.0.0')    
+    app.run(debug=False, host='0.0.0.0', port=5000)    
 
 if __name__ == '__main__':
     main()
