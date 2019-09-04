@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
@@ -12,6 +13,8 @@ namespace RescuerLaApp.Models
     public class Docker : IDisposable
     {
         private readonly DockerClient _client;
+        private const int API_VER = 1;
+        private readonly bool IS_GPU = false;
         
         public Docker()
         {
@@ -36,6 +39,12 @@ namespace RescuerLaApp.Models
         
         public async Task Initialize(string imageName = "gosha20777/test", string tag = "1")
         {
+            if(IS_GPU)
+                tag = $"gpu-{API_VER}.{tag}";
+            else
+            {
+                tag = $"{API_VER}.{tag}";
+            }
             try
             {
                 var progressDictionary = new Dictionary<string, string>();
@@ -95,6 +104,12 @@ namespace RescuerLaApp.Models
 
         public async Task<string> CreateContainer(string imageName = "gosha20777/test", string tag = "1")
         {
+            if(IS_GPU)
+                tag = $"gpu-{API_VER}.{tag}";
+            else
+            {
+                tag = $"{API_VER}.{tag}";
+            }
             try
             {
                 var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters(){All = true});
@@ -106,7 +121,22 @@ namespace RescuerLaApp.Models
                         return container.ID;
                     }
                 }
-                
+
+                if (IS_GPU)
+                {
+                    string err = "", stdOut = "";
+                    var bash = new BashCommand();
+                    stdOut = bash.Execute($"docker create --runtime=nvidia -p 5000:5000 {imageName}:{tag}", out err);
+                    
+                    await Task.Delay(800);
+                    stdOut = stdOut.Replace(Environment.NewLine, String.Empty);
+                    if(string.IsNullOrWhiteSpace(stdOut) || !string.IsNullOrWhiteSpace(err))
+                        throw new Exception($"invalid id {err}");
+
+                    return stdOut;
+                }
+
+                //else
                 var containerCreateResponse = await _client.Containers.CreateContainerAsync(
                     new CreateContainerParameters
                     {
@@ -149,6 +179,11 @@ namespace RescuerLaApp.Models
                         return true;
                     }
                 }
+
+                var param = new ContainerStartParameters()
+                {
+                    DetachKeys = "--runtime=nvidia"
+                };
                 
                 return await _client.Containers.StartContainerAsync(id, new ContainerStartParameters());
             }
@@ -209,11 +244,35 @@ namespace RescuerLaApp.Models
                 response = JsonConvert.DeserializeObject<DockerTagResponse>(jsonResp);
                 result.AddRange(response.Images.Select(image => image.Tag).ToList());
             }
-            return result;
+            
+            var result_ = new List<string>();
+            foreach (var r in result)
+            {
+                var prefix = "";
+                if (IS_GPU)
+                {
+                    prefix = $"gpu-{API_VER}.";
+                    if(r.Contains(prefix))
+                        result_.Add(r.Replace(prefix, ""));
+                }
+                else
+                {
+                    prefix = $"{API_VER}.";
+                    if(!r.Contains("gpu") && r.Contains(prefix))
+                        result_.Add(r.Replace(prefix, ""));
+                }
+            }
+            return result_;
         }
 
         public async Task Remove(string imageName = "gosha20777/test", string tag = "1")
         {
+            if(IS_GPU)
+                tag = $"gpu-{API_VER}.{tag}";
+            else
+            {
+                tag = $"{API_VER}.{tag}";
+            }
             try
             {
                 //stop and remove all containers
@@ -242,13 +301,30 @@ namespace RescuerLaApp.Models
         public async Task<List<string>> GetInstalledVersions(string imageName = "gosha20777/test")
         {
             var tags = new List<string>();
+            var res_tags = new List<string>();
             var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = imageName});
             foreach (var image in images)
             {
                 tags.AddRange(image.RepoTags);
             }
 
-            return tags;
+            foreach (var tag in tags)
+            {
+                var prefix = "";
+                if (IS_GPU)
+                {
+                    prefix = $"gpu-{API_VER}.";
+                    if(tag.Contains($"{imageName}:{prefix}"))
+                        res_tags.Add(tag.Replace($"{imageName}:{prefix}", ""));
+                }
+                else
+                {
+                    prefix = $"{API_VER}.";
+                    if(!tag.Contains("gpu") && tag.Contains(prefix))
+                        res_tags.Add(tag.Replace($"{imageName}:{prefix}", ""));
+                }
+            }
+            return res_tags;
         }
 
         public void Dispose()
