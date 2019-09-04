@@ -10,9 +10,6 @@ namespace RescuerLaApp.Models
 {
     public class NeuroModel : IDisposable
     {
-        /*TODO: реализовать логику*/
-        private readonly string _pythonExecName;
-        private readonly string _fileNameParameter;
         private readonly RestApiClient _client;
         private Docker _docker;
         private string _id = "";
@@ -20,15 +17,6 @@ namespace RescuerLaApp.Models
         
         public NeuroModel()
         {
-            _pythonExecName = "python3";
-            #if DEBUG
-            _pythonExecName = "/home/gosha20777/anaconda3/bin/python";
-            #endif
-            var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var modelName = "resnet50_liza_alert_v3_interface.h5";
-            var modelPatch = $"{appPath}/python/snapshots/{modelName}";
-            _fileNameParameter = $"{appPath}/python/inference.py --model {modelPatch}";
-            
             _client = new RestApiClient("http://127.0.0.1:5000/");
             _docker = new Docker();
         }
@@ -81,19 +69,18 @@ namespace RescuerLaApp.Models
             jsonImg.Load(frame.Patch);
             var json = JsonConvert.SerializeObject(jsonImg);
             var outputText = await _client.PostAsync(json, "image");
-             
-            if (!string.IsNullOrEmpty(outputText))
+            var objects = JsonConvert.DeserializeObject<JsonAnnotation>(outputText);
+            Console.WriteLine(outputText);
+            if (objects != null || objects.Objects.Count > 0)
             {
-                foreach (var line in outputText.Split(Environment.NewLine))
+                foreach (var ooj in objects.Objects)
                 {
-                    if(!line.StartsWith("output=")) continue;
-                    var output = line.Split(' ');
-                    var x1 = int.Parse(output[1]);
-                    var y1 = int.Parse(output[2]);
-                    var x2 = int.Parse(output[3]);
-                    var y2 = int.Parse(output[4]);
-                    var score = output[6];
-                    var label = output[5];
+                    var x1 = ooj.Xmin;
+                    var y1 = ooj.Ymin;
+                    var x2 = ooj.Xmax;
+                    var y2 = ooj.Ymax;
+                    var score = ooj.Score;
+                    var label = ooj.Name;
                     var rect = new BoundBox(
                         x1,
                         y1,
@@ -163,9 +150,10 @@ namespace RescuerLaApp.Models
                 return -1;
             foreach (var t in tags)
             {
-                if (int.TryParse(t.Split(':').Last(), out var tag))
+                if (int.TryParse(t, out var tag))
                     maxTag = Math.Max(maxTag, tag);
             }
+            Console.WriteLine(maxTag);
             return maxTag;
         }
 
