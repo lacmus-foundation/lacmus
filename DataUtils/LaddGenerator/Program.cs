@@ -61,7 +61,7 @@ namespace LaddGenerator
                 try
                 {
                     var srcAnnotation = Annotation.ParseFromXml(sfile);
-                    if (!srcAnnotation.Filename.EndsWith(".jpg"))
+                    if (!srcAnnotation.Filename.ToLower().EndsWith(".jpg"))
                         srcAnnotation.Filename += ".jpg";
 
                     var dstAnnotation = new Annotation();

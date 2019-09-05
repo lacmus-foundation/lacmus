@@ -14,7 +14,22 @@ namespace LaddGenerator
 
         public Dictionary<string, string> Parse(string[] args)
         {
-            if (args.Length / 2 != _argsKeys.Count)
+            if (args.Length == 0)
+            {
+                List<string> argsList = new List<string>();
+                Console.Write("usage\n");
+                foreach (var (key, value) in _argsKeys)
+                {
+                    Console.WriteLine($"\t{key}\t{value}");
+                }
+                for (int i = 0; i < _argsKeys.Count; i++)
+                {
+                    argsList.AddRange(Console.ReadLine()?.Split(' '));
+                }
+
+                args = argsList.ToArray();
+            }
+            else if (args.Length / 2 != _argsKeys.Count)
             {
                 Console.Write("usage\n");
                 foreach (var (key, value) in _argsKeys)
