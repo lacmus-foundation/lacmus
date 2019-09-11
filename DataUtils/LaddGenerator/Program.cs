@@ -97,7 +97,7 @@ namespace LaddGenerator
                 files.Add(i);
             }
             Shuffle(files);
-            int trainSplit = 45;
+            int trainSplit = 0;
             List<string> lines = new List<string>();
             for (int i = 0; i < files.Count-trainSplit; i++)
             {

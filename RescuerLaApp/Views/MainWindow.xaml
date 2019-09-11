@@ -121,7 +121,7 @@
               <DataTemplate DataType="{x:Type models:BoundBox}">
                 <Polygon
                   Points="{Binding Points}"
-                  Stroke="Blue" StrokeThickness="2" />
+                  Stroke="Red" StrokeThickness="10" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>

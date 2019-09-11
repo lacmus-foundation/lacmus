@@ -3,6 +3,7 @@ using RescuerLaApp.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -39,6 +40,10 @@ namespace RescuerLaApp.ViewModels
             var canExecute = this
                 .WhenAnyValue(x => x.Status)
                 .Select(status => status.Status != Enums.Status.Working);
+            
+            var canShowPedestrians = this
+                .WhenAnyValue(x => x._frames)
+                .Select(frames => frames.Any(x => x.IsVisible));
             
             // The bound button will stay disabled, when
             // there are no frames before the current one.
@@ -117,11 +122,18 @@ namespace RescuerLaApp.ViewModels
         {
             if (IsShowPedestrians)
             {
-                Frames = Frames.FindAll(x => x.IsVisible);
+                //fix bug when application stop if focus was set on image without object
+                if (!_frames.Any(x => x.IsVisible))
+                    return;
+                SelectedIndex = Frames.FindIndex(x => x.IsVisible);
+                Console.WriteLine(SelectedIndex);
+                Frames = _frames.FindAll(x => x.IsVisible);
+                UpdateUi();
             }
             else
             {
                 Frames = new List<Frame>(_frames);
+                UpdateUi();
             }
         }
 
@@ -223,6 +235,7 @@ namespace RescuerLaApp.ViewModels
             }
             _frames = new List<Frame>(Frames);
             await _model.Stop();
+            SelectedIndex = 0; //Fix bug when application stopped if index > 0
             UpdateUi();
         }
         
