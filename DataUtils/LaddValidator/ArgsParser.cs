@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LaddGenerator
+namespace LaddValidator
 {
     public class ArgsParser
     {

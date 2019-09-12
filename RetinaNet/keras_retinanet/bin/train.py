@@ -235,7 +235,7 @@ def create_generators(args, preprocess_image):
             min_scaling=(0.9, 0.9),
             max_scaling=(1.1, 1.1),
             flip_x_chance=0.5,
-            flip_y_chance=0.5,
+            flip_y_chance=0.1,
         )
         visual_effect_generator = random_visual_effect_generator(
             contrast_range=(0.9, 1.1),
@@ -244,8 +244,26 @@ def create_generators(args, preprocess_image):
             saturation_range=(0.95, 1.05)
         )
     else:
-        transform_generator = random_transform_generator(flip_x_chance=0.5)
-        visual_effect_generator = None
+        #transform_generator = random_transform_generator(flip_x_chance=0.5)
+        #visual_effect_generator = None
+        transform_generator = random_transform_generator(
+            min_rotation=-0.1,
+            max_rotation=0.1,
+            min_translation=(-0.1, -0.1),
+            max_translation=(0.1, 0.1),
+            min_shear=-0.1,
+            max_shear=0.1,
+            min_scaling=(0.9, 0.9),
+            max_scaling=(1.1, 1.1),
+            flip_x_chance=0.5,
+            flip_y_chance=0.1,
+        )
+        visual_effect_generator = random_visual_effect_generator(
+            contrast_range=(0.9, 1.1),
+            brightness_range=(-.1, .1),
+            hue_range=(-0.05, 0.05),
+            saturation_range=(0.95, 1.05)
+        )
 
     if args.dataset_type == 'coco':
         # import here to prevent unnecessary dependency on cocoapi
