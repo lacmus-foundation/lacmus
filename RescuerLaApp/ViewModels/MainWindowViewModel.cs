@@ -60,6 +60,7 @@ namespace RescuerLaApp.ViewModels
             LoadModelCommand = ReactiveCommand.Create(LoadModel, canExecute);
             UpdateModelCommand = ReactiveCommand.Create(UpdateModel, canExecute);
             ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
+            ImportAllCommand = ReactiveCommand.Create(ImportAll, canExecute);
         }
 
         public void UpdateFramesRepo()
@@ -109,6 +110,8 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
         
         public ReactiveCommand<Unit, Unit> SaveAllCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> ImportAllCommand { get; }
         
         public ReactiveCommand<Unit, Unit> LoadModelCommand { get; }
         
@@ -222,13 +225,6 @@ namespace RescuerLaApp.ViewModels
                         Status = Enums.Status.Working, 
                         StringStatus = $"Working | processing images: {index} / {Frames.Count}"
                     };
-                else
-                {
-                    Status = new AppStatusInfo()
-                    {
-                        Status = Enums.Status.Ready
-                    };
-                }
 
                 if (frame.Rectangles.Count > 0)
                     frame.IsVisible = true;
@@ -237,6 +233,10 @@ namespace RescuerLaApp.ViewModels
             await _model.Stop();
             SelectedIndex = 0; //Fix bug when application stopped if index > 0
             UpdateUi();
+            Status = new AppStatusInfo()
+            {
+                Status = Enums.Status.Ready
+            };
         }
         
         private void ShrinkCanvas()
@@ -266,7 +266,7 @@ namespace RescuerLaApp.ViewModels
                 }
                 var fileNames = Directory.GetFiles(dirName);
                 _frameLoadProgressIndex = 0;
-                Frames.Clear();
+                Frames.Clear(); _frames.Clear(); GC.Collect();
                 var loadingFrames = new List<Frame>();
                 foreach (var fileName in fileNames)
                 {
@@ -284,7 +284,8 @@ namespace RescuerLaApp.ViewModels
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
                     loadingFrames.Add(frame);
                 }
-                if(loadingFrames.Count == 0)
+
+                if (loadingFrames.Count == 0)
                 {
                     Status = new AppStatusInfo() {Status = Enums.Status.Ready};
                     return;
@@ -296,6 +297,7 @@ namespace RescuerLaApp.ViewModels
                 UpdateFramesRepo();
                 UpdateUi();
                 _frames = new List<Frame>(Frames);
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
             }
             catch (Exception ex)
             {
@@ -317,11 +319,7 @@ namespace RescuerLaApp.ViewModels
                     return;
                 }
                 Status = new AppStatusInfo() {Status = Enums.Status.Working};
-                var openDig = new OpenFolderDialog()
-                {
-                    Title = "Choose a directory to save annotations"
-                };
-                var dirName = await openDig.ShowAsync(new Window());
+                var dirName = Path.GetDirectoryName(Frames.First().Patch);
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
                     Status = new AppStatusInfo() {Status = Enums.Status.Ready};
@@ -333,10 +331,9 @@ namespace RescuerLaApp.ViewModels
                     if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
                         continue;
                     var annotation = new Annotation();
-                    annotation.Filename = Path.GetFileNameWithoutExtension(frame.Patch);
+                    annotation.Filename = Path.GetFileName(frame.Patch);
                     annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Patch));
                     annotation.Segmented = 0;
-                    frame.Load(frame.Patch);
                     annotation.Size = new Models.Size()
                     {
                         Depth = 3,
@@ -358,8 +355,9 @@ namespace RescuerLaApp.ViewModels
                     }
 
                     annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
                 }
+                Console.WriteLine($"Saved to {dirName}");
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
             }
             catch (Exception ex)
             {
@@ -370,6 +368,97 @@ namespace RescuerLaApp.ViewModels
                 };
             }
         }
+        
+        private async void ImportAll()
+        {
+            Status = new AppStatusInfo() {Status = Enums.Status.Working};
+            try
+            {
+                var openDig = new OpenFolderDialog()
+                {
+                    Title = "Choose a directory with xml annotations"
+                };
+                var dirName = await openDig.ShowAsync(new Window());
+                if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                
+                var fileNames = Directory.GetFiles(dirName);
+                _frameLoadProgressIndex = 0;
+                Frames.Clear(); _frames.Clear(); GC.Collect();
+                
+                var loadingFrames = new List<Frame>();
+                var annotations = new List<Annotation>();
+                foreach (var fileName in fileNames)
+                {
+                    if (Path.GetExtension(fileName).ToLower() != ".xml")
+                        continue;
+                    annotations.Add(Annotation.ParseFromXml(fileName));
+                }
+
+                foreach (var ann in annotations)
+                {
+                    var fileName = Path.Combine(dirName, ann.Filename);
+                    // TODO: Проверка IsImage вне зависимости от расширений.
+                    if (!File.Exists(fileName))
+                        continue;
+                    if(!Path.HasExtension(fileName))
+                        continue;
+                    if (Path.GetExtension(fileName).ToLower() != ".jpg" &&
+                        Path.GetExtension(fileName).ToLower() != ".jpeg" &&
+                        Path.GetExtension(fileName).ToLower() != ".png" &&
+                        Path.GetExtension(fileName).ToLower() != ".bmp")
+                        continue;
+                    
+                    var frame = new Frame();
+                    frame.OnLoad += FrameLoadingProgressUpdate;
+                    frame.Load(fileName, Enums.ImageLoadMode.Miniature);
+                    frame.Rectangles = new List<BoundBox>();
+                    foreach (var obj in ann.Objects)
+                    {
+                        var bbox = new BoundBox(
+                            x: obj.Box.Xmin,
+                            y: obj.Box.Ymin,
+                            height: obj.Box.Ymax - obj.Box.Ymin,
+                            width: obj.Box.Xmax - obj.Box.Xmin
+                            );
+                        frame.Rectangles.Add(bbox);
+                    }
+
+                    if (frame.Rectangles.Count > 0)
+                    {
+                        frame.IsVisible = true;
+                    }
+                    loadingFrames.Add(frame);
+                }
+
+                if (loadingFrames.Count == 0)
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                    
+                
+                Frames = loadingFrames;
+                if (SelectedIndex < 0)
+                    SelectedIndex = 0;
+                UpdateFramesRepo();
+                UpdateUi();
+                _frames = new List<Frame>(Frames);
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+            }
+            catch (Exception ex)
+            {
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
+                };
+            }
+        }
+        
 
         private void FrameLoadingProgressUpdate()
         {

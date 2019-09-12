@@ -21,9 +21,8 @@
       <Menu>
         <MenuItem Name="mFile" Header="File">
           <MenuItem Name="mFileOpen" Header="Open directory..." Command="{Binding OpenFileCommand}"/>
-          <MenuItem Name="mFilePredict" Header="Predict all" Command="{Binding SaveAllCommand}"/>
-          <MenuItem Name="mFileSave" Header="Save"/>
-          <MenuItem Name="mFileShowAll" Header="Show all"/>
+          <MenuItem Name="mFileExportAll" Header="Import all from XML..." Command="{Binding ImportAllCommand}"/>
+          <MenuItem Name="mFileSave" Header="Save all" Command="{Binding SaveAllCommand}"/>
           <Separator></Separator>
           <MenuItem Name="mFileExit" Header="Exit"/>
         </MenuItem>

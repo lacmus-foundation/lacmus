@@ -72,7 +72,8 @@ namespace LaddGenerator
                     dstAnnotation.Size = srcAnnotation.Size;
                     if (dstAnnotation.Objects == null || dstAnnotation.Objects.Count <= 0)
                     {
-                        throw new Exception("no objects in the image!");
+                        dstAnnotation.Objects = new List<Object>();
+                        //throw new Exception("no objects in the image!");
                     }
                     foreach (var obj in dstAnnotation.Objects)
                     {
@@ -97,7 +98,7 @@ namespace LaddGenerator
                 files.Add(i);
             }
             Shuffle(files);
-            int trainSplit = 0;
+            int trainSplit = 45;
             List<string> lines = new List<string>();
             for (int i = 0; i < files.Count-trainSplit; i++)
             {
