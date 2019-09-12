@@ -179,11 +179,6 @@ namespace RescuerLaApp.Models
                         return true;
                     }
                 }
-
-                var param = new ContainerStartParameters()
-                {
-                    DetachKeys = "--runtime=nvidia"
-                };
                 
                 return await _client.Containers.StartContainerAsync(id, new ContainerStartParameters());
             }

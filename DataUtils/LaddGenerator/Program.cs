@@ -61,7 +61,7 @@ namespace LaddGenerator
                 try
                 {
                     var srcAnnotation = Annotation.ParseFromXml(sfile);
-                    if (!srcAnnotation.Filename.EndsWith(".jpg"))
+                    if (!srcAnnotation.Filename.ToLower().EndsWith(".jpg"))
                         srcAnnotation.Filename += ".jpg";
 
                     var dstAnnotation = new Annotation();
@@ -72,7 +72,8 @@ namespace LaddGenerator
                     dstAnnotation.Size = srcAnnotation.Size;
                     if (dstAnnotation.Objects == null || dstAnnotation.Objects.Count <= 0)
                     {
-                        throw new Exception("no objects in the image!");
+                        dstAnnotation.Objects = new List<Object>();
+                        //throw new Exception("no objects in the image!");
                     }
                     foreach (var obj in dstAnnotation.Objects)
                     {

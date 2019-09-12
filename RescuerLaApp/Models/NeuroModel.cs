@@ -70,9 +70,9 @@ namespace RescuerLaApp.Models
             var json = JsonConvert.SerializeObject(jsonImg);
             var outputText = await _client.PostAsync(json, "image");
             var objects = JsonConvert.DeserializeObject<JsonAnnotation>(outputText);
-            Console.WriteLine(outputText);
             if (objects != null || objects.Objects.Count > 0)
             {
+                Console.WriteLine("File {0} contains:", Path.GetFileName(frame.Patch));
                 foreach (var ooj in objects.Objects)
                 {
                     var x1 = ooj.Xmin;
@@ -87,7 +87,7 @@ namespace RescuerLaApp.Models
                         y2-y1,
                         x2-x1);
                     list.Add(rect);
-                    Console.WriteLine($">{label}: {score}");
+                    Console.WriteLine("\t{0}: {1:P1}", label, double.Parse(score.Replace('.',',')));
                 }
             }
             return list;

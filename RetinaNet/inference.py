@@ -42,10 +42,6 @@ def run_detection_image(model, labels_to_names, data):
         npImage = np.asarray(Image.open(BytesIO(imgdata)).convert('RGB'))
         image = npImage[:, :, ::-1].copy()
 
-        # copy to draw on
-        draw = image
-        draw = cv2.cvtColor(draw, cv2.COLOR_BGR2RGB)
-
         # preprocess image for network
         image = preprocess_image(image)
         image, scale = resize_image(image)
