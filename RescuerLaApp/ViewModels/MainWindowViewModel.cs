@@ -61,6 +61,7 @@ namespace RescuerLaApp.ViewModels
             UpdateModelCommand = ReactiveCommand.Create(UpdateModel, canExecute);
             ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
             ImportAllCommand = ReactiveCommand.Create(ImportAll, canExecute);
+            SaveAllImagesWithObjectsCommand = ReactiveCommand.Create(SaveAllImagesWithObjects, canExecute);
         }
 
         public void UpdateFramesRepo()
@@ -118,6 +119,8 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; }
         
         public ReactiveCommand<Unit, Unit> ShowPerestriansCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; }
 
         #endregion
 
@@ -355,6 +358,49 @@ namespace RescuerLaApp.ViewModels
                     }
 
                     annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
+                }
+                Console.WriteLine($"Saved to {dirName}");
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
+            }
+            catch (Exception ex)
+            {
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
+                };
+            }
+        }
+
+        private async void SaveAllImagesWithObjects()
+        {
+            try
+            {
+                if (Frames == null || Frames.Count < 1)
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                Status = new AppStatusInfo() {Status = Enums.Status.Working};
+
+                var openDig = new OpenFolderDialog()
+                {
+                    Title = "Choose a directory to save images with objects"
+                };
+                var dirName = await openDig.ShowAsync(new Window());
+
+                
+                if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                
+                foreach (var frame in Frames)
+                {
+                    if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
+                        continue;
+                    File.Copy(frame.Patch, Path.Combine(dirName, Path.GetFileName(frame.Patch)));
                 }
                 Console.WriteLine($"Saved to {dirName}");
                 Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
