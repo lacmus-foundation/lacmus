@@ -281,7 +281,7 @@ namespace RescuerLaApp.Models
                     }
                 }
                 
-                var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = imageName});
+                var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = $"{imageName}:{tag}"});
                 foreach (var image in images)
                 {
                     await _client.Images.DeleteImageAsync(image.ID, new ImageDeleteParameters {Force = true});
