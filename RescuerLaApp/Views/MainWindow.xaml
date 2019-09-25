@@ -25,7 +25,7 @@
           <MenuItem Name="mFileSave" Header="Save all" Command="{Binding SaveAllCommand}"/>
           <MenuItem Name="mFileSaveAllImagesWithObjects" Header="Save only images with pedestrians" Command="{Binding SaveAllImagesWithObjectsCommand}"/>
           <Separator></Separator>
-          <MenuItem Name="mFileExit" Header="Exit"/>
+          <MenuItem Name="mFileExit" Header="Exit" Command="{Binding ExitCommand}"/>
         </MenuItem>
         <MenuItem Name="mModel" Header="Model">
           <MenuItem Name="mModelLoad" Header="Load model..." Command="{Binding LoadModelCommand}"/>
@@ -42,9 +42,9 @@
           <MenuItem Name="mImagePrev" Header="Prev" Command="{Binding PrevImageCommand}"/>
         </MenuItem>
         <MenuItem Name="mHelp" Header="Help">
-          <MenuItem Name="mHelpOpen" Header="Open user guide"/>
+          <MenuItem Name="mHelpOpen" Header="Open user guide" Command="{Binding HelpCommand}"/>
           <Separator></Separator>
-          <MenuItem Name="mHelpAbout" Header="About"/>
+          <MenuItem Name="mHelpAbout" Header="About" Command="{Binding AboutCommand}"/>
         </MenuItem>
       </Menu>
       <ToolTip>

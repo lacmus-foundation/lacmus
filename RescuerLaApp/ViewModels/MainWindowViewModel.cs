@@ -6,9 +6,15 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
+using Docker.DotNet;
+using MessageBox.Avalonia.DTO;
+using MessageBox.Avalonia.Enums;
+using MessageBox.Avalonia.Models;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Newtonsoft.Json;
@@ -62,6 +68,9 @@ namespace RescuerLaApp.ViewModels
             ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
             ImportAllCommand = ReactiveCommand.Create(ImportAll, canExecute);
             SaveAllImagesWithObjectsCommand = ReactiveCommand.Create(SaveAllImagesWithObjects, canExecute);
+            HelpCommand = ReactiveCommand.Create(Help);
+            AboutCommand = ReactiveCommand.Create(About);
+            ExitCommand = ReactiveCommand.Create(Exit, canExecute);
         }
 
         public void UpdateFramesRepo()
@@ -121,6 +130,11 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> ShowPerestriansCommand { get; }
         
         public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; }
+        public ReactiveCommand<Unit, Unit> HelpCommand { get; }
+        public ReactiveCommand<Unit, Unit> AboutCommand { get; }
+        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
+        
+        
 
         #endregion
 
@@ -522,6 +536,82 @@ namespace RescuerLaApp.ViewModels
                     Status = Enums.Status.Ready
                 };
             }
+        }
+
+        public void Help()
+        {
+            OpenUrl("https://github.com/lizaalert/lacmus/wiki");
+        }
+
+        public async void About()
+        {
+            var message =
+                "Copyright (c) 2019 Georgy Perevozghikov <gosha20777@live.ru>\nGithub page: https://github.com/lizaalert/lacmus/. Press `Github` button for more details.\nProvided by Yandex Cloud: https://cloud.yandex.com/." +
+                "\nThis program comes with ABSOLUTELY NO WARRANTY." +
+                "\nThis is free software, and you are welcome to redistribute it under GNU GPLv3 conditions.\nPress `License` button to learn more about the license";
+
+            var msgBoxCustomParams = new MessageBoxCustomParams
+            {
+                ButtonDefinitions =  new []
+                {
+                    new ButtonDefinition{Name = "Ok", Type = ButtonType.Colored},
+                    new ButtonDefinition{Name = "License"},
+                    new ButtonDefinition{Name = "Github"}
+                },
+                ContentTitle = "About",
+                ContentHeader = "Lacmus desktop application. Version 0.3.0 alpha.",
+                ContentMessage = message,
+                Icon = Icon.Avalonia,
+                Style = Style.None,
+                ShowInCenter = true
+            };
+            var msgbox = MessageBox.Avalonia.MessageBoxWindow.CreateCustomWindow(msgBoxCustomParams);
+            var result = await msgbox.Show();
+            switch (result.ToLower())
+            {
+                case "ok": return;
+                case "license": OpenUrl("https://github.com/lizaalert/lacmus/blob/master/LICENSE"); break;
+                case "github": OpenUrl("https://github.com/lizaalert/lacmus"); break;
+            }
+        }
+        
+        public async void Exit()
+        {
+            var message = "Do you really want to exit?";
+            
+            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            {
+                Button = ButtonEnum.YesNo,
+                ContentTitle = "Exit",
+                ContentMessage = message,
+                Icon = Icon.Info,
+                Style = Style.None,
+                ShowInCenter = true
+            });
+            var result = await msgbox.Show();
+            if(result.ToLower() == "yes")
+                Application.Current.MainWindow.Close();
+        }
+
+        private void OpenUrl(string url)
+        {
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    System.Diagnostics.Process.Start(url);
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+                         RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    System.Diagnostics.Process.Start("x-www-browser", url);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
         }
 
         private void UpdateUi()
