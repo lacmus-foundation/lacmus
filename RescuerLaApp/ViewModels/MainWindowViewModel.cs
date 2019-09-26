@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -15,9 +16,11 @@ using Docker.DotNet;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using MessageBox.Avalonia.Models;
+using MetadataExtractor;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Newtonsoft.Json;
+using Directory = System.IO.Directory;
 
 namespace RescuerLaApp.ViewModels
 {
@@ -68,6 +71,8 @@ namespace RescuerLaApp.ViewModels
             ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
             ImportAllCommand = ReactiveCommand.Create(ImportAll, canExecute);
             SaveAllImagesWithObjectsCommand = ReactiveCommand.Create(SaveAllImagesWithObjects, canExecute);
+            ShowAllMetadataCommand = ReactiveCommand.Create(ShowAllMetadata, canExecute);
+            ShowGeoDataCommand = ReactiveCommand.Create(ShowGeoData, canExecute);
             HelpCommand = ReactiveCommand.Create(Help);
             AboutCommand = ReactiveCommand.Create(About);
             ExitCommand = ReactiveCommand.Create(Exit, canExecute);
@@ -130,6 +135,9 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> ShowPerestriansCommand { get; }
         
         public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; }
+        
+        public ReactiveCommand<Unit, Unit> ShowAllMetadataCommand { get; }
+        public ReactiveCommand<Unit, Unit> ShowGeoDataCommand { get; }
         public ReactiveCommand<Unit, Unit> HelpCommand { get; }
         public ReactiveCommand<Unit, Unit> AboutCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -541,6 +549,64 @@ namespace RescuerLaApp.ViewModels
         public void Help()
         {
             OpenUrl("https://github.com/lizaalert/lacmus/wiki");
+        }
+        
+        public void ShowGeoData()
+        {
+            string msg = string.Empty;
+            int rows = 0;
+            var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Patch);
+            foreach (var directory in directories)
+            foreach (var tag in directory.Tags)
+            {
+                if (directory.Name.ToLower() == "gps")
+                {
+                    if (tag.Name.ToLower() == "gps latitude" ||
+                        tag.Name.ToLower() == "gps longitude" ||
+                        tag.Name.ToLower() == "gps altitude")
+                    {
+                        rows++;
+                        msg += $"{tag.Name}: {tag.Description}\n";
+                    }
+                }
+            }
+
+            if (rows != 3)
+                msg = "This image have hot geo tags.\nUse `Show all metadata` more for more details.";
+            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            {
+                Button = ButtonEnum.Ok,
+                ContentTitle = $"Geo position of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
+                ContentMessage = msg,
+                Icon = Icon.Info,
+                Style = Style.None,
+                ShowInCenter = true
+            });
+            msgbox.Show();
+        }
+
+        public void ShowAllMetadata()
+        {
+            var tb = new TextTableBuilder();
+            tb.AddRow("Group", "Tag name", "Description");
+            tb.AddRow("-----", "--------", "-----------");
+
+            
+            var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Patch);
+            foreach (var directory in directories)
+            foreach (var tag in directory.Tags)
+                tb.AddRow(directory.Name, tag.Name, tag.Description);
+            
+            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            {
+                Button = ButtonEnum.Ok,
+                ContentTitle = $"Metadata of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
+                ContentMessage = tb.Output(),
+                Icon = Icon.Info,
+                Style = Style.None,
+                ShowInCenter = true
+            });
+            msgbox.Show();
         }
 
         public async void About()
