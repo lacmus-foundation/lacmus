@@ -73,7 +73,7 @@ namespace LaddGenerator
                     if (dstAnnotation.Objects == null || dstAnnotation.Objects.Count <= 0)
                     {
                         dstAnnotation.Objects = new List<Object>();
-                        //throw new Exception("no objects in the image!");
+                        throw new Exception("no objects in the image!");
                     }
                     foreach (var obj in dstAnnotation.Objects)
                     {
