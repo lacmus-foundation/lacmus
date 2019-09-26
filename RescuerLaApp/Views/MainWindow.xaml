@@ -113,8 +113,15 @@
                   VerticalAlignment="Stretch"
                   Background="{Binding ImageBrush}"
                   Height="{Binding CanvasHeight, Mode=TwoWay}"
-                  Width="{Binding CanvasWidth, Mode=TwoWay}"
-                />
+                  Width="{Binding CanvasWidth, Mode=TwoWay}">
+                  <Canvas.ContextMenu>
+                    <ContextMenu>
+                      <MenuItem Header="Show geo position" Command="{Binding ShowGeoDataCommand}"/>
+                      <!-- <MenuItem Header="Find nearest photo"/> -->
+                      <MenuItem Header="Show all metadata" Command="{Binding ShowAllMetadataCommand}"/>
+                    </ContextMenu>
+                  </Canvas.ContextMenu>
+                </Canvas>  
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
