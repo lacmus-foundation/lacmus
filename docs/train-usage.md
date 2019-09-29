@@ -98,6 +98,6 @@ Here first path is the path to the trained model and the second would be the pat
 I created two notebooks from the original code that can be used to run inference on images and on videos.
 
 The notebooks are:
-* ResNet50RetinaNet-Image.ipynb : For inference on a batch of images
-* ResNet50RetinaNet-Video.ipynb : For inference on a video
+* RetinaNet/ResNet50RetinaNet-Image.ipynb : For inference on a batch of images
+* RetinaNet/ResNet50RetinaNet-Video.ipynb : For inference on a video
 
