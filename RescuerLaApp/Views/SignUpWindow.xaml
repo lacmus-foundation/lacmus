@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="RescuerLaApp.Views.SignUpWindow" SizeToContent="WidthAndHeight" CanResize="False">
+    <StackPanel HorizontalAlignment="Center">
+        <TextBlock Margin="10 2 10 2">Email</TextBlock>
+        <TextBox Name="tbEmail" Margin="10 2 10 2" Height="30" Width="300"></TextBox>
+        <TextBlock Margin="10 2 10 2">Nick name</TextBlock>
+        <TextBox Name="tbNickName" Margin="10 2 10 2" Height="30" Width="300"></TextBox>
+        <TextBlock Margin="10 2 10 2">First name</TextBlock>
+        <TextBox Name="tbFirstName" Margin="10 2 10 2" Height="30" Width="300"></TextBox>
+        <TextBlock Margin="10 2 10 2">Last name</TextBlock>
+        <TextBox Name="tbLastName" Margin="10 2 10 2" Height="30" Width="300"></TextBox>
+        <TextBlock Margin="10 2 10 2">Password</TextBlock>
+        <TextBox Name="tbPassword" Margin="10 2 10 2" Height="30" Width="300"></TextBox>
+        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Name="Buttons">
+            <StackPanel.Styles>
+                <Style Selector="Button">
+                    <Setter Property="Margin" Value="10, 5, 10, 5"/>
+                </Style>
+            </StackPanel.Styles>
+        </StackPanel>
+    </StackPanel>
+</Window>
