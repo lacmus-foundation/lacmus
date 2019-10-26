@@ -7,6 +7,7 @@
             Ready,
             Working,
             Success,
+            Unauthenticated,
             Error
         }
         

@@ -20,6 +20,7 @@ using MetadataExtractor;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Newtonsoft.Json;
+using RescuerLaApp.Views;
 using Directory = System.IO.Directory;
 
 namespace RescuerLaApp.ViewModels
@@ -48,7 +49,11 @@ namespace RescuerLaApp.ViewModels
 
             var canExecute = this
                 .WhenAnyValue(x => x.Status)
-                .Select(status => status.Status != Enums.Status.Working);
+                .Select(status => status.Status != Enums.Status.Working && status.Status != Enums.Status.Unauthenticated);
+            
+            var canAuth = this
+                .WhenAnyValue(x => x.Status)
+                .Select(status => status.Status == Enums.Status.Unauthenticated);
             
             var canShowPedestrians = this
                 .WhenAnyValue(x => x._frames)
@@ -75,7 +80,9 @@ namespace RescuerLaApp.ViewModels
             ShowGeoDataCommand = ReactiveCommand.Create(ShowGeoData, canExecute);
             HelpCommand = ReactiveCommand.Create(Help);
             AboutCommand = ReactiveCommand.Create(About);
-            ExitCommand = ReactiveCommand.Create(Exit, canExecute);
+            SignUpCommand = ReactiveCommand.Create(SignUp, canAuth);
+            SignInCommand = ReactiveCommand.Create(SignIn, canAuth);
+            ExitCommand = ReactiveCommand.Create(Exit);
         }
 
         public void UpdateFramesRepo()
@@ -106,7 +113,7 @@ namespace RescuerLaApp.ViewModels
 
         [Reactive] public List<Frame> Frames { get; set; } = new List<Frame>();
         
-        [Reactive] public AppStatusInfo Status { get; set; } = new AppStatusInfo { Status = Enums.Status.Ready };
+        [Reactive] public AppStatusInfo Status { get; set; } = new AppStatusInfo { Status = Enums.Status.Unauthenticated };
         
         [Reactive] public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
 
@@ -140,6 +147,8 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> ShowGeoDataCommand { get; }
         public ReactiveCommand<Unit, Unit> HelpCommand { get; }
         public ReactiveCommand<Unit, Unit> AboutCommand { get; }
+        public ReactiveCommand<Unit, Unit> SignUpCommand { get; }
+        public ReactiveCommand<Unit, Unit> SignInCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
         
         
@@ -625,7 +634,7 @@ namespace RescuerLaApp.ViewModels
                     new ButtonDefinition{Name = "Github"}
                 },
                 ContentTitle = "About",
-                ContentHeader = "Lacmus desktop application. Version 0.3.0 alpha.",
+                ContentHeader = "Lacmus desktop application. Version 0.3.1 alpha.",
                 ContentMessage = message,
                 Icon = Icon.Avalonia,
                 Style = Style.None,
@@ -639,6 +648,19 @@ namespace RescuerLaApp.ViewModels
                 case "license": OpenUrl("https://github.com/lizaalert/lacmus/blob/master/LICENSE"); break;
                 case "github": OpenUrl("https://github.com/lizaalert/lacmus"); break;
             }
+        }
+
+        public async void SignUp()
+        {
+            var result = await Views.SignUpWindow.Show(null);
+            if(Status.Status == Enums.Status.Unauthenticated && result.IsSignIn)
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+        }
+        public async void SignIn()
+        {
+            var result = await Views.SignInWindow.Show(null);
+            if(Status.Status == Enums.Status.Unauthenticated && result.IsSignIn)
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
         }
         
         public async void Exit()

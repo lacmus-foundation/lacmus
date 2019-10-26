@@ -1,0 +1,113 @@
+using System;
+using System.Data;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
+using MessageBox.Avalonia.DTO;
+using MessageBox.Avalonia.Enums;
+using Newtonsoft.Json;
+using RescuerLaApp.Models;
+
+namespace RescuerLaApp.Views
+{
+    class SignInWindow : Window
+    {
+        [JsonObject]
+        public class SignInResult
+        {
+            [JsonProperty("email")]
+            public string Email { get; set; }
+            [JsonProperty("passwordHash")]
+            public string PasswordHash { get; set; }
+            [JsonProperty("id")]
+            public int Id { get; set; }
+            [JsonProperty("time")]
+            public string Time { get; set; }
+
+            public bool IsSignIn { get; set; } = false;
+        }
+
+        public SignInWindow()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
+
+        public static Task<SignInResult> Show(Window parent)
+        {
+            var title = "Sign In";
+            var msgbox = new SignInWindow()
+            {
+                Title = title
+            };
+            var buttonPanel = msgbox.FindControl<StackPanel>("Buttons");
+
+            SignInResult res = new SignInResult();
+
+            void AddButton(string caption)
+            {
+                var btn = new Button {Content = caption};
+                btn.Click += (_, __) =>
+                {
+                    var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+                    if (File.Exists(patch))
+                    {
+                        res = JsonConvert.DeserializeObject<SignInResult>(File.ReadAllText(patch));
+                    }
+                    else
+                    {
+                        ShowError("There are no account. Please sign up");
+                        return;
+                    }
+
+                    var passwordHash = msgbox.FindControl<TextBox>("tbPassword").Text;
+                    var email = msgbox.FindControl<TextBox>("tbEmail").Text;
+                    
+                    if (string.IsNullOrWhiteSpace(passwordHash) || passwordHash.Length < 6)
+                    {
+                        ShowError("Incorrect Password");
+                        return;
+                    }
+                    PasswordHasher hasher = new PasswordHasher();
+                    if (string.IsNullOrWhiteSpace(passwordHash) || !hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
+                    {
+                        ShowError("Incorrect Password");
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(email) || !email.Contains('@') || !email.Contains('.') || email != res.Email)
+                    {
+                        ShowError("Incorrect Email");
+                        return;
+                    }
+                    
+                    res.IsSignIn = true;
+                    msgbox.Close();
+                };
+                buttonPanel.Children.Add(btn);
+            }
+            
+            AddButton("Sign Ip");
+            var tcs = new TaskCompletionSource<SignInResult>();
+            msgbox.Closed += delegate { tcs.TrySetResult(res); };
+            if (parent != null)
+                msgbox.ShowDialog(parent);
+            else msgbox.Show();
+            return tcs.Task;
+        }
+
+        private static async void ShowError(string message)
+        {
+            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            {
+                Button = ButtonEnum.Ok,
+                ContentTitle = "Error",
+                ContentMessage = message,
+                Icon = MessageBox.Avalonia.Enums.Icon.Error,
+                Style = Style.None,
+                ShowInCenter = true
+            });
+            var result = await msgbox.Show();
+        }
+    }
+}
