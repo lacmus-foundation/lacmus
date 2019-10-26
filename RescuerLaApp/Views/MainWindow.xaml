@@ -25,6 +25,9 @@
           <MenuItem Name="mFileSave" Header="Save all" Command="{Binding SaveAllCommand}"/>
           <MenuItem Name="mFileSaveAllImagesWithObjects" Header="Save only images with pedestrians" Command="{Binding SaveAllImagesWithObjectsCommand}"/>
           <Separator></Separator>
+          <MenuItem Name="mSIgnIn" Header="Sign in" Command="{Binding SignInCommand}"/>
+          <MenuItem Name="mSignUp" Header="Sign up" Command="{Binding SignUpCommand}"/>
+          <Separator></Separator>
           <MenuItem Name="mFileExit" Header="Exit" Command="{Binding ExitCommand}"/>
         </MenuItem>
         <MenuItem Name="mModel" Header="Model">
@@ -49,6 +52,7 @@
       </Menu>
       <ToolTip>
         <StackPanel Orientation="Horizontal">
+          <Button Name="bSignIn" Command="{Binding SignInCommand}">Suin In</Button>
           <Button Name="bOpen" Command="{Binding OpenFileCommand}">Open</Button>
           <Button Name="bPredict" Command="{Binding PredictAllCommand}">Predict all</Button>
           <Separator/>
