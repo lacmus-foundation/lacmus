@@ -3,11 +3,12 @@
         xmlns:vm="clr-namespace:RescuerLaApp.ViewModels;assembly=RescuerLaApp"
         xmlns:models="clr-namespace:RescuerLaApp.Models"
         xmlns:paz="clr-namespace:Avalonia.Controls.PanAndZoom;assembly=Avalonia.Controls.PanAndZoom"
-        UseLayoutRounding="True"
         Icon="resm:RescuerLaApp.Assets.avalonia-logo.ico"
+        x:Class="RescuerLaApp.Views.MainWindow"
+        UseLayoutRounding="True"
         Title="RescuerLaApp"
-        Width = "800"
-        Height = "600">
+        Width="800"
+        Height="600">
 
   <Grid Name="Main">
     <Grid.RowDefinitions>

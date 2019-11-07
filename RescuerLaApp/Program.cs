@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.ReactiveUI;
 using Avalonia.Rendering;
 using RescuerLaApp.ViewModels;
 using RescuerLaApp.Views;
@@ -15,7 +16,7 @@ namespace RescuerLaApp
             Console.WriteLine("This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.");
             Console.WriteLine("This is free software, and you are welcome to redistribute it\nunder certain conditions; type `show c' for details.");
             Console.WriteLine("------------------------------------");
-            BuildAvaloniaApp().Start<MainWindow>(() => new MainWindowViewModel());
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         
         private static AppBuilder BuildAvaloniaApp()
