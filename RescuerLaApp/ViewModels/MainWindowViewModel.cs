@@ -7,20 +7,15 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
-using Docker.DotNet;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using MessageBox.Avalonia.Models;
 using MetadataExtractor;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Newtonsoft.Json;
-using RescuerLaApp.Views;
 using Directory = System.IO.Directory;
 
 namespace RescuerLaApp.ViewModels
@@ -343,7 +338,7 @@ namespace RescuerLaApp.ViewModels
             }
         }
 
-        private async void SaveAll()
+        private void SaveAll()
         {
             try
             {
@@ -677,8 +672,8 @@ namespace RescuerLaApp.ViewModels
                 ShowInCenter = true
             });
             var result = await msgbox.Show();
-            if(result.ToLower() == "yes")
-                Application.Current.MainWindow.Close();
+            if (result.ToLower() == "yes")
+                Avalonia.Application.Current.MainWindow.Close();
         }
 
         private void OpenUrl(string url)
