@@ -44,6 +44,7 @@ namespace RescuerLaApp.Views
             var buttonPanel = msgbox.FindControl<StackPanel>("Buttons");
 
             SignInResult res = new SignInResult();
+            res.IsSignIn = false;
 
             void AddButton(string caption)
             {
@@ -54,34 +55,39 @@ namespace RescuerLaApp.Views
                     if (File.Exists(patch))
                     {
                         res = JsonConvert.DeserializeObject<SignInResult>(File.ReadAllText(patch));
+                        res.IsSignIn = false;
                     }
                     else
                     {
                         ShowError("There are no account. Please sign up");
+                        msgbox.Close();
                         return;
                     }
 
                     var passwordHash = msgbox.FindControl<TextBox>("tbPassword").Text;
                     var email = msgbox.FindControl<TextBox>("tbEmail").Text;
-                    
+                    PasswordHasher hasher = new PasswordHasher();
                     if (string.IsNullOrWhiteSpace(passwordHash) || passwordHash.Length < 6)
                     {
                         ShowError("Incorrect Password");
+                        msgbox.Close();
                         return;
                     }
-                    PasswordHasher hasher = new PasswordHasher();
-                    if (string.IsNullOrWhiteSpace(passwordHash) || !hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
+                    else if (string.IsNullOrWhiteSpace(passwordHash) || !hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
                     {
                         ShowError("Incorrect Password");
+                        msgbox.Close();
                         return;
                     }
-                    if (string.IsNullOrWhiteSpace(email) || !email.Contains('@') || !email.Contains('.') || email != res.Email)
+                    else if (string.IsNullOrWhiteSpace(email) || !email.Contains('@') || !email.Contains('.') || email != res.Email)
                     {
                         ShowError("Incorrect Email");
+                        msgbox.Close();
                         return;
                     }
+                    else if(email == res.Email && hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
+                        res.IsSignIn = true;
                     
-                    res.IsSignIn = true;
                     msgbox.Close();
                 };
                 buttonPanel.Children.Add(btn);
