@@ -673,7 +673,7 @@ namespace RescuerLaApp.ViewModels
             });
             var result = await msgbox.Show();
             if (result.ToLower() == "yes")
-                Application.Current.MainWindow.Close();
+                Avalonia.Application.Current.MainWindow.Close();
         }
 
         private void OpenUrl(string url)
