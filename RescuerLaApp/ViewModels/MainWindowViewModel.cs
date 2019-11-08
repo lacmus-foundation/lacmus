@@ -22,12 +22,14 @@ namespace RescuerLaApp.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject
     {
+        private readonly Window _window;
         private int _frameLoadProgressIndex;
         private NeuroModel _model = null;
         private List<Frame> _frames = new List<Frame>();
         
-        public MainWindowViewModel()
+        public MainWindowViewModel(Window window)
         {
+            _window = window;
             var canGoNext = this
                 .WhenAnyValue(x => x.SelectedIndex)
                 .Select(index => index < Frames.Count - 1);
@@ -673,7 +675,7 @@ namespace RescuerLaApp.ViewModels
             });
             var result = await msgbox.Show();
             if (result.ToLower() == "yes")
-                Avalonia.Application.Current.MainWindow.Close();
+                _window.Close();
         }
 
         private void OpenUrl(string url)
