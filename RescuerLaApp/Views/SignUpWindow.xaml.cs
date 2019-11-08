@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using Newtonsoft.Json;
@@ -119,9 +120,9 @@ namespace RescuerLaApp.Views
 
         private static async void ShowError(string message)
         {
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = "Error",
                 ContentMessage = message,
                 Icon = MessageBox.Avalonia.Enums.Icon.Error,
@@ -132,9 +133,9 @@ namespace RescuerLaApp.Views
         }
         private static async void ShowInfo(string message)
         {
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = "Info",
                 ContentMessage = message,
                 Icon = MessageBox.Avalonia.Enums.Icon.Lock,

@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using Newtonsoft.Json;
@@ -10,7 +11,7 @@ using RescuerLaApp.Models;
 
 namespace RescuerLaApp.Views
 {
-    class SignInWindow : Window
+    public class SignInWindow : Window
     {
         [JsonObject]
         public class SignInResult
@@ -27,10 +28,7 @@ namespace RescuerLaApp.Views
             public bool IsSignIn { get; set; } = false;
         }
 
-        public SignInWindow()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        public SignInWindow() => AvaloniaXamlLoader.Load(this);
 
         public static Task<SignInResult> Show(Window parent)
         {
@@ -102,9 +100,9 @@ namespace RescuerLaApp.Views
 
         private static async void ShowError(string message)
         {
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = "Error",
                 ContentMessage = message,
                 Icon = MessageBox.Avalonia.Enums.Icon.Error,
