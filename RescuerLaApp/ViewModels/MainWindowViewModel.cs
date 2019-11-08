@@ -7,9 +7,9 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
+using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using MessageBox.Avalonia.Models;
@@ -579,9 +579,9 @@ namespace RescuerLaApp.ViewModels
 
             if (rows != 3)
                 msg = "This image have hot geo tags.\nUse `Show all metadata` more for more details.";
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = $"Geo position of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
                 ContentMessage = msg,
                 Icon = Icon.Info,
@@ -603,9 +603,9 @@ namespace RescuerLaApp.ViewModels
             foreach (var tag in directory.Tags)
                 tb.AddRow(directory.Name, tag.Name, tag.Description);
             
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = $"Metadata of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
                 ContentMessage = tb.Output(),
                 Icon = Icon.Info,
@@ -637,7 +637,7 @@ namespace RescuerLaApp.ViewModels
                 Style = Style.None,
                 ShowInCenter = true
             };
-            var msgbox = MessageBox.Avalonia.MessageBoxWindow.CreateCustomWindow(msgBoxCustomParams);
+            var msgbox = MessageBoxManager.GetMessageBoxCustomWindow(msgBoxCustomParams);
             var result = await msgbox.Show();
             switch (result.ToLower())
             {
@@ -663,18 +663,17 @@ namespace RescuerLaApp.ViewModels
         public async void Exit()
         {
             var message = "Do you really want to exit?";
-            
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var window = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.YesNo,
                 ContentTitle = "Exit",
                 ContentMessage = message,
                 Icon = Icon.Info,
                 Style = Style.None,
-                ShowInCenter = true
+                ShowInCenter = true,
+                ButtonDefinitions = ButtonEnum.YesNo
             });
-            var result = await msgbox.Show();
-            if (result.ToLower() == "yes")
+            var result = await window.Show();
+            if (result == ButtonResult.Yes)
                 _window.Close();
         }
 
