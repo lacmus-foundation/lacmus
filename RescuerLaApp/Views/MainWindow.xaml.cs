@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.PanAndZoom;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.ReactiveUI;
 using RescuerLaApp.ViewModels;
 using ReactiveUI;
 using RescuerLaApp.Models;
