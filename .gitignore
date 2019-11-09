@@ -108,7 +108,9 @@ data/
 
 .ipynb_checkpoints/
 
+# Snapshots with weights for RetinaNet
 *.h5
+
 RetinaNet/logs/
 .vs/
 

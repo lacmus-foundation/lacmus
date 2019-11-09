@@ -7,9 +7,9 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
+using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using MessageBox.Avalonia.Models;
@@ -22,12 +22,14 @@ namespace RescuerLaApp.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject
     {
+        private readonly Window _window;
         private int _frameLoadProgressIndex;
         private NeuroModel _model = null;
         private List<Frame> _frames = new List<Frame>();
         
-        public MainWindowViewModel()
+        public MainWindowViewModel(Window window)
         {
+            _window = window;
             var canGoNext = this
                 .WhenAnyValue(x => x.SelectedIndex)
                 .Select(index => index < Frames.Count - 1);
@@ -577,9 +579,9 @@ namespace RescuerLaApp.ViewModels
 
             if (rows != 3)
                 msg = "This image have hot geo tags.\nUse `Show all metadata` more for more details.";
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = $"Geo position of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
                 ContentMessage = msg,
                 Icon = Icon.Info,
@@ -601,9 +603,9 @@ namespace RescuerLaApp.ViewModels
             foreach (var tag in directory.Tags)
                 tb.AddRow(directory.Name, tag.Name, tag.Description);
             
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.Ok,
+                ButtonDefinitions = ButtonEnum.Ok,
                 ContentTitle = $"Metadata of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
                 ContentMessage = tb.Output(),
                 Icon = Icon.Info,
@@ -629,13 +631,13 @@ namespace RescuerLaApp.ViewModels
                     new ButtonDefinition{Name = "Github"}
                 },
                 ContentTitle = "About",
-                ContentHeader = "Lacmus desktop application. Version 0.3.1 alpha.",
+                ContentHeader = "Lacmus desktop application. Version 0.3.2-preview alpha.",
                 ContentMessage = message,
                 Icon = Icon.Avalonia,
                 Style = Style.None,
                 ShowInCenter = true
             };
-            var msgbox = MessageBox.Avalonia.MessageBoxWindow.CreateCustomWindow(msgBoxCustomParams);
+            var msgbox = MessageBoxManager.GetMessageBoxCustomWindow(msgBoxCustomParams);
             var result = await msgbox.Show();
             switch (result.ToLower())
             {
@@ -661,19 +663,18 @@ namespace RescuerLaApp.ViewModels
         public async void Exit()
         {
             var message = "Do you really want to exit?";
-            
-            var msgbox = new MessageBox.Avalonia.MessageBoxWindow(new MessageBoxParams
+            var window = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
-                Button = ButtonEnum.YesNo,
                 ContentTitle = "Exit",
                 ContentMessage = message,
                 Icon = Icon.Info,
                 Style = Style.None,
-                ShowInCenter = true
+                ShowInCenter = true,
+                ButtonDefinitions = ButtonEnum.YesNo
             });
-            var result = await msgbox.Show();
-            if (result.ToLower() == "yes")
-                Avalonia.Application.Current.MainWindow.Close();
+            var result = await window.Show();
+            if (result == ButtonResult.Yes)
+                _window.Close();
         }
 
         private void OpenUrl(string url)
