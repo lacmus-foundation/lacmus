@@ -13,6 +13,7 @@ using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using MessageBox.Avalonia.Models;
+using MessageBox.Avalonia.Views;
 using MetadataExtractor;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -48,6 +49,10 @@ namespace RescuerLaApp.ViewModels
                 .WhenAnyValue(x => x.Status)
                 .Select(status => status.Status != Enums.Status.Working && status.Status != Enums.Status.Unauthenticated);
             
+            var canSwitchBoundBox = this
+                .WhenAnyValue(x => x.BoundBoxes)
+                .Select(count => BoundBoxes?.Count > 0);
+            
             var canAuth = this
                 .WhenAnyValue(x => x.Status)
                 .Select(status => status.Status == Enums.Status.Unauthenticated);
@@ -75,6 +80,7 @@ namespace RescuerLaApp.ViewModels
             SaveAllImagesWithObjectsCommand = ReactiveCommand.Create(SaveAllImagesWithObjects, canExecute);
             ShowAllMetadataCommand = ReactiveCommand.Create(ShowAllMetadata, canExecute);
             ShowGeoDataCommand = ReactiveCommand.Create(ShowGeoData, canExecute);
+            SwitchBoundBoxesVisibilityCommand = ReactiveCommand.Create(SwitchBoundBoxesVisibility, canSwitchBoundBox);
             HelpCommand = ReactiveCommand.Create(Help);
             AboutCommand = ReactiveCommand.Create(About);
             SignUpCommand = ReactiveCommand.Create(SignUp, canAuth);
@@ -94,6 +100,7 @@ namespace RescuerLaApp.ViewModels
                             Status = Enums.Status.Ready, 
                             StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Patch}"
                         };
+                    SwitchBoundBoxesVisibilityToTrue();
                     UpdateUi();
                 });
         }
@@ -101,11 +108,13 @@ namespace RescuerLaApp.ViewModels
         #region Public API
 
         [Reactive] public List<BoundBox> BoundBoxes { get; set; } = new List<BoundBox>();
+        // TODO: update with locales
+        [Reactive] public string BoundBoxesStateString { get; set; } = "Hide bound boxes";
         
         [Reactive] public double CanvasWidth { get; set; } = 500;
         
         [Reactive] public double CanvasHeight { get; set; } = 500;
-        
+
         [Reactive] public int SelectedIndex { get; set; } = 0;
 
         [Reactive] public List<Frame> Frames { get; set; } = new List<Frame>();
@@ -142,6 +151,7 @@ namespace RescuerLaApp.ViewModels
         
         public ReactiveCommand<Unit, Unit> ShowAllMetadataCommand { get; }
         public ReactiveCommand<Unit, Unit> ShowGeoDataCommand { get; }
+        public ReactiveCommand<Unit, Unit> SwitchBoundBoxesVisibilityCommand { get; }
         public ReactiveCommand<Unit, Unit> HelpCommand { get; }
         public ReactiveCommand<Unit, Unit> AboutCommand { get; }
         public ReactiveCommand<Unit, Unit> SignUpCommand { get; }
@@ -586,7 +596,13 @@ namespace RescuerLaApp.ViewModels
                 ContentMessage = msg,
                 Icon = Icon.Info,
                 Style = Style.None,
-                ShowInCenter = true
+                ShowInCenter = true,
+                Window = new MsBoxStandardWindow
+                {
+                    Height = 300,
+                    Width = 500,
+                    CanResize = true
+                }
             });
             msgbox.Show();
         }
@@ -610,9 +626,47 @@ namespace RescuerLaApp.ViewModels
                 ContentMessage = tb.Output(),
                 Icon = Icon.Info,
                 Style = Style.None,
-                ShowInCenter = true
+                ShowInCenter = true,
+                Window = new MsBoxStandardWindow
+                {
+                    Height = 600,
+                    Width = 1300,
+                    CanResize = true
+                }
             });
             msgbox.Show();
+        }
+
+        public void SwitchBoundBoxesVisibility()
+        {
+            var isVisible = true;
+            
+            if (BoundBoxes == null) return;
+            if (BoundBoxes.Count > 0)
+                isVisible = BoundBoxes[0].IsVisible;
+
+            foreach (var rectangle in BoundBoxes)
+            {
+                rectangle.IsVisible = !isVisible;
+            }
+
+            if (BoundBoxes[0].IsVisible)
+                BoundBoxesStateString = "Hide bound boxes";
+            else
+                BoundBoxesStateString = "Show bound boxes";
+            
+            UpdateUi();
+        }
+
+        private void SwitchBoundBoxesVisibilityToTrue()
+        {
+            if (BoundBoxes == null || BoundBoxes[0].IsVisible) return;
+            
+            foreach (var rectangle in BoundBoxes)
+            {
+                rectangle.IsVisible = true;
+            }
+            BoundBoxesStateString = "Hide bound boxes";
         }
 
         public async void About()
@@ -635,7 +689,13 @@ namespace RescuerLaApp.ViewModels
                 ContentMessage = message,
                 Icon = Icon.Avalonia,
                 Style = Style.None,
-                ShowInCenter = true
+                ShowInCenter = true,
+                Window = new MsBoxCustomWindow
+                {
+                    Height = 400,
+                    Width = 1000,
+                    CanResize = true
+                }
             };
             var msgbox = MessageBoxManager.GetMessageBoxCustomWindow(msgBoxCustomParams);
             var result = await msgbox.Show();

@@ -124,6 +124,7 @@
                       <MenuItem Header="Show geo position" Command="{Binding ShowGeoDataCommand}"/>
                       <!-- <MenuItem Header="Find nearest photo"/> -->
                       <MenuItem Header="Show all metadata" Command="{Binding ShowAllMetadataCommand}"/>
+                      <MenuItem Header="{Binding BoundBoxesStateString}" Command="{Binding SwitchBoundBoxesVisibilityCommand}"/>
                     </ContextMenu>
                   </Canvas.ContextMenu>
                 </Canvas>  
@@ -133,7 +134,8 @@
               <DataTemplate DataType="{x:Type models:BoundBox}">
                 <Polygon
                   Points="{Binding Points}"
-                  Stroke="Red" StrokeThickness="10" />
+                  Stroke="Red" StrokeThickness="10"
+                  IsVisible="{Binding IsVisible}"/>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
