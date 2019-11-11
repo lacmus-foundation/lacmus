@@ -80,20 +80,48 @@
           <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
         
-        <ListBox Grid.Column="0" Grid.Row="0" 
-                 x:Name="ImageList" 
-                 Items="{Binding Frames}"
-                 SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
-          <ListBox.DataTemplates>
-            <DataTemplate DataType="{x:Type models:Frame}">
-              <StackPanel Margin="25,5" Orientation="Vertical">
-                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
-                <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.DataTemplates>
-        </ListBox>
-
+        <TabControl Grid.Column="0" Grid.Row="0">
+          <TabItem Header="All" VerticalContentAlignment="Center">
+            <ListBox x:Name="ImageList" 
+                     Items="{Binding Frames}"
+                     SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+              <ListBox.DataTemplates>
+                <DataTemplate DataType="{x:Type models:Frame}">
+                  <StackPanel Margin="25,5" Orientation="Vertical">
+                    <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.DataTemplates>
+            </ListBox>
+          </TabItem>
+          <TabItem Header="Pedestrians" VerticalContentAlignment="Center">
+            <ListBox Items="{Binding Frames}"
+                     SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+              <ListBox.DataTemplates>
+                <DataTemplate DataType="{x:Type models:Frame}">
+                  <StackPanel Margin="25,5" Orientation="Vertical">
+                    <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.DataTemplates>
+            </ListBox>
+          </TabItem>
+          <TabItem Header="Favorites" VerticalContentAlignment="Center">
+            <ListBox Items="{Binding Frames}"
+                     SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+              <ListBox.DataTemplates>
+                <DataTemplate DataType="{x:Type models:Frame}">
+                  <StackPanel Margin="25,5" Orientation="Vertical">
+                    <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
+                    <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.DataTemplates>
+            </ListBox>
+          </TabItem>
+        </TabControl>
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
           <CheckBox Name="cbShowPedestrians" Content="Show pedestrians" Margin="5,0,2.5,0"
                     IsChecked="{Binding IsShowPedestrians}" Command="{Binding ShowPerestriansCommand}"/>
