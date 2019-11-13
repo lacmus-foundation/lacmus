@@ -52,6 +52,7 @@ namespace RescuerLaApp.Models
         public int Height { get; private set; }
 
         public bool IsVisible { get; set; } = false;
+        public bool IsFavorite { get; set; } = false;
         
         public delegate void MethodContainer();
 

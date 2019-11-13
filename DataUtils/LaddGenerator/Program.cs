@@ -44,12 +44,17 @@ namespace LaddGenerator
             {
                 Directory.CreateDirectory(annDstPatch);
             }
+            if (!Directory.Exists(spltDstPatch))
+            {
+                Directory.CreateDirectory(spltDstPatch);
+            }
 
             var srcFiles = Directory.GetFiles(annSrcPatch);
             var dstImgFileNames = Directory.GetFiles(imgDstPatch);
             int count = 0; //420;
+            int beginCount = 769;
             if (dstImgFileNames == null || dstImgFileNames.Length == 0)
-                count = 0;
+                count = beginCount;
             else
             {
                 count = dstImgFileNames.Length;
@@ -73,7 +78,7 @@ namespace LaddGenerator
                     if (dstAnnotation.Objects == null || dstAnnotation.Objects.Count <= 0)
                     {
                         dstAnnotation.Objects = new List<Object>();
-                        throw new Exception("no objects in the image!");
+                        //throw new Exception("no objects in the image!");
                     }
                     foreach (var obj in dstAnnotation.Objects)
                     {
@@ -93,7 +98,7 @@ namespace LaddGenerator
             
             Console.Write($"Shuffling {count-1} files");
             List<int> files = new List<int>();
-            for (int i = 0; i < count; i++)
+            for (int i = beginCount; i < count; i++)
             {
                 files.Add(i);
             }
