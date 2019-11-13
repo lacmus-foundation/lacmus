@@ -10,6 +10,7 @@ namespace RescuerLaApp.Models
         private int _y;
         private int _height;
         private int _width;
+        private bool _isVisible;
         private readonly int _xBase;
         private readonly int _yBase;
         private readonly int _heightBase;
@@ -21,6 +22,7 @@ namespace RescuerLaApp.Models
             _y = _yBase = y;
             _width = _widthBase = width;
             _height = _heightBase = height;
+            _isVisible = true;
         }
 
         public List<Point> Points
@@ -34,6 +36,13 @@ namespace RescuerLaApp.Models
                 return new List<Point>() {p1, p3, p4, p2};
             }
         }
+
+        public bool IsVisible
+        {
+            get => _isVisible;
+            set => _isVisible = value;
+        }
+
         public int X
         {
             get => _x;
