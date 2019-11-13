@@ -76,10 +76,13 @@ namespace RescuerLaApp.ViewModels
             LoadModelCommand = ReactiveCommand.Create(LoadModel, canExecute);
             UpdateModelCommand = ReactiveCommand.Create(UpdateModel, canExecute);
             ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
+            ShowFavoritesCommand = ReactiveCommand.Create(ShowFavorites, canExecute);
             ImportAllCommand = ReactiveCommand.Create(ImportAll, canExecute);
             SaveAllImagesWithObjectsCommand = ReactiveCommand.Create(SaveAllImagesWithObjects, canExecute);
+            SaveFavoritesImagesCommand = ReactiveCommand.Create(SaveFavoritesImages, canExecute);
             ShowAllMetadataCommand = ReactiveCommand.Create(ShowAllMetadata, canExecute);
             ShowGeoDataCommand = ReactiveCommand.Create(ShowGeoData, canExecute);
+            AddToFavoritesCommand = ReactiveCommand.Create(AddToFavorites, canExecute);
             SwitchBoundBoxesVisibilityCommand = ReactiveCommand.Create(SwitchBoundBoxesVisibility, canSwitchBoundBox);
             HelpCommand = ReactiveCommand.Create(Help);
             AboutCommand = ReactiveCommand.Create(About);
@@ -101,6 +104,10 @@ namespace RescuerLaApp.ViewModels
                             StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Patch}"
                         };
                     SwitchBoundBoxesVisibilityToTrue();
+                    if (Frames[SelectedIndex].IsFavorite)
+                        FavoritesStateString = "Remove from favorites";
+                    else
+                        FavoritesStateString = "Add to favorites";
                     UpdateUi();
                 });
         }
@@ -110,6 +117,7 @@ namespace RescuerLaApp.ViewModels
         [Reactive] public List<BoundBox> BoundBoxes { get; set; } = new List<BoundBox>();
         // TODO: update with locales
         [Reactive] public string BoundBoxesStateString { get; set; } = "Hide bound boxes";
+        [Reactive] public string FavoritesStateString { get; set; } = "Add to favorites";
         
         [Reactive] public double CanvasWidth { get; set; } = 500;
         
@@ -124,6 +132,7 @@ namespace RescuerLaApp.ViewModels
         [Reactive] public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
 
         [Reactive] public bool IsShowPedestrians { get; set; } = false;
+        [Reactive] public bool IsShowFavorites { get; set; } = false;
         
         public ReactiveCommand<Unit, Unit> PredictAllCommand { get; }
         
@@ -146,11 +155,12 @@ namespace RescuerLaApp.ViewModels
         public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; }
         
         public ReactiveCommand<Unit, Unit> ShowPerestriansCommand { get; }
-        
+        public ReactiveCommand<Unit, Unit> ShowFavoritesCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; }
-        
+        public ReactiveCommand<Unit, Unit> SaveFavoritesImagesCommand { get; }
         public ReactiveCommand<Unit, Unit> ShowAllMetadataCommand { get; }
         public ReactiveCommand<Unit, Unit> ShowGeoDataCommand { get; }
+        public ReactiveCommand<Unit, Unit> AddToFavoritesCommand { get; }
         public ReactiveCommand<Unit, Unit> SwitchBoundBoxesVisibilityCommand { get; }
         public ReactiveCommand<Unit, Unit> HelpCommand { get; }
         public ReactiveCommand<Unit, Unit> AboutCommand { get; }
@@ -166,12 +176,44 @@ namespace RescuerLaApp.ViewModels
         {
             if (IsShowPedestrians)
             {
-                //fix bug when application stop if focus was set on image without object
+                // fix bug when application stop if focus was set on image without object
                 if (!_frames.Any(x => x.IsVisible))
+                {
+                    IsShowPedestrians = false;
+                    if (IsShowFavorites)
+                    {
+                        IsShowFavorites = false;
+                        ShowFavorites();
+                    }
                     return;
+                }
+                IsShowFavorites = false;
                 SelectedIndex = Frames.FindIndex(x => x.IsVisible);
-                Console.WriteLine(SelectedIndex);
                 Frames = _frames.FindAll(x => x.IsVisible);
+                UpdateUi();
+            }
+            else
+            {
+                Frames = new List<Frame>(_frames);
+                UpdateUi();
+            }
+        }
+        
+        private void ShowFavorites()
+        {
+            if (IsShowFavorites)
+            {
+                //fix bug when application stop if focus was set on image without object
+                if (!_frames.Any(x => x.IsFavorite))
+                {
+                    IsShowFavorites = false;
+                    ShowPedestrians();
+                    return;
+                }
+                
+                IsShowPedestrians = false;
+                SelectedIndex = Frames.FindIndex(x => x.IsFavorite);
+                Frames = _frames.FindAll(x => x.IsFavorite);
                 UpdateUi();
             }
             else
@@ -453,6 +495,85 @@ namespace RescuerLaApp.ViewModels
             }
         }
         
+        private async void SaveFavoritesImages()
+        {
+            try
+            {
+                if (Frames == null || Frames.Count < 1)
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                Status = new AppStatusInfo() {Status = Enums.Status.Working};
+
+                var openDig = new OpenFolderDialog()
+                {
+                    Title = "Choose a directory to save images with objects"
+                };
+                var dirName = await openDig.ShowAsync(new Window());
+
+                
+                if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+                
+                foreach (var frame in Frames)
+                {
+                    if (!frame.IsFavorite)
+                        continue;
+                    
+                    var annotation = new Annotation();
+                    annotation.Filename = Path.GetFileName(frame.Patch);
+                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Patch));
+                    annotation.Segmented = 0;
+                    annotation.Size = new Models.Size()
+                    {
+                        Depth = 3,
+                        Height = frame.Height,
+                        Width = frame.Width
+                    };
+                    if (frame.Rectangles == null)
+                    {
+                        frame.Rectangles = new List<BoundBox>();
+                    }
+                    foreach (var rectangle in frame.Rectangles)
+                    {
+                        var o = new Models.Object();
+                        o.Name = "Pedestrian";
+                        o.Box = new Box()
+                        {
+                            Xmax = rectangle.XBase + rectangle.WidthBase,
+                            Ymax = rectangle.YBase + rectangle.HeightBase,
+                            Xmin = rectangle.XBase,
+                            Ymin = rectangle.YBase
+                        };
+                        annotation.Objects.Add(o);
+                    }
+
+                    annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
+                    
+                    if (frame.Rectangles.Count == 0)
+                    {
+                        frame.Rectangles = null;
+                    }
+                    
+                    File.Copy(frame.Patch, Path.Combine(dirName, Path.GetFileName(frame.Patch)));
+                }
+                Console.WriteLine($"Saved to {dirName}");
+                Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
+            }
+            catch (Exception ex)
+            {
+                Status = new AppStatusInfo()
+                {
+                    Status = Enums.Status.Error, 
+                    StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
+                };
+            }
+        }
+
         private async void ImportAll()
         {
             Status = new AppStatusInfo() {Status = Enums.Status.Working};
@@ -582,7 +703,7 @@ namespace RescuerLaApp.ViewModels
                         tag.Name.ToLower() == "gps altitude")
                     {
                         rows++;
-                        msg += $"{tag.Name}: {tag.Description}\n";
+                        msg += $"{tag.Name}: {TranslateGeoTag(tag.Description)}\n";
                     }
                 }
             }
@@ -605,6 +726,36 @@ namespace RescuerLaApp.ViewModels
                 }
             });
             msgbox.Show();
+        }
+
+        private string TranslateGeoTag(string tag)
+        {
+            /*
+            GPS Latitude: 55° 11' 51,44"
+            GPS Longitude: 37° 41' 39,88"
+            GPS Altitude: 124 metres
+            */
+            try
+            {
+                if (!tag.Contains('°'))
+                    return tag;
+                tag = tag.Replace('°', ';');
+                tag = tag.Replace('\'', ';');
+                tag = tag.Replace('"', ';');
+                tag = tag.Replace(" ", "");
+            
+                var splitTag = tag.Split(';');
+                var grad = float.Parse(splitTag[0]);
+                var min = float.Parse(splitTag[1]);
+                var sec = float.Parse(splitTag[2]);
+
+                float result = grad + min / 60 + sec / 3600;
+                return $"{result}";
+            }
+            catch (Exception e)
+            {
+                return tag;
+            }
         }
 
         public void ShowAllMetadata()
@@ -635,6 +786,27 @@ namespace RescuerLaApp.ViewModels
                 }
             });
             msgbox.Show();
+        }
+
+        public void AddToFavorites()
+        {
+            Frames[SelectedIndex].IsFavorite = !Frames[SelectedIndex].IsFavorite;
+            
+            if (IsShowFavorites)
+            {
+                IsShowPedestrians = false;
+                //fix bug when application stop if focus was set on image without object
+                if (!_frames.Any(x => x.IsFavorite))
+                {
+                    IsShowFavorites = false;
+                    ShowFavorites();
+                    return;
+                }
+                    
+                SelectedIndex = Frames.FindIndex(x => x.IsFavorite);
+                Frames = _frames.FindAll(x => x.IsFavorite);
+                UpdateUi();
+            }
         }
 
         public void SwitchBoundBoxesVisibility()
@@ -685,7 +857,7 @@ namespace RescuerLaApp.ViewModels
                     new ButtonDefinition{Name = "Github"}
                 },
                 ContentTitle = "About",
-                ContentHeader = "Lacmus desktop application. Version 0.3.2-preview alpha.",
+                ContentHeader = "Lacmus desktop application. Version 0.3.2 alpha.",
                 ContentMessage = message,
                 Icon = Icon.Avalonia,
                 Style = Style.None,

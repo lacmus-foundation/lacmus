@@ -25,6 +25,7 @@
           <MenuItem Name="mFileExportAll" Header="Import all from XML..." Command="{Binding ImportAllCommand}"/>
           <MenuItem Name="mFileSave" Header="Save all" Command="{Binding SaveAllCommand}"/>
           <MenuItem Name="mFileSaveAllImagesWithObjects" Header="Save only images with pedestrians" Command="{Binding SaveAllImagesWithObjectsCommand}"/>
+          <MenuItem Name="mFileSaveFavorites" Header="Save favorites images" Command="{Binding SaveFavoritesImagesCommand}"/>
           <Separator></Separator>
           <MenuItem Name="mSIgnIn" Header="Sign in" Command="{Binding SignInCommand}"/>
           <MenuItem Name="mSignUp" Header="Sign up" Command="{Binding SignUpCommand}"/>
@@ -77,9 +78,24 @@
       <Grid Name="ImageView" Grid.Column="0" Grid.Row="0" Background="White">
         <Grid.RowDefinitions>
           <RowDefinition/>
-          <RowDefinition Height="40"/>
+          <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
         
+        <ListBox Grid.Column="0" Grid.Row="0"
+                 x:Name="ImageList" 
+                 Items="{Binding Frames}"
+                 SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}">
+          <ListBox.DataTemplates>
+            <DataTemplate DataType="{x:Type models:Frame}">
+              <StackPanel Margin="25,5" Orientation="Vertical">
+                <Canvas Width="100" Height="150" HorizontalAlignment="Stretch" Background="{Binding ImageBrush}"/>
+                <TextBlock Margin="0,5" HorizontalAlignment="Center" Text="{Binding Name}"></TextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.DataTemplates>
+        </ListBox>
+        
+        <!--
         <TabControl Grid.Column="0" Grid.Row="0">
           <TabItem Header="All" VerticalContentAlignment="Center">
             <ListBox x:Name="ImageList" 
@@ -122,9 +138,13 @@
             </ListBox>
           </TabItem>
         </TabControl>
-        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="White">
-          <CheckBox Name="cbShowPedestrians" Content="Show pedestrians" Margin="5,0,2.5,0"
+        -->
+        
+        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Vertical" Background="White">
+          <CheckBox Name="cbShowPedestrians" Content="Show pedestrians" Margin="5,2,2,1"
                     IsChecked="{Binding IsShowPedestrians}" Command="{Binding ShowPerestriansCommand}"/>
+          <CheckBox Name="cbShowFavorites" Content="Show favorites" Margin="5,1,2,2"
+                    IsChecked="{Binding IsShowFavorites}" Command="{Binding ShowFavoritesCommand}"/>
         </StackPanel>
       </Grid>
       <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden">
@@ -149,10 +169,13 @@
                   Width="{Binding CanvasWidth, Mode=TwoWay}">
                   <Canvas.ContextMenu>
                     <ContextMenu>
+                      <MenuItem Header="{Binding BoundBoxesStateString}" Command="{Binding SwitchBoundBoxesVisibilityCommand}"/>
+                      <Separator/>
                       <MenuItem Header="Show geo position" Command="{Binding ShowGeoDataCommand}"/>
                       <!-- <MenuItem Header="Find nearest photo"/> -->
                       <MenuItem Header="Show all metadata" Command="{Binding ShowAllMetadataCommand}"/>
-                      <MenuItem Header="{Binding BoundBoxesStateString}" Command="{Binding SwitchBoundBoxesVisibilityCommand}"/>
+                      <Separator/>
+                      <MenuItem Header="{Binding FavoritesStateString}" Command="{Binding AddToFavoritesCommand}"/>
                     </ContextMenu>
                   </Canvas.ContextMenu>
                 </Canvas>  
