@@ -89,7 +89,7 @@ namespace RescuerLaApp.Views
                 buttonPanel.Children.Add(btn);
             }
             
-            AddButton("Sign Ip");
+            AddButton("Sign In");
             var tcs = new TaskCompletionSource<SignInResult>();
             msgbox.Closed += delegate { tcs.TrySetResult(res); };
             if (parent != null)
