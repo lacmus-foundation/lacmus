@@ -860,7 +860,7 @@ namespace RescuerLaApp.ViewModels
                     new ButtonDefinition{Name = "Github"}
                 },
                 ContentTitle = "About",
-                ContentHeader = "Lacmus desktop application. Version 0.3.2 alpha.",
+                ContentHeader = "Lacmus desktop application. Version 0.3.3 alpha.",
                 ContentMessage = message,
                 Icon = Icon.Avalonia,
                 Style = Style.None,
