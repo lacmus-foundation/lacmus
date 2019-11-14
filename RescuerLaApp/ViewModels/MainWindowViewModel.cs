@@ -89,6 +89,9 @@ namespace RescuerLaApp.ViewModels
             SignUpCommand = ReactiveCommand.Create(SignUp, canAuth);
             SignInCommand = ReactiveCommand.Create(SignIn, canAuth);
             ExitCommand = ReactiveCommand.Create(Exit);
+            
+            //auto sign in
+            SignIn();
         }
 
         public void UpdateFramesRepo()
@@ -887,6 +890,16 @@ namespace RescuerLaApp.ViewModels
         }
         public async void SignIn()
         {
+            var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+            if (File.Exists(patch))
+            {
+                if (Status.Status == Enums.Status.Unauthenticated)
+                {
+                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    return;
+                }
+            }
+            
             var result = await Views.SignInWindow.Show(null);
             if(Status.Status == Enums.Status.Unauthenticated && result.IsSignIn)
                 Status = new AppStatusInfo() {Status = Enums.Status.Ready};

@@ -54,17 +54,17 @@
       </Menu>
       <ToolTip>
         <StackPanel Orientation="Horizontal">
-          <Button Name="bSignIn" Command="{Binding SignInCommand}">Suin In</Button>
-          <Button Name="bOpen" Command="{Binding OpenFileCommand}">Open</Button>
-          <Button Name="bPredict" Command="{Binding PredictAllCommand}">Predict all</Button>
+          <!-- <Button Name="bSignIn" Command="{Binding SignInCommand}">Suin In</Button> -->
+          <Button Name="bOpen" Margin="1" Command="{Binding OpenFileCommand}">Open</Button>
+          <Button Name="bPredict" Margin="1" Command="{Binding PredictAllCommand}">Predict all</Button>
           <Separator/>
-          <Button Name="bSave" Command="{Binding SaveAllCommand}">Save all</Button>
+          <Button Name="bSave" Margin="1" Command="{Binding SaveAllCommand}">Save all</Button>
           <Separator/>
-          <Button Name="bImageIncrease" Command="{Binding IncreaseCanvasCommand}">Increase</Button>
-          <Button Name="bImageShrink" Command="{Binding ShrinkCanvasCommand}">Shrink</Button>
+          <Button Name="bImageIncrease" Margin="1" Command="{Binding IncreaseCanvasCommand}">Increase</Button>
+          <Button Name="bImageShrink" Margin="1" Command="{Binding ShrinkCanvasCommand}">Shrink</Button>
           <Separator/>
-          <Button Name="bImagePrev" Command="{Binding PrevImageCommand}">Prev</Button>
-          <Button Name="bImageNext" Command="{Binding NextImageCommand}">Next</Button>
+          <Button Name="bImagePrev" Margin="1" Command="{Binding PrevImageCommand}">Prev</Button>
+          <Button Name="bImageNext" Margin="1" Command="{Binding NextImageCommand}">Next</Button>
         </StackPanel>
       </ToolTip>
     </StackPanel>
