@@ -16,9 +16,9 @@ The project is being developed by a non-profit organization Liza Alert.
 
 *Picture 2*
 
-[![vidio](http://img.youtube.com/vi/9pVtPM4bzww/0.jpg)](http://www.youtube.com/watch?v=9pVtPM4bzww)
+[![video](http://img.youtube.com/vi/9pVtPM4bzww/0.jpg)](http://www.youtube.com/watch?v=9pVtPM4bzww)
 
-*Vidio 1*
+*Video 1*
 
 See [more examples](docs/work-demo.md).
 
