@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using MessageBox.Avalonia;
@@ -23,9 +24,10 @@ namespace RescuerLaApp.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject
     {
+        private INeuroModel _model = null; // TODO : Make field readonly 
+
         private readonly Window _window;
         private int _frameLoadProgressIndex;
-        private NeuroModel _model = null;
         private List<Frame> _frames = new List<Frame>();
         
         public MainWindowViewModel(Window window)
@@ -236,7 +238,7 @@ namespace RescuerLaApp.ViewModels
             
             if (_model == null)
             {
-                _model = new NeuroModel();
+                _model = AvaloniaLocator.Current.GetService<INeuroModel>();
             }
 
             await _model.Load();
@@ -257,7 +259,7 @@ namespace RescuerLaApp.ViewModels
             
             if (_model == null)
             {
-                _model = new NeuroModel();
+                _model = AvaloniaLocator.Current.GetService<INeuroModel>();
             }
             
             await _model.UpdateModel();
@@ -279,7 +281,7 @@ namespace RescuerLaApp.ViewModels
             
             if (_model == null)
             {
-                _model = new NeuroModel();
+                _model = AvaloniaLocator.Current.GetService<INeuroModel>();
             }
 
             var isLoaded = await _model.Run();

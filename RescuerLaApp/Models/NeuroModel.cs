@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using  Newtonsoft.Json;
 
 namespace RescuerLaApp.Models
 {
-    public class NeuroModel : IDisposable
+    public class NeuroModel : INeuroModel 
     {
         private readonly RestApiClient _client;
         private Docker _docker;
@@ -179,7 +177,6 @@ namespace RescuerLaApp.Models
             {
                 // ignored
             }
-            
         }
     }
 }
