@@ -18,6 +18,7 @@ namespace RescuerLaApp.Models
         {
             _baseUrl = baseUrl;
         }
+
         #region Ping
         /// <summary>
         /// ping host and check if it active

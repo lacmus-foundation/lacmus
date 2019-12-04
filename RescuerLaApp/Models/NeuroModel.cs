@@ -9,7 +9,7 @@ namespace RescuerLaApp.Models
     public class NeuroModel : INeuroModel 
     {
         private readonly RestApiClient _client;
-        private Docker _docker;
+        private readonly Docker _docker;
         private string _id = "";
         
         
@@ -37,7 +37,7 @@ namespace RescuerLaApp.Models
             {
                 Console.WriteLine("Container runs. Loading retina-net model...");
                 var startTime = DateTime.Now;
-                TimeSpan waitingTime = new TimeSpan(0, 0, 10, 0);
+                var waitingTime = new TimeSpan(0, 0, 10, 0);
                 while (DateTime.Now - startTime < waitingTime)
                 {
                     // Provide a 100ms startup delay
@@ -79,11 +79,7 @@ namespace RescuerLaApp.Models
                     var y2 = ooj.Ymax;
                     var score = ooj.Score;
                     var label = ooj.Name;
-                    var rect = new BoundBox(
-                        x1,
-                        y1,
-                        y2-y1,
-                        x2-x1);
+                    var rect = new BoundBox(x1, y1, y2-y1, x2-x1);
                     list.Add(rect);
                     Console.WriteLine("\t{0}: {1:P1}", label, double.Parse(score.Replace('.',',')));
                 }

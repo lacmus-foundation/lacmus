@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 
 namespace RescuerLaApp.Models
@@ -7,11 +6,11 @@ namespace RescuerLaApp.Models
     {
         public string Execute(string command, out string standardError)
         {
-            string outputText = string.Empty;
+            var outputText = string.Empty;
             standardError = string.Empty;
             try
             {
-                using (Process process = new Process())
+                using (var process = new Process())
                 {
                     process.StartInfo = new ProcessStartInfo
                     {
@@ -28,9 +27,9 @@ namespace RescuerLaApp.Models
                     process.WaitForExit();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                string exceptionMessage = ex.Message;
+                
             }
             return outputText;
         }

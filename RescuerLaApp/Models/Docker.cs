@@ -13,8 +13,8 @@ namespace RescuerLaApp.Models
     {
         private readonly DockerClient _client;
         private const int API_VER = 1;
-        private readonly bool IS_GPU = false;
-        
+        private const bool IS_GPU = false;
+
         public Docker()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -38,12 +38,7 @@ namespace RescuerLaApp.Models
         
         public async Task Initialize(string imageName = "gosha20777/test", string tag = "1")
         {
-            if(IS_GPU)
-                tag = $"gpu-{API_VER}.{tag}";
-            else
-            {
-                tag = $"{API_VER}.{tag}";
-            }
+            tag = IS_GPU ? $"gpu-{API_VER}.{tag}" : $"{API_VER}.{tag}";
             try
             {
                 var progressDictionary = new Dictionary<string, string>();
@@ -61,14 +56,8 @@ namespace RescuerLaApp.Models
                     {
                         if (progressDictionary.ContainsKey(message.ID) && message.Status.Contains("Pull complete"))
                         {
-                            var count = 0;
                             progressDictionary[message.ID] = message.Status;
-                            foreach (var (_, value) in progressDictionary)
-                            {
-                                if (value.Contains("Pull complete"))
-                                    count++;
-
-                            }
+                            var count = progressDictionary.Cast<string>().Count(value => value.Contains("Pull complete"));
                             Console.WriteLine($"{count}/{progressDictionary.Count-1}");
                         }
                         else
@@ -103,12 +92,7 @@ namespace RescuerLaApp.Models
 
         public async Task<string> CreateContainer(string imageName = "gosha20777/test", string tag = "1")
         {
-            if(IS_GPU)
-                tag = $"gpu-{API_VER}.{tag}";
-            else
-            {
-                tag = $"{API_VER}.{tag}";
-            }
+            tag = IS_GPU ? $"gpu-{API_VER}.{tag}" : $"{API_VER}.{tag}";
             try
             {
                 var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
@@ -123,9 +107,9 @@ namespace RescuerLaApp.Models
 
                 if (IS_GPU)
                 {
-                    string err = "", stdOut = "";
+                    var stdOut = "";
                     var bash = new BashCommand();
-                    stdOut = bash.Execute($"docker create --runtime=nvidia -p 5000:5000 {imageName}:{tag}", out err);
+                    stdOut = bash.Execute($"docker create --runtime=nvidia -p 5000:5000 {imageName}:{tag}", out var err);
                     
                     await Task.Delay(800);
                     stdOut = stdOut.Replace(Environment.NewLine, String.Empty);
@@ -163,7 +147,6 @@ namespace RescuerLaApp.Models
             {
                 throw new Exception($"Unable to create docker container: {e.Message}");
             }
-            
         }
 
         public async Task<bool> Run(string id)
@@ -262,12 +245,7 @@ namespace RescuerLaApp.Models
 
         public async Task Remove(string imageName = "gosha20777/test", string tag = "1")
         {
-            if(IS_GPU)
-                tag = $"gpu-{API_VER}.{tag}";
-            else
-            {
-                tag = $"{API_VER}.{tag}";
-            }
+            tag = IS_GPU ? $"gpu-{API_VER}.{tag}" : $"{API_VER}.{tag}";
             try
             {
                 //stop and remove all containers

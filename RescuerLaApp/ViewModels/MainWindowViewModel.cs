@@ -63,10 +63,6 @@ namespace RescuerLaApp.ViewModels
                 .WhenAnyValue(x => x.Status)
                 .Select(status => status.Status == Enums.Status.Unauthenticated);
             
-            var canShowPedestrians = this
-                .WhenAnyValue(x => x._frames)
-                .Select(frames => frames.Any(x => x.IsVisible));
-            
             // The bound button will stay disabled, when
             // there are no frames before the current one.
             PrevImageCommand = ReactiveCommand.Create(
@@ -81,7 +77,7 @@ namespace RescuerLaApp.ViewModels
             SaveAllCommand = ReactiveCommand.Create(SaveAll, canExecute);
             LoadModelCommand = ReactiveCommand.Create(LoadModel, canExecute);
             UpdateModelCommand = ReactiveCommand.Create(UpdateModel, canExecute);
-            ShowPerestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
+            ShowPedestriansCommand = ReactiveCommand.Create(ShowPedestrians, canExecute);
             ShowFavoritesCommand = ReactiveCommand.Create(ShowFavorites, canExecute);
             ImportAllCommand = ReactiveCommand.Create(ImportAll, canExecute);
             SaveAllImagesWithObjectsCommand = ReactiveCommand.Create(SaveAllImagesWithObjects, canExecute);
@@ -113,10 +109,7 @@ namespace RescuerLaApp.ViewModels
                             StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Path}"
                         };
                     SwitchBoundBoxesVisibilityToTrue();
-                    if (Frames[SelectedIndex].IsFavorite)
-                        FavoritesStateString = "Remove from favorites";
-                    else
-                        FavoritesStateString = "Add to favorites";
+                    FavoritesStateString = Frames[SelectedIndex].IsFavorite ? "Remove from favorites" : "Add to favorites";
                     UpdateUi();
                 });
         }
@@ -163,7 +156,7 @@ namespace RescuerLaApp.ViewModels
         
         public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; }
         
-        public ReactiveCommand<Unit, Unit> ShowPerestriansCommand { get; }
+        public ReactiveCommand<Unit, Unit> ShowPedestriansCommand { get; }
         public ReactiveCommand<Unit, Unit> ShowFavoritesCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveFavoritesImagesCommand { get; }
@@ -288,8 +281,7 @@ namespace RescuerLaApp.ViewModels
                 _model = AvaloniaLocator.Current.GetService<INeuroModel>();
             }
 
-            var isLoaded = await _model.Run();
-            if (!isLoaded)
+            if (!await _model.Run())
             {
                 Status = new AppStatusInfo
                 {
@@ -434,16 +426,17 @@ namespace RescuerLaApp.ViewModels
                     };
                     foreach (var rectangle in frame.Rectangles)
                     {
-                        var o = new Object();
-                        o.Name = "Pedestrian";
-                        o.Box = new Box
+                        annotation.Objects.Add(new Object
                         {
-                            Xmax = rectangle.XBase + rectangle.WidthBase,
-                            Ymax = rectangle.YBase + rectangle.HeightBase,
-                            Xmin = rectangle.XBase,
-                            Ymin = rectangle.YBase
-                        };
-                        annotation.Objects.Add(o);
+                            Name = "Pedestrian",
+                            Box = new Box
+                            {
+                                Xmax = rectangle.XBase + rectangle.WidthBase,
+                                Ymax = rectangle.YBase + rectangle.HeightBase,
+                                Xmin = rectangle.XBase,
+                                Ymin = rectangle.YBase
+                            }
+                        });
                     }
 
                     annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
@@ -485,10 +478,8 @@ namespace RescuerLaApp.ViewModels
                     return;
                 }
                 
-                foreach (var frame in Frames)
+                foreach (var frame in Frames.Where(frame => frame.Rectangles != null && frame.Rectangles.Any()))
                 {
-                    if (frame.Rectangles == null || !frame.Rectangles.Any())
-                        continue;
                     File.Copy(frame.Path, Path.Combine(dirName, Path.GetFileName(frame.Path)));
                 }
                 Console.WriteLine($"Saved to {dirName}");
@@ -532,16 +523,13 @@ namespace RescuerLaApp.ViewModels
                 {
                     if (!frame.IsFavorite)
                         continue;
-                    
-                    var annotation = new Annotation();
-                    annotation.Filename = Path.GetFileName(frame.Path);
-                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Path));
-                    annotation.Segmented = 0;
-                    annotation.Size = new Size
+
+                    var annotation = new Annotation
                     {
-                        Depth = 3,
-                        Height = frame.Height,
-                        Width = frame.Width
+                        Filename = Path.GetFileName(frame.Path),
+                        Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Path)),
+                        Segmented = 0,
+                        Size = new Size {Depth = 3, Height = frame.Height, Width = frame.Width}
                     };
                     if (frame.Rectangles == null)
                     {
@@ -549,16 +537,17 @@ namespace RescuerLaApp.ViewModels
                     }
                     foreach (var rectangle in frame.Rectangles)
                     {
-                        var o = new Object();
-                        o.Name = "Pedestrian";
-                        o.Box = new Box
+                        annotation.Objects.Add(new Object
                         {
-                            Xmax = rectangle.XBase + rectangle.WidthBase,
-                            Ymax = rectangle.YBase + rectangle.HeightBase,
-                            Xmin = rectangle.XBase,
-                            Ymin = rectangle.YBase
-                        };
-                        annotation.Objects.Add(o);
+                            Name = "Pedestrian",
+                            Box = new Box
+                            {
+                                Xmax = rectangle.XBase + rectangle.WidthBase,
+                                Ymax = rectangle.YBase + rectangle.HeightBase,
+                                Xmin = rectangle.XBase,
+                                Ymin = rectangle.YBase
+                            }
+                        });
                     }
 
                     annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
@@ -604,13 +593,8 @@ namespace RescuerLaApp.ViewModels
                 Frames.Clear(); _frames.Clear(); GC.Collect();
                 
                 var loadingFrames = new List<Frame>();
-                var annotations = new List<Annotation>();
-                foreach (var fileName in fileNames)
-                {
-                    if (Path.GetExtension(fileName).ToLower() != ".xml")
-                        continue;
-                    annotations.Add(Annotation.ParseFromXml(fileName));
-                }
+                var annotations = fileNames.Where(i => Path.GetExtension(i).ToLower() == ".xml")
+                    .Select(Annotation.ParseFromXml).ToList();
 
                 foreach (var ann in annotations)
                 {
@@ -690,22 +674,18 @@ namespace RescuerLaApp.ViewModels
         
         public void ShowGeoData()
         {
-            string msg = string.Empty;
-            int rows = 0;
+            var msg = string.Empty;
+            var rows = 0;
             var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Path);
             foreach (var directory in directories)
             foreach (var tag in directory.Tags)
             {
-                if (directory.Name.ToLower() == "gps")
-                {
-                    if (tag.Name.ToLower() == "gps latitude" ||
-                        tag.Name.ToLower() == "gps longitude" ||
-                        tag.Name.ToLower() == "gps altitude")
-                    {
-                        rows++;
-                        msg += $"{tag.Name}: {TranslateGeoTag(tag.Description)}\n";
-                    }
-                }
+                if (directory.Name.ToLower() != "gps") continue;
+                if (tag.Name.ToLower() != "gps latitude" && tag.Name.ToLower() != "gps longitude" &&
+                    tag.Name.ToLower() != "gps altitude") continue;
+
+                rows++;
+                msg += $"{tag.Name}: {TranslateGeoTag(tag.Description)}\n";
             }
 
             if (rows != 3)
@@ -749,10 +729,10 @@ namespace RescuerLaApp.ViewModels
                 var min = float.Parse(splitTag[1]);
                 var sec = float.Parse(splitTag[2]);
 
-                float result = grad + min / 60 + sec / 3600;
+                var result = grad + min / 60 + sec / 3600;
                 return $"{result}";
             }
-            catch (Exception e)
+            catch
             {
                 return tag;
             }
@@ -822,10 +802,7 @@ namespace RescuerLaApp.ViewModels
                 rectangle.IsVisible = !isVisible;
             }
 
-            if (BoundBoxes[0].IsVisible)
-                BoundBoxesStateString = "Hide bound boxes";
-            else
-                BoundBoxesStateString = "Show bound boxes";
+            BoundBoxesStateString = BoundBoxes[0].IsVisible ? "Hide bound boxes" : "Show bound boxes";
             
             UpdateUi();
         }
@@ -904,11 +881,10 @@ namespace RescuerLaApp.ViewModels
         
         public async void Exit()
         {
-            var message = "Do you really want to exit?";
             var window = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
                 ContentTitle = "Exit",
-                ContentMessage = message,
+                ContentMessage = "Do you really want to exit?",
                 Icon = Icon.Info,
                 Style = Style.None,
                 ShowInCenter = true,

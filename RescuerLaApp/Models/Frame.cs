@@ -56,13 +56,13 @@ namespace RescuerLaApp.Models
                         Height = Bitmap.PixelSize.Height;
                         break;
                     case Enums.ImageLoadMode.Miniature:
-                        using (SKStream stream = new SKFileStream(imgFileName))
-                        using (SKBitmap src = SKBitmap.Decode(stream))
+                        using (var stream = new SKFileStream(imgFileName))
+                        using (var src = SKBitmap.Decode(stream))
                         {
                             Width = src.Width;
                             Height = src.Height;
-                            float scale = 100f / src.Width;
-                            SKBitmap resized = new SKBitmap(
+                            var scale = 100f / src.Width;
+                            var resized = new SKBitmap(
                                 (int)(src.Width * scale),
                                 (int)(src.Height * scale), 
                                 src.ColorType, 
