@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
@@ -48,7 +47,7 @@ namespace RescuerLaApp.Models
             try
             {
                 var progressDictionary = new Dictionary<string, string>();
-                var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = $"{imageName}:{tag}"});
+                var images = await _client.Images.ListImagesAsync(new ImagesListParameters {MatchName = $"{imageName}:{tag}"});
                 if (images.Count > 0)
                 {
                     Console.WriteLine($"such image already exists: {images.First().ID}");
@@ -112,7 +111,7 @@ namespace RescuerLaApp.Models
             }
             try
             {
-                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters(){All = true});
+                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
                 foreach (var container in containers)
                 {
                     if (container.Image == $"{imageName}:{tag}")
@@ -148,7 +147,8 @@ namespace RescuerLaApp.Models
                                 { "5000", new List<PortBinding> { new PortBinding { HostPort = "5000" } } }
                             }
                         },
-                        ExposedPorts = new Dictionary<string, EmptyStruct>() {
+                        ExposedPorts = new Dictionary<string, EmptyStruct>
+                        {
                             { "5000", new EmptyStruct() }
                         }
                     });
@@ -170,7 +170,7 @@ namespace RescuerLaApp.Models
         {
             try
             {
-                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters(){All = true});
+                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
                 foreach (var container in containers)
                 {
                     if (container.ID == id && container.Status.Contains("Up"))
@@ -190,7 +190,7 @@ namespace RescuerLaApp.Models
 
         public async Task StopAll(string imageName = "gosha20777/test")
         {
-            var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters(){All = true});
+            var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
             foreach (var container in containers)
             {
                 if (container.Image.Contains(imageName) && container.Status.Contains("Up"))
@@ -206,7 +206,7 @@ namespace RescuerLaApp.Models
         {
             try
             {
-                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters(){All = true});
+                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
                 foreach (var container in containers)
                 {
                     if (container.ID == id && container.Status.Contains("Exited"))
@@ -271,17 +271,17 @@ namespace RescuerLaApp.Models
             try
             {
                 //stop and remove all containers
-                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters(){All = true});
+                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
                 foreach (var container in containers)
                 {
                     if (container.Image == $"{imageName}:{tag}")
                     {
                         await Stop(container.ID);
-                        await _client.Containers.RemoveContainerAsync(container.ID, new ContainerRemoveParameters(){Force = true});
+                        await _client.Containers.RemoveContainerAsync(container.ID, new ContainerRemoveParameters {Force = true});
                     }
                 }
                 
-                var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = $"{imageName}:{tag}"});
+                var images = await _client.Images.ListImagesAsync(new ImagesListParameters {MatchName = $"{imageName}:{tag}"});
                 foreach (var image in images)
                 {
                     await _client.Images.DeleteImageAsync(image.ID, new ImageDeleteParameters {Force = true});
@@ -297,7 +297,7 @@ namespace RescuerLaApp.Models
         {
             var tags = new List<string>();
             var res_tags = new List<string>();
-            var images = await _client.Images.ListImagesAsync(new ImagesListParameters(){MatchName = imageName});
+            var images = await _client.Images.ListImagesAsync(new ImagesListParameters {MatchName = imageName});
             foreach (var image in images)
             {
                 tags.AddRange(image.RepoTags);

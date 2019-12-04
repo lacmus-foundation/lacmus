@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Reactive.Disposables;
 
 namespace RescuerLaApp.Models
 {
@@ -14,7 +13,7 @@ namespace RescuerLaApp.Models
             {
                 using (Process process = new Process())
                 {
-                    process.StartInfo = new ProcessStartInfo()
+                    process.StartInfo = new ProcessStartInfo
                     {
                         FileName = "/bin/bash",
                         Arguments = $"-c \"{command}\"",

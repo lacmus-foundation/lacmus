@@ -25,7 +25,7 @@ namespace RescuerLaApp.Views
             [JsonProperty("time")]
             public string Time { get; set; }
 
-            public bool IsSignIn { get; set; } = false;
+            public bool IsSignIn { get; set; }
         }
 
         public SignUpWindow()
@@ -36,7 +36,7 @@ namespace RescuerLaApp.Views
         public static Task<SignUpResult> Show(Window parent)
         {
             var title = "Create Account";
-            var msgbox = new SignUpWindow()
+            var msgbox = new SignUpWindow
             {
                 Title = title
             };

@@ -33,7 +33,7 @@ namespace RescuerLaApp.Models
                 var p2 = new Point(_x, _y + _height);
                 var p3 = new Point(_x + _width, _y);
                 var p4 = new Point(_x + _width, _y + _height);
-                return new List<Point>() {p1, p3, p4, p2};
+                return new List<Point> {p1, p3, p4, p2};
             }
         }
 

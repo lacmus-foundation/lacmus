@@ -1,7 +1,6 @@
-﻿using Avalonia.Media;
-using RescuerLaApp.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive;
@@ -9,6 +8,7 @@ using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
@@ -18,13 +18,17 @@ using MessageBox.Avalonia.Views;
 using MetadataExtractor;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using RescuerLaApp.Models;
+using RescuerLaApp.Views;
 using Directory = System.IO.Directory;
+using Object = RescuerLaApp.Models.Object;
+using Size = RescuerLaApp.Models.Size;
 
 namespace RescuerLaApp.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject
     {
-        private INeuroModel _model = null; // TODO : Make field readonly 
+        private INeuroModel _model; // TODO : Make field readonly 
 
         private readonly Window _window;
         private int _frameLoadProgressIndex;
@@ -128,7 +132,7 @@ namespace RescuerLaApp.ViewModels
         
         [Reactive] public double CanvasHeight { get; set; } = 500;
 
-        [Reactive] public int SelectedIndex { get; set; } = 0;
+        [Reactive] public int SelectedIndex { get; set; }
 
         [Reactive] public List<Frame> Frames { get; set; } = new List<Frame>();
         
@@ -136,8 +140,8 @@ namespace RescuerLaApp.ViewModels
         
         [Reactive] public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
 
-        [Reactive] public bool IsShowPedestrians { get; set; } = false;
-        [Reactive] public bool IsShowFavorites { get; set; } = false;
+        [Reactive] public bool IsShowPedestrians { get; set; }
+        [Reactive] public bool IsShowFavorites { get; set; }
         
         public ReactiveCommand<Unit, Unit> PredictAllCommand { get; }
         
@@ -230,10 +234,10 @@ namespace RescuerLaApp.ViewModels
 
         private async void LoadModel()
         {
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Working, 
-                StringStatus = $"Working | loading model..."
+                StringStatus = "Working | loading model..."
             };
             
             if (_model == null)
@@ -243,7 +247,7 @@ namespace RescuerLaApp.ViewModels
 
             await _model.Load();
             
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Ready
             };
@@ -251,10 +255,10 @@ namespace RescuerLaApp.ViewModels
         
         private async void UpdateModel()
         {
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Working, 
-                StringStatus = $"Working | updating model..."
+                StringStatus = "Working | updating model..."
             };
             
             if (_model == null)
@@ -264,7 +268,7 @@ namespace RescuerLaApp.ViewModels
             
             await _model.UpdateModel();
             
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Ready
             };
@@ -273,10 +277,10 @@ namespace RescuerLaApp.ViewModels
         private async void PredictAll()
         {
             if (Frames == null || Frames.Count < 1) return;
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Working, 
-                StringStatus = $"Working | loading model..."
+                StringStatus = "Working | loading model..."
             };
             
             if (_model == null)
@@ -287,10 +291,10 @@ namespace RescuerLaApp.ViewModels
             var isLoaded = await _model.Run();
             if (!isLoaded)
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Error, 
-                    StringStatus = $"Error: unable to load model"
+                    StringStatus = "Error: unable to load model"
                 };
                 _model.Dispose();
                 _model = null;
@@ -298,7 +302,7 @@ namespace RescuerLaApp.ViewModels
             }
                     
             var index = 0;
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Working, 
                 StringStatus = $"Working | processing images: {index} / {Frames.Count}"
@@ -308,7 +312,7 @@ namespace RescuerLaApp.ViewModels
                 index++;
                 frame.Rectangles = await _model.Predict(frame.Path);
                 if(index < Frames.Count)
-                    Status = new AppStatusInfo()
+                    Status = new AppStatusInfo
                     {
                         Status = Enums.Status.Working, 
                         StringStatus = $"Working | processing images: {index} / {Frames.Count}"
@@ -321,7 +325,7 @@ namespace RescuerLaApp.ViewModels
             await _model.Stop();
             SelectedIndex = 0; //Fix bug when application stopped if index > 0
             UpdateUi();
-            Status = new AppStatusInfo()
+            Status = new AppStatusInfo
             {
                 Status = Enums.Status.Ready
             };
@@ -339,17 +343,17 @@ namespace RescuerLaApp.ViewModels
 
         private async void OpenFile()
         {
-            Status = new AppStatusInfo() {Status = Enums.Status.Working};
+            Status = new AppStatusInfo {Status = Enums.Status.Working};
             try
             {
-                var openDig = new OpenFolderDialog()
+                var openDig = new OpenFolderDialog
                 {
                     Title = "Choose a directory with images"
                 };
                 var dirName = await openDig.ShowAsync(new Window());
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                 var fileNames = Directory.GetFiles(dirName);
@@ -375,7 +379,7 @@ namespace RescuerLaApp.ViewModels
 
                 if (loadingFrames.Count == 0)
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                 
@@ -385,11 +389,11 @@ namespace RescuerLaApp.ViewModels
                 UpdateFramesRepo();
                 UpdateUi();
                 _frames = new List<Frame>(Frames);
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready};
             }
             catch (Exception ex)
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Error, 
                     StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
@@ -403,14 +407,14 @@ namespace RescuerLaApp.ViewModels
             {
                 if (Frames == null || Frames.Count < 1)
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
-                Status = new AppStatusInfo() {Status = Enums.Status.Working};
+                Status = new AppStatusInfo {Status = Enums.Status.Working};
                 var dirName = Path.GetDirectoryName(Frames.First().Path);
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                 
@@ -422,7 +426,7 @@ namespace RescuerLaApp.ViewModels
                     annotation.Filename = Path.GetFileName(frame.Path);
                     annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Path));
                     annotation.Segmented = 0;
-                    annotation.Size = new Models.Size()
+                    annotation.Size = new Size
                     {
                         Depth = 3,
                         Height = frame.Height,
@@ -430,9 +434,9 @@ namespace RescuerLaApp.ViewModels
                     };
                     foreach (var rectangle in frame.Rectangles)
                     {
-                        var o = new Models.Object();
+                        var o = new Object();
                         o.Name = "Pedestrian";
-                        o.Box = new Box()
+                        o.Box = new Box
                         {
                             Xmax = rectangle.XBase + rectangle.WidthBase,
                             Ymax = rectangle.YBase + rectangle.HeightBase,
@@ -445,11 +449,11 @@ namespace RescuerLaApp.ViewModels
                     annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
                 }
                 Console.WriteLine($"Saved to {dirName}");
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
             }
             catch (Exception ex)
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Error, 
                     StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
@@ -463,12 +467,12 @@ namespace RescuerLaApp.ViewModels
             {
                 if (Frames == null || Frames.Count < 1)
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
-                Status = new AppStatusInfo() {Status = Enums.Status.Working};
+                Status = new AppStatusInfo {Status = Enums.Status.Working};
 
-                var openDig = new OpenFolderDialog()
+                var openDig = new OpenFolderDialog
                 {
                     Title = "Choose a directory to save images with objects"
                 };
@@ -477,7 +481,7 @@ namespace RescuerLaApp.ViewModels
                 
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                 
@@ -488,11 +492,11 @@ namespace RescuerLaApp.ViewModels
                     File.Copy(frame.Path, Path.Combine(dirName, Path.GetFileName(frame.Path)));
                 }
                 Console.WriteLine($"Saved to {dirName}");
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
             }
             catch (Exception ex)
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Error, 
                     StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
@@ -506,12 +510,12 @@ namespace RescuerLaApp.ViewModels
             {
                 if (Frames == null || Frames.Count < 1)
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
-                Status = new AppStatusInfo() {Status = Enums.Status.Working};
+                Status = new AppStatusInfo {Status = Enums.Status.Working};
 
-                var openDig = new OpenFolderDialog()
+                var openDig = new OpenFolderDialog
                 {
                     Title = "Choose a directory to save images with objects"
                 };
@@ -520,7 +524,7 @@ namespace RescuerLaApp.ViewModels
                 
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                 
@@ -533,7 +537,7 @@ namespace RescuerLaApp.ViewModels
                     annotation.Filename = Path.GetFileName(frame.Path);
                     annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Path));
                     annotation.Segmented = 0;
-                    annotation.Size = new Models.Size()
+                    annotation.Size = new Size
                     {
                         Depth = 3,
                         Height = frame.Height,
@@ -545,9 +549,9 @@ namespace RescuerLaApp.ViewModels
                     }
                     foreach (var rectangle in frame.Rectangles)
                     {
-                        var o = new Models.Object();
+                        var o = new Object();
                         o.Name = "Pedestrian";
-                        o.Box = new Box()
+                        o.Box = new Box
                         {
                             Xmax = rectangle.XBase + rectangle.WidthBase,
                             Ymax = rectangle.YBase + rectangle.HeightBase,
@@ -567,11 +571,11 @@ namespace RescuerLaApp.ViewModels
                     File.Copy(frame.Path, Path.Combine(dirName, Path.GetFileName(frame.Path)));
                 }
                 Console.WriteLine($"Saved to {dirName}");
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
             }
             catch (Exception ex)
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Error, 
                     StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
@@ -581,17 +585,17 @@ namespace RescuerLaApp.ViewModels
 
         private async void ImportAll()
         {
-            Status = new AppStatusInfo() {Status = Enums.Status.Working};
+            Status = new AppStatusInfo {Status = Enums.Status.Working};
             try
             {
-                var openDig = new OpenFolderDialog()
+                var openDig = new OpenFolderDialog
                 {
                     Title = "Choose a directory with xml annotations"
                 };
                 var dirName = await openDig.ShowAsync(new Window());
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                 
@@ -637,7 +641,7 @@ namespace RescuerLaApp.ViewModels
 
                 if (loadingFrames.Count == 0)
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
                     
@@ -648,11 +652,11 @@ namespace RescuerLaApp.ViewModels
                 UpdateFramesRepo();
                 UpdateUi();
                 _frames = new List<Frame>(Frames);
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready};
             }
             catch (Exception ex)
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Error, 
                     StringStatus = $"Error | {ex.Message.Replace('\n', ' ')}"
@@ -665,14 +669,14 @@ namespace RescuerLaApp.ViewModels
         {
             _frameLoadProgressIndex++;
             if(_frameLoadProgressIndex < Frames.Count)
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Working, 
                     StringStatus = $"Working | loading images: {_frameLoadProgressIndex} / {Frames.Count}"
                 };
             else
             {
-                Status = new AppStatusInfo()
+                Status = new AppStatusInfo
                 {
                     Status = Enums.Status.Ready
                 };
@@ -877,9 +881,9 @@ namespace RescuerLaApp.ViewModels
 
         public async void SignUp()
         {
-            var result = await Views.SignUpWindow.Show(null);
+            var result = await SignUpWindow.Show(null);
             if(Status.Status == Enums.Status.Unauthenticated && result.IsSignIn)
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready};
         }
         public async void SignIn()
         {
@@ -888,14 +892,14 @@ namespace RescuerLaApp.ViewModels
             {
                 if (Status.Status == Enums.Status.Unauthenticated)
                 {
-                    Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                    Status = new AppStatusInfo {Status = Enums.Status.Ready};
                     return;
                 }
             }
             
-            var result = await Views.SignInWindow.Show(null);
+            var result = await SignInWindow.Show(null);
             if(Status.Status == Enums.Status.Unauthenticated && result.IsSignIn)
-                Status = new AppStatusInfo() {Status = Enums.Status.Ready};
+                Status = new AppStatusInfo {Status = Enums.Status.Ready};
         }
         
         public async void Exit()
@@ -921,12 +925,12 @@ namespace RescuerLaApp.ViewModels
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    System.Diagnostics.Process.Start(url);
+                    Process.Start(url);
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
                          RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    System.Diagnostics.Process.Start("x-www-browser", url);
+                    Process.Start("x-www-browser", url);
                 }
             }
             catch (Exception e)

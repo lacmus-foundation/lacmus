@@ -3,19 +3,15 @@ using System.Collections.Generic;
 using System.Threading;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Skia;
 using Avalonia.Threading;
 using SkiaSharp;
-using Avalonia.Media.Imaging;
 
 namespace RescuerLaApp.Models
 {
     public class Frame
     {
-        private ImageBrush _imageBrush = new ImageBrush() { Stretch = Stretch.Uniform };
-        private Bitmap _bitmap;
-        private IEnumerable<BoundBox> _rectangles;
-
         public string Path { get; set; }
 
         public string Name
@@ -31,23 +27,12 @@ namespace RescuerLaApp.Models
             }
         }
 
-        public ImageBrush ImageBrush
-        {
-            get => _imageBrush;
-            set => _imageBrush = value;
-        }
+        public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
 
-        public Bitmap Bitmap
-        {
-            get => _bitmap;
-            set => _bitmap = value;
-        }
+        public Bitmap Bitmap { get; set; }
 
-        public IEnumerable<BoundBox> Rectangles
-        {
-            get => _rectangles;
-            set => _rectangles = value;
-        }
+        public IEnumerable<BoundBox> Rectangles { get; set; }
+
         public int Width { get; private set; }
         public int Height { get; private set; }
 
@@ -66,9 +51,9 @@ namespace RescuerLaApp.Models
                 switch (loadMode)
                 {
                     case Enums.ImageLoadMode.Full:
-                        _bitmap = new Bitmap(imgFileName);
-                        Width = _bitmap.PixelSize.Width;
-                        Height = _bitmap.PixelSize.Height;
+                        Bitmap = new Bitmap(imgFileName);
+                        Width = Bitmap.PixelSize.Width;
+                        Height = Bitmap.PixelSize.Height;
                         break;
                     case Enums.ImageLoadMode.Miniature:
                         using (SKStream stream = new SKFileStream(imgFileName))
@@ -83,7 +68,7 @@ namespace RescuerLaApp.Models
                                 src.ColorType, 
                                 src.AlphaType);
                             src.ScalePixels(resized, SKFilterQuality.Low);
-                            _bitmap = new Bitmap(
+                            Bitmap = new Bitmap(
                                 resized.ColorType.ToPixelFormat(),
                                 resized.GetPixels(),
                                 new PixelSize(resized.Width, resized.Height), 
@@ -96,7 +81,7 @@ namespace RescuerLaApp.Models
                 }
                 Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    _imageBrush.Source = _bitmap;
+                    ImageBrush.Source = Bitmap;
                     OnLoad?.Invoke();
                 });
             });

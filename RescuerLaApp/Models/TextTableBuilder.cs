@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,7 +16,7 @@ namespace RescuerLaApp.Models
     {
         protected class TextRow : List<String>, ITextRow
         {
-            protected TextTableBuilder owner = null;
+            protected TextTableBuilder owner;
             public TextRow(TextTableBuilder Owner)
             {
                 owner = Owner;
@@ -29,7 +30,7 @@ namespace RescuerLaApp.Models
             }
             public void Output(StringBuilder sb)
             {
-                sb.AppendFormat(owner.FormatString, this.ToArray());
+                sb.AppendFormat(owner.FormatString, ToArray());
             }
             public Object Tag { get; set; }
         }
@@ -71,7 +72,7 @@ namespace RescuerLaApp.Models
             return row;
         }
 
-        protected String _fmtString = null;
+        protected String _fmtString;
         public String FormatString
         {
             get
@@ -108,7 +109,7 @@ namespace RescuerLaApp.Models
             return rows.GetEnumerator();
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return rows.GetEnumerator();
         }

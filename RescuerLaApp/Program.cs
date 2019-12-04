@@ -4,8 +4,6 @@ using Avalonia;
 using Avalonia.ReactiveUI;
 using Avalonia.Rendering;
 using RescuerLaApp.Models;
-using RescuerLaApp.ViewModels;
-using RescuerLaApp.Views;
 
 namespace RescuerLaApp
 {
