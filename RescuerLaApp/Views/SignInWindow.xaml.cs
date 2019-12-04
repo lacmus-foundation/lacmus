@@ -47,10 +47,10 @@ namespace RescuerLaApp.Views
                 var btn = new Button {Content = caption};
                 btn.Click += (_, __) =>
                 {
-                    var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
-                    if (File.Exists(patch))
+                    var path = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+                    if (File.Exists(path))
                     {
-                        res = JsonConvert.DeserializeObject<SignInResult>(File.ReadAllText(patch));
+                        res = JsonConvert.DeserializeObject<SignInResult>(File.ReadAllText(path));
                         res.IsSignIn = false;
                     }
                     else

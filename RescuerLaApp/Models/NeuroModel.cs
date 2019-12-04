@@ -64,13 +64,13 @@ namespace RescuerLaApp.Models
             }
             
             var jsonImg = new JsonImage();
-            jsonImg.Load(frame.Patch);
+            jsonImg.Load(frame.Path);
             var json = JsonConvert.SerializeObject(jsonImg);
             var outputText = await _client.PostAsync(json, "image");
             var objects = JsonConvert.DeserializeObject<JsonAnnotation>(outputText);
             if (objects != null || objects.Objects.Count > 0)
             {
-                Console.WriteLine("File {0} contains:", Path.GetFileName(frame.Patch));
+                Console.WriteLine("File {0} contains:", Path.GetFileName(frame.Path));
                 foreach (var ooj in objects.Objects)
                 {
                     var x1 = ooj.Xmin;

@@ -91,8 +91,8 @@ namespace RescuerLaApp.Views
                         Time = DateTime.Now.ToString()
                     };
 
-                    var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
-                    if (File.Exists(patch))
+                    var path = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+                    if (File.Exists(path))
                     {
                         ShowInfo("You already signed up. Please log in.");
                         msgbox.Close();
@@ -102,7 +102,7 @@ namespace RescuerLaApp.Views
                     res.IsSignIn = true;
                     
                     File.AppendAllText(
-                        patch,
+                        path,
                         JsonConvert.SerializeObject(res));
                     msgbox.Close();
                 };

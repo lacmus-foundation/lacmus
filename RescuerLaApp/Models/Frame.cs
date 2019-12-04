@@ -16,13 +16,13 @@ namespace RescuerLaApp.Models
         private Bitmap _bitmap;
         private List<BoundBox> _rectangles;
 
-        public string Patch { get; set; }
+        public string Path { get; set; }
 
         public string Name
         {
             get
             {
-                var name = System.IO.Path.GetFileName(Patch);
+                var name = System.IO.Path.GetFileName(Path);
                 if (name.Length > 10)
                 {
                     name = name.Substring(0, 3) + "{~}" + name.Substring(name.Length - 5);
@@ -62,7 +62,7 @@ namespace RescuerLaApp.Models
         {
             ThreadPool.QueueUserWorkItem(o =>
             {
-                Patch = imgFileName;
+                Path = imgFileName;
                 switch (loadMode)
                 {
                     case Enums.ImageLoadMode.Full:

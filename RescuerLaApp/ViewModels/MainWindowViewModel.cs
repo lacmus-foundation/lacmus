@@ -106,7 +106,7 @@ namespace RescuerLaApp.ViewModels
                         Status = new AppStatusInfo
                         {
                             Status = Enums.Status.Ready, 
-                            StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Patch}"
+                            StringStatus = $"{Enums.Status.Ready.ToString()} | {Frames[SelectedIndex].Path}"
                         };
                     SwitchBoundBoxesVisibilityToTrue();
                     if (Frames[SelectedIndex].IsFavorite)
@@ -407,7 +407,7 @@ namespace RescuerLaApp.ViewModels
                     return;
                 }
                 Status = new AppStatusInfo() {Status = Enums.Status.Working};
-                var dirName = Path.GetDirectoryName(Frames.First().Patch);
+                var dirName = Path.GetDirectoryName(Frames.First().Path);
                 if (string.IsNullOrEmpty(dirName) || !Directory.Exists(dirName))
                 {
                     Status = new AppStatusInfo() {Status = Enums.Status.Ready};
@@ -419,8 +419,8 @@ namespace RescuerLaApp.ViewModels
                     if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
                         continue;
                     var annotation = new Annotation();
-                    annotation.Filename = Path.GetFileName(frame.Patch);
-                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Patch));
+                    annotation.Filename = Path.GetFileName(frame.Path);
+                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Path));
                     annotation.Segmented = 0;
                     annotation.Size = new Models.Size()
                     {
@@ -485,7 +485,7 @@ namespace RescuerLaApp.ViewModels
                 {
                     if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
                         continue;
-                    File.Copy(frame.Patch, Path.Combine(dirName, Path.GetFileName(frame.Patch)));
+                    File.Copy(frame.Path, Path.Combine(dirName, Path.GetFileName(frame.Path)));
                 }
                 Console.WriteLine($"Saved to {dirName}");
                 Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
@@ -530,8 +530,8 @@ namespace RescuerLaApp.ViewModels
                         continue;
                     
                     var annotation = new Annotation();
-                    annotation.Filename = Path.GetFileName(frame.Patch);
-                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Patch));
+                    annotation.Filename = Path.GetFileName(frame.Path);
+                    annotation.Folder = Path.GetRelativePath(dirName, Path.GetDirectoryName(frame.Path));
                     annotation.Segmented = 0;
                     annotation.Size = new Models.Size()
                     {
@@ -564,7 +564,7 @@ namespace RescuerLaApp.ViewModels
                         frame.Rectangles = null;
                     }
                     
-                    File.Copy(frame.Patch, Path.Combine(dirName, Path.GetFileName(frame.Patch)));
+                    File.Copy(frame.Path, Path.Combine(dirName, Path.GetFileName(frame.Path)));
                 }
                 Console.WriteLine($"Saved to {dirName}");
                 Status = new AppStatusInfo() {Status = Enums.Status.Ready, StringStatus = $"Success | saved to {dirName}"};
@@ -697,7 +697,7 @@ namespace RescuerLaApp.ViewModels
         {
             string msg = string.Empty;
             int rows = 0;
-            var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Patch);
+            var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Path);
             foreach (var directory in directories)
             foreach (var tag in directory.Tags)
             {
@@ -718,7 +718,7 @@ namespace RescuerLaApp.ViewModels
             var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
                 ButtonDefinitions = ButtonEnum.Ok,
-                ContentTitle = $"Geo position of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
+                ContentTitle = $"Geo position of {Path.GetFileName(Frames[SelectedIndex].Path)}",
                 ContentMessage = msg,
                 Icon = Icon.Info,
                 Style = Style.None,
@@ -770,7 +770,7 @@ namespace RescuerLaApp.ViewModels
             tb.AddRow("-----", "--------", "-----------");
 
             
-            var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Patch);
+            var directories = ImageMetadataReader.ReadMetadata(Frames[SelectedIndex].Path);
             foreach (var directory in directories)
             foreach (var tag in directory.Tags)
                 tb.AddRow(directory.Name, tag.Name, tag.Description);
@@ -778,7 +778,7 @@ namespace RescuerLaApp.ViewModels
             var msgbox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
                 ButtonDefinitions = ButtonEnum.Ok,
-                ContentTitle = $"Metadata of {Path.GetFileName(Frames[SelectedIndex].Patch)}",
+                ContentTitle = $"Metadata of {Path.GetFileName(Frames[SelectedIndex].Path)}",
                 ContentMessage = tb.Output(),
                 Icon = Icon.Info,
                 Style = Style.None,
@@ -892,8 +892,8 @@ namespace RescuerLaApp.ViewModels
         }
         public async void SignIn()
         {
-            var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
-            if (File.Exists(patch))
+            var path = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+            if (File.Exists(path))
             {
                 if (Status.Status == Enums.Status.Unauthenticated)
                 {
@@ -948,7 +948,7 @@ namespace RescuerLaApp.ViewModels
         private void UpdateUi()
         {
             /*TODO: Вынести сюда все функции обновления UI*/
-            ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Patch); //replace to frame.load(...)
+            ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Path); //replace to frame.load(...)
             CanvasHeight = ImageBrush.Source.PixelSize.Height;
             CanvasWidth = ImageBrush.Source.PixelSize.Width;
             if (Frames[SelectedIndex].Rectangles != null && Frames[SelectedIndex].Rectangles.Count > 0)
