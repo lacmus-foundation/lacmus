@@ -10,7 +10,7 @@ namespace RescuerLaApp.Models
             return true;
         }
 
-        public async Task<List<BoundBox>> Predict(Frame frame)
+        public async Task<List<BoundBox>> Predict(string path)
         {
             return new List<BoundBox> { new BoundBox(100, 100, 40, 40), new BoundBox(200, 300, 40, 40), new BoundBox(300, 200, 40, 40) };
         }

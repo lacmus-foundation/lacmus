@@ -53,7 +53,7 @@ namespace RescuerLaApp.Models
             return false;
         }
 
-        public async Task<List<BoundBox>> Predict(Frame frame)
+        public async Task<List<BoundBox>> Predict(string path)
         {
             var list = new List<BoundBox>();
             var status = await _client.GetStatusAsync();
@@ -64,13 +64,13 @@ namespace RescuerLaApp.Models
             }
             
             var jsonImg = new JsonImage();
-            jsonImg.Load(frame.Path);
+            jsonImg.Load(path);
             var json = JsonConvert.SerializeObject(jsonImg);
             var outputText = await _client.PostAsync(json, "image");
             var objects = JsonConvert.DeserializeObject<JsonAnnotation>(outputText);
             if (objects != null || objects.Objects.Count > 0)
             {
-                Console.WriteLine("File {0} contains:", Path.GetFileName(frame.Path));
+                Console.WriteLine("File {0} contains:", Path.GetFileName(path));
                 foreach (var ooj in objects.Objects)
                 {
                     var x1 = ooj.Xmin;

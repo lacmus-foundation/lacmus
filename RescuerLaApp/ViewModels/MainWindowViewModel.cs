@@ -306,7 +306,7 @@ namespace RescuerLaApp.ViewModels
             foreach (var frame in Frames)
             {
                 index++;
-                frame.Rectangles = await _model.Predict(frame);
+                frame.Rectangles = await _model.Predict(frame.Path);
                 if(index < Frames.Count)
                     Status = new AppStatusInfo()
                     {
@@ -314,7 +314,7 @@ namespace RescuerLaApp.ViewModels
                         StringStatus = $"Working | processing images: {index} / {Frames.Count}"
                     };
 
-                if (frame.Rectangles.Count > 0)
+                if (frame.Rectangles.Any())
                     frame.IsVisible = true;
             }
             _frames = new List<Frame>(Frames);
@@ -416,7 +416,7 @@ namespace RescuerLaApp.ViewModels
                 
                 foreach (var frame in Frames)
                 {
-                    if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
+                    if (frame.Rectangles == null || !frame.Rectangles.Any())
                         continue;
                     var annotation = new Annotation();
                     annotation.Filename = Path.GetFileName(frame.Path);
@@ -483,7 +483,7 @@ namespace RescuerLaApp.ViewModels
                 
                 foreach (var frame in Frames)
                 {
-                    if (frame.Rectangles == null || frame.Rectangles.Count <= 0)
+                    if (frame.Rectangles == null || !frame.Rectangles.Any())
                         continue;
                     File.Copy(frame.Path, Path.Combine(dirName, Path.GetFileName(frame.Path)));
                 }
@@ -559,7 +559,7 @@ namespace RescuerLaApp.ViewModels
 
                     annotation.SaveToXml(Path.Join(dirName,$"{annotation.Filename}.xml"));
                     
-                    if (frame.Rectangles.Count == 0)
+                    if (!frame.Rectangles.Any())
                     {
                         frame.Rectangles = null;
                     }
@@ -625,19 +625,10 @@ namespace RescuerLaApp.ViewModels
                     var frame = new Frame();
                     frame.OnLoad += FrameLoadingProgressUpdate;
                     frame.Load(fileName, Enums.ImageLoadMode.Miniature);
-                    frame.Rectangles = new List<BoundBox>();
-                    foreach (var obj in ann.Objects)
-                    {
-                        var bbox = new BoundBox(
-                            x: obj.Box.Xmin,
-                            y: obj.Box.Ymin,
-                            height: obj.Box.Ymax - obj.Box.Ymin,
-                            width: obj.Box.Xmax - obj.Box.Xmin
-                            );
-                        frame.Rectangles.Add(bbox);
-                    }
+                    frame.Rectangles = ann.Objects.Select(obj => 
+                        new BoundBox(obj.Box.Xmin, obj.Box.Ymin, obj.Box.Ymax - obj.Box.Ymin, obj.Box.Xmax - obj.Box.Xmin));
 
-                    if (frame.Rectangles.Count > 0)
+                    if (frame.Rectangles.Any())
                     {
                         frame.IsVisible = true;
                     }
@@ -951,7 +942,7 @@ namespace RescuerLaApp.ViewModels
             ImageBrush.Source = new Bitmap(Frames[SelectedIndex].Path); //replace to frame.load(...)
             CanvasHeight = ImageBrush.Source.PixelSize.Height;
             CanvasWidth = ImageBrush.Source.PixelSize.Width;
-            if (Frames[SelectedIndex].Rectangles != null && Frames[SelectedIndex].Rectangles.Count > 0)
+            if (Frames[SelectedIndex].Rectangles != null && Frames[SelectedIndex].Rectangles.Any())
             {
                 BoundBoxes = new List<BoundBox>(Frames[SelectedIndex].Rectangles);
             }

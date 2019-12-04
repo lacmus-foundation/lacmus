@@ -14,7 +14,7 @@ namespace RescuerLaApp.Models
     {
         private ImageBrush _imageBrush = new ImageBrush() { Stretch = Stretch.Uniform };
         private Bitmap _bitmap;
-        private List<BoundBox> _rectangles;
+        private IEnumerable<BoundBox> _rectangles;
 
         public string Path { get; set; }
 
@@ -43,7 +43,7 @@ namespace RescuerLaApp.Models
             set => _bitmap = value;
         }
 
-        public List<BoundBox> Rectangles
+        public IEnumerable<BoundBox> Rectangles
         {
             get => _rectangles;
             set => _rectangles = value;
