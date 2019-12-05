@@ -153,9 +153,11 @@ namespace RescuerLaApp.Models
                 streamWriter.Flush();
             }
             using (var resp = webRequest.GetResponse())
-            using (var sr = new StreamReader(resp.GetResponseStream() ?? throw new Exception("stream is null")))
             {
-                return sr.ReadToEnd();
+                using (var sr = new StreamReader(resp.GetResponseStream() ?? throw new InvalidOperationException("stream is null")))
+                {
+                    return sr.ReadToEnd();
+                }
             }
         }
 
