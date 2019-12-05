@@ -21,11 +21,11 @@ namespace RescuerLaApp.Models
 
         public async Task<bool> Run()
         {
-            Console.WriteLine("Checking reina-net service...");
+            Console.WriteLine("Checking retina-net service...");
             var status = await _client.GetStatusAsync();
             if (status != null && status.Contains("server is running"))
             {
-                Console.WriteLine("Reina-net is ready!");
+                Console.WriteLine("Retina-net is ready!");
                 return true;
             }
             Console.WriteLine("Retina-net is not running: trying to run...");
@@ -45,7 +45,7 @@ namespace RescuerLaApp.Models
                     status = await _client.GetStatusAsync();
                     if (status != null && status.Contains("server is running"))
                     {
-                        Console.WriteLine("Reina-net is ready!");
+                        Console.WriteLine("Retina-net is ready!");
                         return true;
                     }   
                 }
