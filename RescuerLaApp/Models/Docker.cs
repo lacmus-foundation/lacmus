@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -54,18 +55,21 @@ namespace RescuerLaApp.Models
                 {
                     try
                     {
-                        if (progressDictionary.ContainsKey(message.ID) && message.Status.Contains("Pull complete"))
+                        if (progressDictionary.ContainsKey(message.ID) && message.Status.Contains("Pull complete",
+                                    StringComparison.InvariantCultureIgnoreCase))
                         {
                             progressDictionary[message.ID] = message.Status;
-                            var count = progressDictionary.Cast<string>().Count(value => value.Contains("Pull complete"));
-                            Console.WriteLine($"{count}/{progressDictionary.Count-1}");
+                            var count = progressDictionary.Cast<string>().Count(value =>
+                                    value.Contains("Pull complete", StringComparison.InvariantCultureIgnoreCase));
+                            Debug.Assert(progressDictionary.Count > 1, "progressDictionary.Count > 1");
+                            Console.WriteLine($"{count}/{progressDictionary.Count - 1}");
                         }
                         else
                             progressDictionary.Add(message.ID, message.Status);
                     }
-                    catch
+                    catch(Exception e)
                     {
-                        // ignored
+                        Console.WriteLine(e.Message);
                     }
                 };
 
@@ -92,6 +96,7 @@ namespace RescuerLaApp.Models
 
         public async Task<string> CreateContainer(string imageName = "gosha20777/test", string tag = "1")
         {
+            //TODO здесь бы все это из файла конфигурировать
             tag = IS_GPU ? $"gpu-{API_VER}.{tag}" : $"{API_VER}.{tag}";
             try
             {
@@ -151,6 +156,7 @@ namespace RescuerLaApp.Models
 
         public async Task<bool> Run(string id)
         {
+            
             try
             {
                 var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
@@ -173,15 +179,25 @@ namespace RescuerLaApp.Models
 
         public async Task StopAll(string imageName = "gosha20777/test")
         {
-            var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
-            foreach (var container in containers)
+            try
             {
-                if (container.Image.Contains(imageName) && container.Status.Contains("Up"))
+                var containers =
+                        await _client.Containers.ListContainersAsync(new ContainersListParameters {All = true});
+                foreach (var container in containers)
                 {
-                    var success = await _client.Containers.StopContainerAsync(container.ID, new ContainerStopParameters());
-                    Console.Write($"stopping container: {container.ID} {container.Image} {success.ToString()}");
-                    return;
+                    if (container.Image.Contains(imageName) && container.Status.Contains("Up"))
+                    {
+                        var success =
+                                await _client.Containers.StopContainerAsync(container.ID,
+                                        new ContainerStopParameters());
+                        Console.Write($"stopping container: {container.ID} {container.Image} {success.ToString()}");
+                        return;
+                    }
                 }
+            }
+            catch(Exception e)
+            {
+                throw new Exception($"Unable to stop docker container: {e.Message}");
             }
         }
         
@@ -212,35 +228,42 @@ namespace RescuerLaApp.Models
         public async Task<List<string>> GetTags(string imageName = "gosha20777/test")
         {
             var baseUrl = "https://registry.hub.docker.com";
-            var client = new RestApiClient(baseUrl);
-            var result = new List<string>();
-            var response = new DockerTagResponse { Next = baseUrl + $"/v2/repositories/{imageName}/tags/"};
-            
-            while (!string.IsNullOrEmpty(response.Next) && response.Next.Contains(baseUrl))
+            try
             {
-                var jsonResp = await client.GetAsync(response.Next.Remove(0, baseUrl.Length));
-                response = JsonConvert.DeserializeObject<DockerTagResponse>(jsonResp);
-                result.AddRange(response.Images.Select(image => image.Tag).ToList());
-            }
+                var client = new RestApiClient(baseUrl);
+                var result = new List<string>();
+                var response = new DockerTagResponse { Next = baseUrl + $"/v2/repositories/{imageName}/tags/"};
             
-            var result_ = new List<string>();
-            foreach (var r in result)
-            {
-                var prefix = "";
-                if (IS_GPU)
+                while (!string.IsNullOrEmpty(response.Next) && response.Next.Contains(baseUrl))
                 {
-                    prefix = $"gpu-{API_VER}.";
-                    if(r.Contains(prefix))
-                        result_.Add(r.Replace(prefix, ""));
+                    var jsonResp = await client.GetAsync(response.Next.Remove(0, baseUrl.Length));
+                    response = JsonConvert.DeserializeObject<DockerTagResponse>(jsonResp);
+                    result.AddRange(response.Images.Select(image => image.Tag).ToList());
                 }
-                else
+            
+                var resTags = new List<string>();
+                foreach (var r in result)
                 {
-                    prefix = $"{API_VER}.";
-                    if(!r.Contains("gpu") && r.Contains(prefix))
-                        result_.Add(r.Replace(prefix, ""));
+                    var prefix = "";
+                    if (IS_GPU)
+                    {
+                        prefix = $"gpu-{API_VER}.";
+                        if(r.Contains(prefix))
+                            resTags.Add(r.Replace(prefix, ""));
+                    }
+                    else
+                    {
+                        prefix = $"{API_VER}.";
+                        if(!r.Contains("gpu") && r.Contains(prefix))
+                            resTags.Add(r.Replace(prefix, ""));
+                    }
                 }
+                return resTags;
             }
-            return result_;
+            catch(Exception e)
+            {
+                throw new Exception($"Unable to retrieve tag(s): {e.Message}");
+            }
         }
 
         public async Task Remove(string imageName = "gosha20777/test", string tag = "1")
@@ -273,31 +296,38 @@ namespace RescuerLaApp.Models
 
         public async Task<List<string>> GetInstalledVersions(string imageName = "gosha20777/test")
         {
-            var tags = new List<string>();
-            var res_tags = new List<string>();
-            var images = await _client.Images.ListImagesAsync(new ImagesListParameters {MatchName = imageName});
-            foreach (var image in images)
+            try
             {
-                tags.AddRange(image.RepoTags);
-            }
+                var tags = new List<string>();
+                var resTags = new List<string>();
+                var images = await _client.Images.ListImagesAsync(new ImagesListParameters {MatchName = imageName});
+                foreach (var image in images)
+                {
+                    tags.AddRange(image.RepoTags);
+                }
 
-            foreach (var tag in tags)
-            {
-                var prefix = "";
-                if (IS_GPU)
+                foreach (var tag in tags)
                 {
-                    prefix = $"gpu-{API_VER}.";
-                    if(tag.Contains($"{imageName}:{prefix}"))
-                        res_tags.Add(tag.Replace($"{imageName}:{prefix}", ""));
+                    var prefix = "";
+                    if (IS_GPU)
+                    {
+                        prefix = $"gpu-{API_VER}.";
+                        if(tag.Contains($"{imageName}:{prefix}"))
+                            resTags.Add(tag.Replace($"{imageName}:{prefix}", ""));
+                    }
+                    else
+                    {
+                        prefix = $"{API_VER}.";
+                        if(!tag.Contains("gpu") && tag.Contains(prefix))
+                            resTags.Add(tag.Replace($"{imageName}:{prefix}", ""));
+                    }
                 }
-                else
-                {
-                    prefix = $"{API_VER}.";
-                    if(!tag.Contains("gpu") && tag.Contains(prefix))
-                        res_tags.Add(tag.Replace($"{imageName}:{prefix}", ""));
-                }
+                return resTags;
             }
-            return res_tags;
+            catch(Exception e)
+            {
+                throw new Exception($"Unable to retrieve installed versions: {e.Message}");
+            }
         }
 
         public void Dispose()

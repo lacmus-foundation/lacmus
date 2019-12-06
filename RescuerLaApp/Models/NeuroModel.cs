@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -23,7 +24,7 @@ namespace RescuerLaApp.Models
         {
             Console.WriteLine("Checking retina-net service...");
             var status = await _client.GetStatusAsync();
-            if (status != null && status.Contains("server is running"))
+            if (status != null && status.Contains("server is running",StringComparison.InvariantCultureIgnoreCase))
             {
                 Console.WriteLine("Retina-net is ready!");
                 return true;
@@ -37,13 +38,13 @@ namespace RescuerLaApp.Models
             {
                 Console.WriteLine("Container runs. Loading retina-net model...");
                 var startTime = DateTime.Now;
-                var waitingTime = new TimeSpan(0, 0, 10, 0);
-                while (DateTime.Now - startTime < waitingTime)
+                //wait no more then 10 min.
+                while ((DateTime.Now - startTime).TotalMinutes < 10)
                 {
                     // Provide a 100ms startup delay
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
                     status = await _client.GetStatusAsync();
-                    if (status != null && status.Contains("server is running"))
+                    if (status != null && status.Contains("server is running",StringComparison.InvariantCultureIgnoreCase))
                     {
                         Console.WriteLine("Retina-net is ready!");
                         return true;
@@ -68,7 +69,7 @@ namespace RescuerLaApp.Models
             var json = JsonConvert.SerializeObject(jsonImg);
             var outputText = await _client.PostAsync(json, "image");
             var objects = JsonConvert.DeserializeObject<JsonAnnotation>(outputText);
-            if (objects != null || objects.Objects.Count > 0)
+            if (objects?.Objects != null && objects.Objects.Any())
             {
                 Console.WriteLine("File {0} contains:", Path.GetFileName(path));
                 foreach (var ooj in objects.Objects)

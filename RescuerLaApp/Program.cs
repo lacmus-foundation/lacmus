@@ -49,11 +49,8 @@ namespace RescuerLaApp
             
             result.UseReactiveUI();
 
-#if DEBUG
             AvaloniaLocator.CurrentMutable.Bind<INeuroModel>().ToConstant(new NeuroModel());
-#else
-            AvaloniaLocator.CurrentMutable.Bind<INeuroModel>().ToConstant(new NeuroModel());
-#endif
+            
 
             return result
                 .With(new Win32PlatformOptions { AllowEglInitialization = true, UseDeferredRendering = true })
