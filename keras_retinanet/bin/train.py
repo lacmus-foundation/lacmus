@@ -47,7 +47,8 @@ from ..utils.config import read_config_file, parse_anchor_parameters
 from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.transform import random_transform_generator
-from ..utils.image import random_visual_effect_generator
+#from ..utils.image import random_visual_effect_generator
+from ..utils.image_adjustments import random_adjustment_generator
 
 
 def makedirs(path):
@@ -237,7 +238,7 @@ def create_generators(args, preprocess_image):
             flip_x_chance=0.5,
             flip_y_chance=0.1,
         )
-        visual_effect_generator = random_visual_effect_generator(
+        visual_effect_generator = random_adjustment_generator(
             contrast_range=(0.9, 1.1),
             brightness_range=(-.1, .1),
             hue_range=(-0.05, 0.05),
@@ -258,7 +259,7 @@ def create_generators(args, preprocess_image):
             flip_x_chance=0.5,
             flip_y_chance=0.1,
         )
-        visual_effect_generator = random_visual_effect_generator(
+        visual_effect_generator = random_adjustment_generator(
             contrast_range=(0.9, 1.1),
             brightness_range=(-.1, .1),
             hue_range=(-0.05, 0.05),
