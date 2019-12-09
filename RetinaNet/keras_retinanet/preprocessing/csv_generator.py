@@ -19,7 +19,8 @@ from .generator import Generator
 from ..utils.image import read_image_bgr
 
 import numpy as np
-from PIL import Image
+#from PIL import Image
+import cv2
 from six import raise_from
 
 import csv
@@ -199,8 +200,11 @@ class CSVGenerator(Generator):
         """ Compute the aspect ratio for an image with image_index.
         """
         # PIL is fast for metadata
-        image = Image.open(self.image_path(image_index))
-        return float(image.width) / float(image.height)
+        #image = Image.open(self.image_path(image_index))
+        #return float(image.width) / float(image.height)
+        img = cv2.imread(self.image_path(image_index))
+        height, width, _ = img.shape
+        return float(width) / float(height)
 
     def load_image(self, image_index):
         """ Load an image at the image_index.

@@ -20,7 +20,8 @@ import os
 import warnings
 
 import numpy as np
-from PIL import Image
+#from PIL import Image
+import cv2
 
 from .generator import Generator
 from ..utils.image import read_image_bgr
@@ -167,8 +168,11 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
                 width, height = images_sizes[frame]
             else:
                 try:
-                    with Image.open(img_path) as img:
-                        width, height = img.width, img.height
+                    #with Image.open(img_path) as img:
+                    #    width, height = img.width, img.height
+                    #    images_sizes[frame] = (width, height)
+                    with cv2.imread(img_path) as img:
+                        width, height, _ = img.shape
                         images_sizes[frame] = (width, height)
                 except Exception as ex:
                     if version == 'challenge2018':

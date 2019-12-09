@@ -20,7 +20,8 @@ from ..utils.image import read_image_bgr
 import os
 import numpy as np
 from six import raise_from
-from PIL import Image
+#from PIL import Image
+import cv2
 
 try:
     import xml.etree.cElementTree as ET
@@ -117,8 +118,11 @@ class PascalVocGenerator(Generator):
         """ Compute the aspect ratio for an image with image_index.
         """
         path  = os.path.join(self.data_dir, 'JPEGImages', self.image_names[image_index] + self.image_extension)
-        image = Image.open(path)
-        return float(image.width) / float(image.height)
+        #image = Image.open(path)
+        #return float(image.width) / float(image.height)
+        img = cv2.imread(path)
+        height, width, _ = img.shape
+        return float(width) / float(height)
 
     def load_image(self, image_index):
         """ Load an image at the image_index.
