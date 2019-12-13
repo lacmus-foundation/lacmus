@@ -70,6 +70,14 @@ namespace RescuerLaApp.ViewModels
                 canGoBack);
             
             // Add here newer commands
+            SetupCommand(canExecute, canSwitchBoundBox, canAuth);
+
+            //auto sign in
+            SignIn();
+        }
+
+        private void SetupCommand(IObservable<bool> canExecute, IObservable<bool> canSwitchBoundBox, IObservable<bool> canAuth)
+        {
             IncreaseCanvasCommand = ReactiveCommand.Create(IncreaseCanvas);
             ShrinkCanvasCommand = ReactiveCommand.Create(ShrinkCanvas);
             PredictAllCommand = ReactiveCommand.Create(PredictAll, canExecute);
@@ -91,9 +99,6 @@ namespace RescuerLaApp.ViewModels
             SignUpCommand = ReactiveCommand.Create(SignUp, canAuth);
             SignInCommand = ReactiveCommand.Create(SignIn, canAuth);
             ExitCommand = ReactiveCommand.Create(Exit);
-            
-            //auto sign in
-            SignIn();
         }
 
         public void UpdateFramesRepo()
@@ -136,41 +141,39 @@ namespace RescuerLaApp.ViewModels
         [Reactive] public bool IsShowPedestrians { get; set; }
         [Reactive] public bool IsShowFavorites { get; set; }
         
-        public ReactiveCommand<Unit, Unit> PredictAllCommand { get; }
-        
+        public ReactiveCommand<Unit, Unit> PredictAllCommand { get; set; }
+
         public ReactiveCommand<Unit, Unit> NextImageCommand { get; }
         
         public ReactiveCommand<Unit, Unit> PrevImageCommand { get; }
         
-        public ReactiveCommand<Unit, Unit> ShrinkCanvasCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> IncreaseCanvasCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> SaveAllCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> ImportAllCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> LoadModelCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; }
-        
-        public ReactiveCommand<Unit, Unit> ShowPedestriansCommand { get; }
-        public ReactiveCommand<Unit, Unit> ShowFavoritesCommand { get; }
-        public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; }
-        public ReactiveCommand<Unit, Unit> SaveFavoritesImagesCommand { get; }
-        public ReactiveCommand<Unit, Unit> ShowAllMetadataCommand { get; }
-        public ReactiveCommand<Unit, Unit> ShowGeoDataCommand { get; }
-        public ReactiveCommand<Unit, Unit> AddToFavoritesCommand { get; }
-        public ReactiveCommand<Unit, Unit> SwitchBoundBoxesVisibilityCommand { get; }
-        public ReactiveCommand<Unit, Unit> HelpCommand { get; }
-        public ReactiveCommand<Unit, Unit> AboutCommand { get; }
-        public ReactiveCommand<Unit, Unit> SignUpCommand { get; }
-        public ReactiveCommand<Unit, Unit> SignInCommand { get; }
-        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
-        
-        
+        public ReactiveCommand<Unit, Unit> ShrinkCanvasCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> IncreaseCanvasCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> OpenFileCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> SaveAllCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> ImportAllCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> LoadModelCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> UpdateModelCommand { get; set; }
+
+        public ReactiveCommand<Unit, Unit> ShowPedestriansCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> ShowFavoritesCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> SaveAllImagesWithObjectsCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> SaveFavoritesImagesCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> ShowAllMetadataCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> ShowGeoDataCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> AddToFavoritesCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> SwitchBoundBoxesVisibilityCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> HelpCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> AboutCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> SignUpCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> SignInCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> ExitCommand { get; set; }
 
         #endregion
 

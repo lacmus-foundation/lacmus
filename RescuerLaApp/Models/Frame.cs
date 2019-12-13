@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -45,7 +46,8 @@ namespace RescuerLaApp.Models
 
         public void Load(string imgFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
-            ThreadPool.QueueUserWorkItem(o =>
+            
+            Task.Factory.StartNew(() =>
             {
                 Path = imgFileName;
                 switch (loadMode)
