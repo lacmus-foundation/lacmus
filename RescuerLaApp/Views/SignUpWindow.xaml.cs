@@ -25,7 +25,7 @@ namespace RescuerLaApp.Views
             [JsonProperty("time")]
             public string Time { get; set; }
 
-            public bool IsSignIn { get; set; } = false;
+            public bool IsSignIn { get; set; }
         }
 
         public SignUpWindow()
@@ -36,7 +36,7 @@ namespace RescuerLaApp.Views
         public static Task<SignUpResult> Show(Window parent)
         {
             var title = "Create Account";
-            var msgbox = new SignUpWindow()
+            var msgbox = new SignUpWindow
             {
                 Title = title
             };
@@ -91,8 +91,8 @@ namespace RescuerLaApp.Views
                         Time = DateTime.Now.ToString()
                     };
 
-                    var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
-                    if (File.Exists(patch))
+                    var path = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+                    if (File.Exists(path))
                     {
                         ShowInfo("You already signed up. Please log in.");
                         msgbox.Close();
@@ -102,7 +102,7 @@ namespace RescuerLaApp.Views
                     res.IsSignIn = true;
                     
                     File.AppendAllText(
-                        patch,
+                        path,
                         JsonConvert.SerializeObject(res));
                     msgbox.Close();
                 };

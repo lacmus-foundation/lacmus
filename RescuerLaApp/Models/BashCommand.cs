@@ -1,6 +1,4 @@
-using System;
 using System.Diagnostics;
-using System.Reactive.Disposables;
 
 namespace RescuerLaApp.Models
 {
@@ -8,13 +6,13 @@ namespace RescuerLaApp.Models
     {
         public string Execute(string command, out string standardError)
         {
-            string outputText = string.Empty;
+            var outputText = string.Empty;
             standardError = string.Empty;
             try
             {
-                using (Process process = new Process())
+                using (var process = new Process())
                 {
-                    process.StartInfo = new ProcessStartInfo()
+                    process.StartInfo = new ProcessStartInfo
                     {
                         FileName = "/bin/bash",
                         Arguments = $"-c \"{command}\"",
@@ -29,9 +27,9 @@ namespace RescuerLaApp.Models
                     process.WaitForExit();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                string exceptionMessage = ex.Message;
+                
             }
             return outputText;
         }
