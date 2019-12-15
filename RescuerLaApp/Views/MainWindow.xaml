@@ -142,7 +142,7 @@
         
         <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Vertical" Background="White">
           <CheckBox Name="cbShowPedestrians" Content="Show pedestrians" Margin="5,2,2,1"
-                    IsChecked="{Binding IsShowPedestrians}" Command="{Binding ShowPerestriansCommand}"/>
+                    IsChecked="{Binding IsShowPedestrians}" Command="{Binding ShowPedestriansCommand}"/>
           <CheckBox Name="cbShowFavorites" Content="Show favorites" Margin="5,1,2,2"
                     IsChecked="{Binding IsShowFavorites}" Command="{Binding ShowFavoritesCommand}"/>
         </StackPanel>

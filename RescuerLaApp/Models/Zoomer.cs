@@ -6,7 +6,7 @@ namespace RescuerLaApp.Models
 {
     public class Zoomer
     {
-        private static ZoomBorder _zoomBorder = null;
+        private static ZoomBorder _zoomBorder;
 
         public static void Init(ZoomBorder zoomBorder)
         {

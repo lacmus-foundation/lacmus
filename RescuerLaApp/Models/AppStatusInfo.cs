@@ -1,8 +1,5 @@
-﻿using Avalonia.Media;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Avalonia.Styling;
+﻿using System;
+using Avalonia.Media;
 using static RescuerLaApp.Models.Enums;
 
 namespace RescuerLaApp.Models

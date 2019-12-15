@@ -2,16 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using  Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace RescuerLaApp.Models
 {
-    public class NeuroModel : IDisposable
+    public class NeuroModel : INeuroModel 
     {
         private readonly RestApiClient _client;
-        private Docker _docker;
+        private readonly Docker _docker;
         private string _id = "";
         
         
@@ -23,11 +22,11 @@ namespace RescuerLaApp.Models
 
         public async Task<bool> Run()
         {
-            Console.WriteLine("Checking reina-net service...");
+            Console.WriteLine("Checking retina-net service...");
             var status = await _client.GetStatusAsync();
-            if (status != null && status.Contains("server is running"))
+            if (status != null && status.Contains("server is running",StringComparison.InvariantCultureIgnoreCase))
             {
-                Console.WriteLine("Reina-net is ready!");
+                Console.WriteLine("Retina-net is ready!");
                 return true;
             }
             Console.WriteLine("Retina-net is not running: trying to run...");
@@ -39,15 +38,15 @@ namespace RescuerLaApp.Models
             {
                 Console.WriteLine("Container runs. Loading retina-net model...");
                 var startTime = DateTime.Now;
-                TimeSpan waitingTime = new TimeSpan(0, 0, 10, 0);
-                while (DateTime.Now - startTime < waitingTime)
+                //wait no more then 10 min.
+                while ((DateTime.Now - startTime).TotalMinutes < 10)
                 {
                     // Provide a 100ms startup delay
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
                     status = await _client.GetStatusAsync();
-                    if (status != null && status.Contains("server is running"))
+                    if (status != null && status.Contains("server is running",StringComparison.InvariantCultureIgnoreCase))
                     {
-                        Console.WriteLine("Reina-net is ready!");
+                        Console.WriteLine("Retina-net is ready!");
                         return true;
                     }   
                 }
@@ -55,7 +54,7 @@ namespace RescuerLaApp.Models
             return false;
         }
 
-        public async Task<List<BoundBox>> Predict(Frame frame)
+        public async Task<List<BoundBox>> Predict(string path)
         {
             var list = new List<BoundBox>();
             var status = await _client.GetStatusAsync();
@@ -66,13 +65,13 @@ namespace RescuerLaApp.Models
             }
             
             var jsonImg = new JsonImage();
-            jsonImg.Load(frame.Patch);
+            jsonImg.Load(path);
             var json = JsonConvert.SerializeObject(jsonImg);
             var outputText = await _client.PostAsync(json, "image");
             var objects = JsonConvert.DeserializeObject<JsonAnnotation>(outputText);
-            if (objects != null || objects.Objects.Count > 0)
+            if (objects?.Objects != null && objects.Objects.Any())
             {
-                Console.WriteLine("File {0} contains:", Path.GetFileName(frame.Patch));
+                Console.WriteLine("File {0} contains:", Path.GetFileName(path));
                 foreach (var ooj in objects.Objects)
                 {
                     var x1 = ooj.Xmin;
@@ -81,11 +80,7 @@ namespace RescuerLaApp.Models
                     var y2 = ooj.Ymax;
                     var score = ooj.Score;
                     var label = ooj.Name;
-                    var rect = new BoundBox(
-                        x1,
-                        y1,
-                        y2-y1,
-                        x2-x1);
+                    var rect = new BoundBox(x1, y1, y2-y1, x2-x1);
                     list.Add(rect);
                     Console.WriteLine("\t{0}: {1:P1}", label, double.Parse(score.Replace('.',',')));
                 }
@@ -179,7 +174,6 @@ namespace RescuerLaApp.Models
             {
                 // ignored
             }
-            
         }
     }
 }

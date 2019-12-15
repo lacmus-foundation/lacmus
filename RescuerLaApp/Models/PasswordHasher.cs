@@ -50,7 +50,7 @@ namespace RescuerLaApp.Models
             hash[0] = 1; //Identity V3 marker
 
             Buffer.BlockCopy(ConvertToNetworkOrder((uint)KeyDerivationPrf.HMACSHA256), 0, hash, 1, sizeof(uint));
-            Buffer.BlockCopy(ConvertToNetworkOrder((uint)iterationCount), 0, hash, 1 + sizeof(uint), sizeof(uint));
+            Buffer.BlockCopy(ConvertToNetworkOrder(iterationCount), 0, hash, 1 + sizeof(uint), sizeof(uint));
             Buffer.BlockCopy(ConvertToNetworkOrder((uint)salt.Length), 0, hash, 1 + 2 * sizeof(uint), sizeof(uint));
             Buffer.BlockCopy(salt, 0, hash, 1 + 3 * sizeof(uint), salt.Length);
             Buffer.BlockCopy(passwordHash, 0, hash, 1 + 3 * sizeof(uint) + salt.Length, passwordHash.Length);

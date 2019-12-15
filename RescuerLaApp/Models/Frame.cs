@@ -1,28 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Skia;
 using Avalonia.Threading;
 using SkiaSharp;
-using Avalonia.Media.Imaging;
 
 namespace RescuerLaApp.Models
 {
     public class Frame
     {
-        private ImageBrush _imageBrush = new ImageBrush() { Stretch = Stretch.Uniform };
-        private Bitmap _bitmap;
-        private List<BoundBox> _rectangles;
-
-        public string Patch { get; set; }
+        public string Path { get; set; }
 
         public string Name
         {
             get
             {
-                var name = System.IO.Path.GetFileName(Patch);
+                var name = System.IO.Path.GetFileName(Path);
                 if (name.Length > 10)
                 {
                     name = name.Substring(0, 3) + "{~}" + name.Substring(name.Length - 5);
@@ -31,23 +28,12 @@ namespace RescuerLaApp.Models
             }
         }
 
-        public ImageBrush ImageBrush
-        {
-            get => _imageBrush;
-            set => _imageBrush = value;
-        }
+        public ImageBrush ImageBrush { get; set; } = new ImageBrush { Stretch = Stretch.Uniform };
 
-        public Bitmap Bitmap
-        {
-            get => _bitmap;
-            set => _bitmap = value;
-        }
+        public Bitmap Bitmap { get; set; }
 
-        public List<BoundBox> Rectangles
-        {
-            get => _rectangles;
-            set => _rectangles = value;
-        }
+        public IEnumerable<BoundBox> Rectangles { get; set; }
+
         public int Width { get; private set; }
         public int Height { get; private set; }
 
@@ -60,30 +46,31 @@ namespace RescuerLaApp.Models
 
         public void Load(string imgFileName, Enums.ImageLoadMode loadMode = Enums.ImageLoadMode.Full)
         {
-            ThreadPool.QueueUserWorkItem(o =>
+            
+            Task.Factory.StartNew(() =>
             {
-                Patch = imgFileName;
+                Path = imgFileName;
                 switch (loadMode)
                 {
                     case Enums.ImageLoadMode.Full:
-                        _bitmap = new Bitmap(imgFileName);
-                        Width = _bitmap.PixelSize.Width;
-                        Height = _bitmap.PixelSize.Height;
+                        Bitmap = new Bitmap(imgFileName);
+                        Width = Bitmap.PixelSize.Width;
+                        Height = Bitmap.PixelSize.Height;
                         break;
                     case Enums.ImageLoadMode.Miniature:
-                        using (SKStream stream = new SKFileStream(imgFileName))
-                        using (SKBitmap src = SKBitmap.Decode(stream))
+                        using (var stream = new SKFileStream(imgFileName))
+                        using (var src = SKBitmap.Decode(stream))
                         {
                             Width = src.Width;
                             Height = src.Height;
-                            float scale = 100f / src.Width;
-                            SKBitmap resized = new SKBitmap(
+                            var scale = 100f / src.Width;
+                            var resized = new SKBitmap(
                                 (int)(src.Width * scale),
                                 (int)(src.Height * scale), 
                                 src.ColorType, 
                                 src.AlphaType);
                             src.ScalePixels(resized, SKFilterQuality.Low);
-                            _bitmap = new Bitmap(
+                            Bitmap = new Bitmap(
                                 resized.ColorType.ToPixelFormat(),
                                 resized.GetPixels(),
                                 new PixelSize(resized.Width, resized.Height), 
@@ -96,7 +83,7 @@ namespace RescuerLaApp.Models
                 }
                 Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    _imageBrush.Source = _bitmap;
+                    ImageBrush.Source = Bitmap;
                     OnLoad?.Invoke();
                 });
             });

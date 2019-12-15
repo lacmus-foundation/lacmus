@@ -3,8 +3,7 @@ using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.ReactiveUI;
 using Avalonia.Rendering;
-using RescuerLaApp.ViewModels;
-using RescuerLaApp.Views;
+using RescuerLaApp.Models;
 
 namespace RescuerLaApp
 {
@@ -49,7 +48,10 @@ namespace RescuerLaApp
             });
             
             result.UseReactiveUI();
+
+            AvaloniaLocator.CurrentMutable.Bind<INeuroModel>().ToConstant(new NeuroModel());
             
+
             return result
                 .With(new Win32PlatformOptions { AllowEglInitialization = true, UseDeferredRendering = true })
                 .With(new X11PlatformOptions { UseGpu = useGpuLinux, WmClass = "lacmus" })

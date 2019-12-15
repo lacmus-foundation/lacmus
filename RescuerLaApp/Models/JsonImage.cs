@@ -13,9 +13,9 @@ namespace RescuerLaApp.Models
         [JsonProperty("data")]
         public byte[] Data { get; set; }
 
-        public void Load(string imagePatch)
+        public void Load(string path)
         {
-            Data = File.ReadAllBytes(imagePatch);
+            Data = File.ReadAllBytes(path);
         }
 
         public Bitmap GetBitmap()
