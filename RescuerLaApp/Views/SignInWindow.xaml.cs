@@ -25,7 +25,7 @@ namespace RescuerLaApp.Views
             [JsonProperty("time")]
             public string Time { get; set; }
 
-            public bool IsSignIn { get; set; } = false;
+            public bool IsSignIn { get; set; }
         }
 
         public SignInWindow() => AvaloniaXamlLoader.Load(this);
@@ -33,7 +33,7 @@ namespace RescuerLaApp.Views
         public static Task<SignInResult> Show(Window parent)
         {
             var title = "Sign In";
-            var msgbox = new SignInWindow()
+            var msgbox = new SignInWindow
             {
                 Title = title
             };
@@ -47,10 +47,10 @@ namespace RescuerLaApp.Views
                 var btn = new Button {Content = caption};
                 btn.Click += (_, __) =>
                 {
-                    var patch = AppDomain.CurrentDomain.BaseDirectory + "user_info";
-                    if (File.Exists(patch))
+                    var path = AppDomain.CurrentDomain.BaseDirectory + "user_info";
+                    if (File.Exists(path))
                     {
-                        res = JsonConvert.DeserializeObject<SignInResult>(File.ReadAllText(patch));
+                        res = JsonConvert.DeserializeObject<SignInResult>(File.ReadAllText(path));
                         res.IsSignIn = false;
                     }
                     else
@@ -69,21 +69,24 @@ namespace RescuerLaApp.Views
                         msgbox.Close();
                         return;
                     }
-                    else if (string.IsNullOrWhiteSpace(passwordHash) || !hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
+
+                    if (string.IsNullOrWhiteSpace(passwordHash) || !hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
                     {
                         ShowError("Incorrect Password");
                         msgbox.Close();
                         return;
                     }
-                    else if (string.IsNullOrWhiteSpace(email) || !email.Contains('@') || !email.Contains('.') || email != res.Email)
+
+                    if (string.IsNullOrWhiteSpace(email) || !email.Contains('@') || !email.Contains('.') || email != res.Email)
                     {
                         ShowError("Incorrect Email");
                         msgbox.Close();
                         return;
                     }
-                    else if(email == res.Email && hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
+
+                    if(email == res.Email && hasher.VerifyIdentityV3Hash(passwordHash, res.PasswordHash))
                         res.IsSignIn = true;
-                    
+
                     msgbox.Close();
                 };
                 buttonPanel.Children.Add(btn);
