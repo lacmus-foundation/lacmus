@@ -2,7 +2,7 @@
 
 LADD is a dataset of drone created images for pedestrian detection. LADD annotations are into VOC format. 
 
-You can download [version 1](https://yadi.sk/d/4Hz_1qpiNbHhpQ) or [version 2](https://yadi.sk/d/IBoACy3LOG8Cig) of the LADD from Yandex.Disk directly. 
+You can [download the LADD](https://cloud.mail.ru/public/2k53/2bJVwYSa7) from Mail.Cloud directly. 
 
 #### Overview of dataset
 
