@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:1.12.0-gpu-py3
+FROM tensorflow/tensorflow:1.14.0-gpu-py3
 
 # install debian packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -22,7 +22,7 @@ RUN apt-get update -qq \
  && rm -rf /var/lib/apt/lists/*
 
 # install application
-ARG KERAS_VERSION=2.2.4
+ARG KERAS_VERSION=2.3.1
 ENV KERAS_BACKEND=tensorflow
 
 RUN mkdir /app
@@ -35,9 +35,9 @@ RUN pip3 install --upgrade setuptools \
     && pip3 install opencv-python \
     && pip3 install . --user \
     && pip3 install flask \
-    && python3 setup.py build_ext --inplace \
-    && cd /app/snapshots \
-    && wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/lizaalert/lacmus/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
+    && python3 setup.py build_ext --inplace 
+    #&& cd /app/snapshots \
+    #&& wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/lizaalert/lacmus/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
 
 EXPOSE 5000/tcp
 EXPOSE 5000/udp
