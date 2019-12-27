@@ -6,7 +6,6 @@ from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize
 from keras_retinanet.utils.visualization import draw_box, draw_caption
 from keras_retinanet.utils.colors import label_color
 # import miscellaneous modules
-import matplotlib.pyplot as plt
 import cv2
 from PIL import Image
 from io import BytesIO
