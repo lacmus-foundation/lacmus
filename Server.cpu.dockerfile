@@ -33,7 +33,7 @@ RUN pip3 install --upgrade setuptools \
     && pip3 install opencv-python \
     && pip3 install . --user \
     && pip3 install flask \
-    && python3 setup.py build_ext --inplace
+    && python3 setup.py build_ext --inplace \
     && cd /app/snapshots \
     && wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/lizaalert/lacmus/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
 
