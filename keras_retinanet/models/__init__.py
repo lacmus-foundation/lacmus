@@ -57,8 +57,14 @@ def backbone(backbone_name):
         from .vgg import VGGBackbone as b
     elif 'densenet' in backbone_name:
         from .densenet import DenseNetBackbone as b
-    elif 'EfficientNet' in backbone_name:
+    elif 'efficientnet' in backbone_name:
         from .effnet import EfficientNetBackbone as b
+    elif 'senet' in backbone_name:
+        from .senet import EfficientNetBackbone as b
+    elif 'seresnet' in backbone_name:
+        from .seresnet import EfficientNetBackbone as b
+    elif 'seresnext' in backbone_name:
+        from .seresnext import EfficientNetBackbone as b
     else:
         raise NotImplementedError('Backbone class for  \'{}\' not implemented.'.format(backbone))
 
