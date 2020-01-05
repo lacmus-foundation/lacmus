@@ -32,7 +32,7 @@ RUN pip3 install --upgrade setuptools \
     && pip3 --no-cache-dir install --no-dependencies git+https://github.com/fchollet/keras.git@${KERAS_VERSION} \
     && pip3 install opencv-python \
     && pip3 install . --user \
-    && pip3 install flask \
+    && pip3 install flask pybase64 \
     && python3 setup.py build_ext --inplace \
     && cd /app/snapshots \
     && wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/lizaalert/lacmus/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
@@ -40,4 +40,4 @@ RUN pip3 install --upgrade setuptools \
 EXPOSE 5000/tcp
 EXPOSE 5000/udp
 
-ENTRYPOINT ["python3", "inference.py"]
+ENTRYPOINT ["python3", "inference.py", "--gpu", "-1"]
