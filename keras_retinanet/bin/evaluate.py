@@ -18,9 +18,6 @@ import argparse
 import os
 import sys
 
-import keras
-import tensorflow as tf
-
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -33,15 +30,9 @@ from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..utils.config import read_config_file, parse_anchor_parameters
 from ..utils.eval import evaluate
+from ..utils.gpu import setup_gpu
 from ..utils.keras_version import check_keras_version
-
-
-def get_session():
-    """ Construct a modified tf session.
-    """
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    return tf.Session(config=config)
+from ..utils.tf_version import check_tf_version
 
 
 def create_generator(args):
@@ -121,13 +112,13 @@ def main(args=None):
         args = sys.argv[1:]
     args = parse_args(args)
 
-    # make sure keras is the minimum required version
+    # make sure keras and tensorflow are the minimum required version
     check_keras_version()
+    check_tf_version()
 
     # optionally choose specific GPU
     if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    keras.backend.tensorflow_backend.set_session(get_session())
+        setup_gpu(args.gpu)
 
     # make save path if it doesn't exist
     if args.save_path is not None and not os.path.exists(args.save_path):
@@ -161,7 +152,7 @@ def main(args=None):
         from ..utils.coco_eval import evaluate_coco
         evaluate_coco(generator, model, args.score_threshold)
     else:
-        average_precisions = evaluate(
+        average_precisions, inference_time = evaluate(
             generator,
             model,
             iou_threshold=args.iou_threshold,
@@ -182,6 +173,8 @@ def main(args=None):
         if sum(total_instances) == 0:
             print('No test instances found.')
             return
+
+        print('Inference time for {:.0f} images: {:.4f}'.format(generator.size(), inference_time))
 
         print('mAP using the weighted average of precisions among classes: {:.4f}'.format(sum([a * b for a, b in zip(total_instances, precisions)]) / sum(total_instances)))
         print('mAP: {:.4f}'.format(sum(precisions) / sum(x > 0 for x in total_instances)))

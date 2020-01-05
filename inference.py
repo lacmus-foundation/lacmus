@@ -5,11 +5,11 @@ from keras_retinanet import models
 from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize_image
 from keras_retinanet.utils.visualization import draw_box, draw_caption
 from keras_retinanet.utils.colors import label_color
+from keras_retinanet.utils.gpu import setup_gpu
 # import miscellaneous modules
 import cv2
-from PIL import Image
 from io import BytesIO
-import base64
+import pybase64
 import argparse
 import sys
 import os
@@ -35,72 +35,69 @@ def predict_image():
 
 
 def run_detection_image(model, labels_to_names, data):
-    print("start predict {}")
-    with graph.as_default():
-        imgdata = base64.b64decode(data)
-        npImage = np.asarray(Image.open(BytesIO(imgdata)).convert('RGB'))
-        image = npImage[:, :, ::-1].copy()
+    print("start predict...")
+    start_time = time.time()
+    with sess.as_default():
+        with graph.as_default():
+            imgdata = pybase64.b64decode(data)
+            file_bytes = np.asarray(bytearray(imgdata), dtype=np.uint8)
+            image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        # preprocess image for network
-        image = preprocess_image(image)
-        image, scale = resize_image(image)
+            # preprocess image for network
+            image = preprocess_image(image)
+            image, scale = resize_image(image)
 
-        # process image
-        boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))
+            # process image
+            boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))
 
-        # correct for image scale
-        boxes /= scale
-        
-        objects = []
-        reaponse = {
-          'objects': objects
-        }
+            # correct for image scale
+            boxes /= scale
 
-        # visualize detections
-        for box, score, label in zip(boxes[0], scores[0], labels[0]):
-            # scores are sorted so we can break
-            if score < 0.5:
-                break
-            b = np.array(box.astype(int)).astype(int)
-            # x1 y1 x2 y2
-            obj = {
-              'name': labels_to_names[label],
-              'score': str(score),
-              'xmin': str(b[0]),
-              'ymin': str(b[1]),
-              'xmax': str(b[2]),
-              'ynax': str(b[3])
+            objects = []
+            reaponse = {
+              'objects': objects
             }
-            objects.append(obj)
-            #caption += "output= {} {} {} {} {} {:.3f}\n".format(b[0], b[1], b[2], b[3], labels_to_names[label], score)
-        reaponse_json = json.dumps(reaponse)
-        print("done {}", reaponse_json)
-        return reaponse_json
 
-def get_session():
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    session = tf.Session(config=config)
-    return session
+            # visualize detections
+            for box, score, label in zip(boxes[0], scores[0], labels[0]):
+                # scores are sorted so we can break
+                if score < 0.5:
+                    break
+                b = np.array(box.astype(int)).astype(int)
+                # x1 y1 x2 y2
+                obj = {
+                  'name': labels_to_names[label],
+                  'score': str(score),
+                  'xmin': str(b[0]),
+                  'ymin': str(b[1]),
+                  'xmax': str(b[2]),
+                  'ynax': str(b[3])
+                }
+                objects.append(obj)
+            reaponse_json = json.dumps(reaponse)
+            print("done in {} s".format(time.time() - start_time))
+            return reaponse_json
 
 def load_model(args):
-    keras.backend.tensorflow_backend.set_session(get_session())
-    model_path = args.model
-    # load retinanet model
+    global sess 
     global model
-    model = models.load_model(model_path, backbone_name='resnet50')
-    # load label to names mapping for visualization purposes
     global labels_to_names
-    labels_to_names = {0: 'Pedestrian'}
     global graph
+
+    sess = tf.InteractiveSession()
     graph = tf.get_default_graph()
+    setup_gpu(0)
+    model_path = args.model
+    model = models.load_model(model_path, backbone_name='resnet50')
+    labels_to_names = {0: 'Pedestrian'}
     return model, labels_to_names
 
 def parse_args(args):
     """ Parse the arguments.
     """
     parser = argparse.ArgumentParser(description='Evaluation script for a RetinaNet network.')
-    parser.add_argument('--model',              help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.h5'))
+    parser.add_argument('--model', help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.h5'))
+    parser.add_argument('--gpu', help='Visile gpu device. Set to -1 if CPU', default=0)
     return parser.parse_args(args)
 
 def main(args=None):
