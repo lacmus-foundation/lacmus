@@ -44,8 +44,10 @@ from ..preprocessing.open_images import OpenImagesGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..utils.anchors import make_shapes_callback
 from ..utils.config import read_config_file, parse_anchor_parameters
+from ..utils.gpu import setup_gpu
 from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
+from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
 #from ..utils.image import random_visual_effect_generator
 from ..utils.image_adjustments import random_adjustment_generator
@@ -60,14 +62,6 @@ def makedirs(path):
     except OSError:
         if not os.path.isdir(path):
             raise
-
-
-def get_session():
-    """ Construct a modified tf session.
-    """
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    return tf.Session(config=config)
 
 
 def model_with_weights(model, weights, skip_mismatch):
@@ -154,6 +148,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
     tensorboard_callback = None
 
     if args.tensorboard_dir:
+        makedirs(args.tensorboard_dir)
         tensorboard_callback = keras.callbacks.TensorBoard(
             log_dir                = args.tensorboard_dir,
             histogram_freq         = 0,
@@ -165,7 +160,6 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
             embeddings_layer_names = None,
             embeddings_metadata    = None
         )
-        callbacks.append(tensorboard_callback)
 
     if args.evaluation and validation_generator:
         if args.dataset_type == 'coco':
@@ -206,6 +200,9 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         min_lr     = 0
     ))
 
+    if args.tensorboard_dir:
+        callbacks.append(tensorboard_callback)
+
     return callbacks
 
 
@@ -221,6 +218,7 @@ def create_generators(args, preprocess_image):
         'config'           : args.config,
         'image_min_side'   : args.image_min_side,
         'image_max_side'   : args.image_max_side,
+        'no_resize'        : args.no_resize,
         'preprocess_image' : preprocess_image,
     }
 
@@ -428,12 +426,12 @@ def parse_args(args):
     group.add_argument('--imagenet-weights',  help='Initialize the model with pretrained imagenet weights. This is the default behaviour.', action='store_const', const=True, default=True)
     group.add_argument('--weights',           help='Initialize the model with weights from a file.')
     group.add_argument('--no-weights',        help='Don\'t initialize the model with any weights.', dest='imagenet_weights', action='store_const', const=False)
-
     parser.add_argument('--backbone',         help='Backbone model used by retinanet.', default='resnet50', type=str)
     parser.add_argument('--batch-size',       help='Size of the batches.', default=1, type=int)
     parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).')
     parser.add_argument('--multi-gpu',        help='Number of GPUs to use for parallel processing.', type=int, default=0)
     parser.add_argument('--multi-gpu-force',  help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
+    parser.add_argument('--initial-epoch',    help='Epoch from which to begin the train, useful if resuming from snapshot.', type=int, default=0)
     parser.add_argument('--epochs',           help='Number of epochs to train.', type=int, default=50)
     parser.add_argument('--steps',            help='Number of steps per epoch.', type=int, default=10000)
     parser.add_argument('--lr',               help='Learning rate.', type=float, default=1e-5)
@@ -445,6 +443,7 @@ def parse_args(args):
     parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
     parser.add_argument('--image-min-side',   help='Rescale the image so the smallest side is min_side.', type=int, default=800)
     parser.add_argument('--image-max-side',   help='Rescale the image if the largest side is larger than max_side.', type=int, default=1333)
+    parser.add_argument('--no-resize',        help='Don''t rescale the image.', action='store_true')
     parser.add_argument('--config',           help='Path to a configuration parameters .ini file.')
     parser.add_argument('--weighted-average', help='Compute the mAP using the weighted average of precisions among classes.', action='store_true')
     parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss', action='store_true')
@@ -466,13 +465,13 @@ def main(args=None):
     # create object that stores backbone information
     backbone = models.backbone(args.backbone)
 
-    # make sure keras is the minimum required version
+    # make sure keras and tensorflow are the minimum required version
     check_keras_version()
+    check_tf_version()
 
     # optionally choose specific GPU
     if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    keras.backend.tensorflow_backend.set_session(get_session())
+        setup_gpu(args.gpu)
 
     # optionally load config parameters
     if args.config:
@@ -538,7 +537,8 @@ def main(args=None):
         workers=args.workers,
         use_multiprocessing=args.multiprocessing,
         max_queue_size=args.max_queue_size,
-        validation_data=validation_generator
+        validation_data=validation_generator,
+        initial_epoch=args.initial_epoch
     )
 
 
