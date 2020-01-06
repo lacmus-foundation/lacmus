@@ -57,7 +57,7 @@ def backbone(backbone_name):
         from .vgg import VGGBackbone as b
     elif 'densenet' in backbone_name:
         from .densenet import DenseNetBackbone as b
-    elif 'efficientnet' in backbone_name:
+    elif 'EfficientNet' in backbone_name:
         from .effnet import EfficientNetBackbone as b
     elif 'senet' in backbone_name:
         from .senet import EfficientNetBackbone as b
