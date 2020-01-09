@@ -1,8 +1,8 @@
-# Lisa Alert Drone Dataset (LADD)
+# Lacmus Drone Dataset (LADD)
 
 LADD is a dataset of drone created images for pedestrian detection. LADD annotations are into VOC format. 
 
-You can download [version 1](https://yadi.sk/d/4Hz_1qpiNbHhpQ) or [version 2](https://yadi.sk/d/IBoACy3LOG8Cig) of the LADD from Yandex.Disk directly. 
+You can [download the LADD](https://cloud.mail.ru/public/2k53/2bJVwYSa7) from Mail.Cloud directly. 
 
 #### Overview of dataset
 
@@ -15,7 +15,7 @@ You can download [version 1](https://yadi.sk/d/4Hz_1qpiNbHhpQ) or [version 2](ht
   ![example](../docs/imgs/examples/01.png)
 
 
-* The structure of the `LADD_v1`
+* The structure of the `LADD_VERSION_SIZON`
 
   ```
   ├── LADD
@@ -73,5 +73,13 @@ You can download [version 1](https://yadi.sk/d/4Hz_1qpiNbHhpQ) or [version 2](ht
 </annotation> 
 ```
 
+The dataset is divided into 3 seasons: **summer**, **spring** and **summer**. All files are stored in archives `LADD_VERSION_SIZON_NUMBER` and are numb. You can independently collect your dataset. To do this, simply merge the corresponding folders and contents of text files into one.
 
+You can also use our official tools.
+
+## License
+
+LADD is licensed under GNU General Public License v3.0. You can read the license text [here](https://github.com/lizaalert/lacmus/blob/master/LICENSE). 
+
+This license applies not only to the dataset, but also to ALL SOFTWARE products that use it to one degree or another.
 
