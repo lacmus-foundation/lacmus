@@ -24,13 +24,18 @@ See [more examples](docs/work-demo.md).
 
 ## Training data
 
-You can download `Liza Alert Drone Dataset` 
-- [LADDv1](https://yadi.sk/d/4Hz_1qpiNbHhpQ)
-- [LADDv2](https://yadi.sk/d/IBoACy3LOG8Cig)
+You can download `Lacmus Drone Dataset (LaDD)` from mail.ru cloud
+
+- https://cloud.mail.ru/public/2k53/2bJVwYSa7
+
+You also can download Lacmus version of `Stenford Drone Dataset (SDD)` from mail.ru cloud
+
+- https://cloud.mail.ru/public/4GKW/3FW26Sq77
+
 
 ## Usage
 
-Read this [train documentation](docs/train-usage.md) to learn how to train the model.
+Read more about training steps and atraining data at [train documentation](docs/train-usage.md) to learn how to train the model.
 
 ## Pretrained models
 
