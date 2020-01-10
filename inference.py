@@ -71,7 +71,7 @@ def run_detection_image(model, labels_to_names, data):
                   'xmin': str(b[0]),
                   'ymin': str(b[1]),
                   'xmax': str(b[2]),
-                  'ynax': str(b[3])
+                  'ymax': str(b[3])
                 }
                 objects.append(obj)
             reaponse_json = json.dumps(reaponse)
