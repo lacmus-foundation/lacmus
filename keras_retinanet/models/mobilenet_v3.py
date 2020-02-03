@@ -40,6 +40,12 @@ class MobileNetV3Backbone(Backbone):
         """
         return mobilenetv3_retinanet(*args, backbone_name=self.backbone, **kwargs)
 
+    def download_imagenet(self):
+        """ Downloads ImageNet weights and returns path to weights file.
+        """
+        err_msg = "ImageNet weights are not available for the backbone {0}. Please train with --no-weights option"
+        err_msg = err_msg.format(self.backbone)
+        raise NotImplementedError(err_msg)
 
     def validate(self):
         """ Checks whether the backbone string is correct.
