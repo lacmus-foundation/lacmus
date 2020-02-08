@@ -22,9 +22,9 @@ from . import retinanet
 from ..utils.image import preprocess_image
 
 import keras
-from keras.applications import mobilenet
 from keras.utils import get_file
 
+from .mobilenetv3.mobilenet_v3_base import relu6, hard_swish
 from .mobilenetv3.mobilenet_v3_large import MobileNetV3_Large
 from .mobilenetv3.mobilenet_v3_small import MobileNetV3_Small
 
@@ -32,6 +32,11 @@ from .mobilenetv3.mobilenet_v3_small import MobileNetV3_Small
 class MobileNetV3Backbone(Backbone):
     """ Describes backbone information and provides utility functions.
     """
+
+    def __init__(self, backbone):
+        super(MobileNetV3Backbone, self).__init__(backbone)
+        self.custom_objects['_hard_swish'] = hard_swish
+        self.custom_objects['_relu6'] = relu6
 
     allowed_backbones = ['mobilenet_v3_small', 'mobilenet_v3_large']
 
@@ -92,15 +97,15 @@ def mobilenetv3_retinanet(num_classes, backbone_name='mobilenet_v3_small', input
     	backbone = MobileNetV3_Small(shape=shape, n_class=1, alpha=alpha, include_top=False).build()
     	layer_outputs = [
             backbone.layers[30].output, # activation_7, bneck 3 before pw, 28x28x88
-	        backbone.layers[98].output, # multiply_5, bneck 8 before pwl, 14x14x144 
-	        backbone.layers[145].output # activation_24, just before global pooling, 7x7x576
+            backbone.layers[98].output, # multiply_5, bneck 8 before pwl, 14x14x144 
+            backbone.layers[145].output # activation_24, just before global pooling, 7x7x576
         ]
     elif 'mobilenet_v3_large' in backbone_name:
         backbone = MobileNetV3_Large(shape=shape, n_class=1, alpha=alpha, include_top=False).build() 
         layer_outputs = [
             backbone.layers[67].output, # multiply_3, bneck 6 before pwl, 28x28x120
-	        backbone.layers[129].output, # multiply_5, bneck 12 before pwl, 14x14x672
-	        backbone.layers[176].output # activation_32, just before global pooling, 7x7x960
+            backbone.layers[129].output, # multiply_5, bneck 12 before pwl, 14x14x672
+            backbone.layers[176].output # activation_32, just before global pooling, 7x7x960
         ]
 
     inputs = backbone.inputs
