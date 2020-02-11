@@ -1,36 +1,14 @@
 import cv2
 from pathlib import Path
 import xml.etree.ElementTree as ET 
-import pickle
 import numpy as np
 import os
-
-def viewimage(img, win_name='Image'):
-    ''' 
-    Displays image in separate window.
-    '''
-    cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
-    cv2.imshow(win_name, img)    
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
-def save_pkl(data, filename):
-    '''
-    Saves any object as pickle file. Filename shall contain full path.
-    '''
-    with open(filename, 'wb') as output:
-        pickle.dump(data, output)
-         
-def load_pkl(filename):
-    '''
-    Loads object from pickle file. Filename shall contain full path.
-    '''
-    with open(filename, 'rb') as input:
-        return pickle.load(input)
+import random
 
 def main():
     
-    # open CFG file, define paths and crops shapes
+    # open CFG file, define paths and crops shapes  
+    
     config = open('config.cfg')
     for line in config:
         if line.startswith('CROP_SIZE'):
@@ -43,10 +21,15 @@ def main():
             frames_folder = line.split('=')[1].strip().replace('\n','')
         if line.startswith('MASKS_FOLDER'):
             masks_folder = line.split('=')[1].strip().replace('\n','')
+        if line.startswith('INVERT_MASKS'):
+            invert_masks = line.split('=')[1].strip().replace('\n','')
+            if invert_masks.lower() in ['false']:
+                invert_masks = False
+            else:
+                invert_masks = True
             
     images_folder      =         'JPEGImages'
     annotations_folder =         'Annotations'  
-    
     config.close()
 
     print('Dataset location: ', dataset_path)
@@ -102,11 +85,15 @@ def main():
                         padding_w = int((crop_size - (xmax - xmin))/2.)
                         padding_h = int((crop_size - (ymax - ymin))/2.)
                         
+                        # get random shift within 25% of crop_size from bbox center
+                        random_dx = int((random.random()-.5)*.5*crop_size)
+                        random_dy = int((random.random()-.5)*.5*crop_size)
+                        
                         # calculate crop corners
-                        new_xmin = xmin - padding_w
-                        new_xmax = xmax + padding_w
-                        new_ymin = ymin - padding_h
-                        new_ymax = ymax + padding_h
+                        new_xmin = xmin - padding_w + random_dx
+                        new_xmax = xmax + padding_w + random_dx
+                        new_ymin = ymin - padding_h + random_dy
+                        new_ymax = ymax + padding_h + random_dy
                         
                         # do not proceed if crop is outside of image
                         if (new_xmin<1 or new_xmax>width-1 or new_ymin<1 or new_ymax>height-1):continue
@@ -134,20 +121,22 @@ def main():
                         # create binary mask
                         mask = np.zeros_like(img).astype(bool)
                         mask[ymin:ymax, xmin:xmax]=True
-                        mask = mask[new_ymin:new_ymax, new_xmin:new_xmax][:,:,0]
-                        
+                        if invert_masks: mask = np.invert(mask)
+                        mask = (mask[new_ymin:new_ymax, new_xmin:new_xmax][:,:,0]*255).astype('uint8')
+                                            
                         # cut out bbox contents from the crop to get a frame
                         frame = img.copy()
-                        frame[ymin:ymax, xmin:xmax] = 255
+                        frame[ymin:ymax, xmin:xmax] = 0
                         frame = frame[new_ymin:new_ymax, new_xmin:new_xmax]
                         
                         # save all this stuff
-                        save_pkl(mask, Path(dataset_path, masks_folder, filename[:-4]+'_'+str(bbox_num)+'_mask.pkl' ))
+                        cv2.imwrite(str(Path(dataset_path, masks_folder, filename[:-4]+'_'+str(bbox_num)+'_mask.png')), mask)               
                         cv2.imwrite(str(Path(dataset_path, frames_folder, filename[:-4]+'_'+str(bbox_num)+'_crop.jpg')), frame)
                         cv2.imwrite(str(Path(dataset_path, crops_folder, filename[:-4]+'_'+str(bbox_num)+'_pic.jpg')), crop)
                         
                         # goto next bbox in current file
                         bbox_num = bbox_num + 1
+                        
         if passed_files in range(int(n_files/10), n_files, int(n_files/10)): print(str(int(passed_files/n_files*10*10)+1)+'% done...')
         passed_files+=1
 
