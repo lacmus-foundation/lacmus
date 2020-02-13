@@ -58,7 +58,7 @@ class CocoEval(keras.callbacks.Callback):
 
             if self.tensorboard:
                 import tensorflow as tf
-                if tf.version.VERSION < '1.14.0' and self.tensorboard.writer:
+                if tf.version.VERSION < '2.0.0' and self.tensorboard.writer:
                     summary = tf.Summary()
                     for index, result in enumerate(coco_eval_stats):
                         summary_value = summary.value.add()

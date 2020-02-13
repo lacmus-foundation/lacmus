@@ -85,7 +85,7 @@ class Evaluate(keras.callbacks.Callback):
 
         if self.tensorboard:
             import tensorflow as tf
-            if tf.version.VERSION < '1.14.0' and self.tensorboard.writer:
+            if tf.version.VERSION < '2.0.0' and self.tensorboard.writer:
                 summary = tf.Summary()
                 summary_value = summary.value.add()
                 summary_value.simple_value = self.mean_ap
