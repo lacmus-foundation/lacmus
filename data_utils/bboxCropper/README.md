@@ -15,4 +15,4 @@ Dataset, located at **DATASET_PATH**.
 #### About masks
 - by default, mask pixels are True in places where image inpainting required, others are False. For mask inversion: set INVERT_MASKS in cfg file.
 
-![Example](https://github.com/2326wz/Play-repository/blob/master/bboxCropper/screenshot.PNG)
+![Example](https://github.com/lacmus-foundation/lacmus/blob/master/data_utils/bboxCropper/screenshot.PNG)
