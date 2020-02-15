@@ -35,8 +35,8 @@ class MobileNetV3Backbone(Backbone):
 
     def __init__(self, backbone):
         super(MobileNetV3Backbone, self).__init__(backbone)
-        self.custom_objects['_hard_swish'] = hard_swish
-        self.custom_objects['_relu6'] = relu6
+        self.custom_objects['hard_swish'] = hard_swish
+        self.custom_objects['relu6'] = relu6
 
     allowed_backbones = ['mobilenet_v3_small', 'mobilenet_v3_large']
 
