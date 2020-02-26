@@ -112,6 +112,7 @@ data/
 *.h5
 
 RetinaNet/logs/
+logs/
 .vs/
 
 ## Ignore Visual Studio temporary files, build results, and
