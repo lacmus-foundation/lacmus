@@ -5,7 +5,7 @@
 # Usage:
 # ./setup_conda_env.sh [environment_name]
 
-# Do not forget to grand the script execute permission by:
+# Do not forget to grant the script execute permission by:
 # chmod +x ./setup_conda_env.sh
 
 
