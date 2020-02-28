@@ -306,15 +306,14 @@ def random_visual_effect_generator(
     _check_range(saturation_range, 0)
 
     def _generate():
-        while True:
-            yield VisualEffect(
-                contrast_factor=_uniform(contrast_range),
-                brightness_delta=_uniform(brightness_range),
-                hue_delta=_uniform(hue_range),
-                saturation_factor=_uniform(saturation_range),
-            )
+        return VisualEffect(
+            contrast_factor=_uniform(contrast_range),
+            brightness_delta=_uniform(brightness_range),
+            hue_delta=_uniform(hue_range),
+            saturation_factor=_uniform(saturation_range)
+        )
 
-    return _generate()
+    return _generate
 
 
 def adjust_contrast(image, factor):
