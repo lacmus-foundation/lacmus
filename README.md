@@ -1,6 +1,6 @@
 # lacmus
 
-![logo](docs/imgs/la-logo.jpg)
+![logo](docs/imgs/lacmus-logo.png)
 
 The program for searching through photos from the air of lost people in the forest using Retina Net neural nwtwork.
 
@@ -39,4 +39,19 @@ Read more about training steps and atraining data at [train documentation](docs/
 
 ## Pretrained models
 
-The models are avalable [here](https://github.com/lizaalert/lacmus/releases/tag/0.1.1)
+The models are avalable [here](https://github.com/lizaalert/lacmus/releases/tag/0.1.1).
+
+## Partners
+
+[![ODS][logoODS]](https://ods.ai)    [![DTL][logoDTL]](http://immersiya.com/about)
+								[![Liza alert][logoLA]](https://lizaalert.org/)    [![Novaya Gazeta][logoNovayaGazeta]](https://novayagazeta.ru/)    [![Teplica][logoTeplica]](https://te-st.ru/)
+
+[logoDTL]: docs/imgs/partners/dtl-logo-200px.png "DTL"
+
+[logoODS]: docs/imgs/partners/ods-logo-200px.png "ODS"
+
+[logoLA]: docs/imgs/partners/lizaalert-logo-128px.png "Liza alert"
+
+[logoNovayaGazeta]: docs/imgs/partners/novaya-gazeta-logo-128px.png "Novaya Gazeta"
+
+[logoTeplica]: docs/imgs/partners/teplica-logo-128px.png "Teplica"

@@ -45,3 +45,29 @@ def parse_anchor_parameters(config):
     strides = list(map(int, config['anchor_parameters']['strides'].split(' ')))
 
     return AnchorParameters(sizes, strides, ratios, scales)
+
+
+def parse_random_transform_parameters(config):
+    kwargs = dict()
+    kwargs['min_rotation'] = float(config['random_transform_parameters']['min_rotation'])
+    kwargs['max_rotation'] = float(config['random_transform_parameters']['max_rotation'])
+    kwargs['min_translation'] = tuple(map(float, config['random_transform_parameters']['min_translation'].split()))
+    kwargs['max_translation'] = tuple(map(float, config['random_transform_parameters']['max_translation'].split()))
+    kwargs['min_shear'] = float(config['random_transform_parameters']['min_shear'])
+    kwargs['max_shear'] = float(config['random_transform_parameters']['max_shear'])
+    kwargs['min_scaling'] = tuple(map(float, config['random_transform_parameters']['min_scaling'].split()))
+    kwargs['max_scaling'] = tuple(map(float, config['random_transform_parameters']['max_scaling'].split()))
+    kwargs['flip_x_chance'] = float(config['random_transform_parameters']['flip_x_chance'])
+    kwargs['flip_y_chance'] = float(config['random_transform_parameters']['flip_y_chance'])
+
+    return kwargs
+
+
+def parse_visual_effect_parameters(config):
+    kwargs = dict()
+    kwargs['contrast_range'] = tuple(map(float, config['visual_effect_parameters']['contrast_range'].split()))
+    kwargs['brightness_range'] = tuple(map(float, config['visual_effect_parameters']['brightness_range'].split()))
+    kwargs['hue_range'] = tuple(map(float, config['visual_effect_parameters']['hue_range'].split()))
+    kwargs['saturation_range'] = tuple(map(float, config['visual_effect_parameters']['saturation_range'].split()))
+
+    return kwargs
