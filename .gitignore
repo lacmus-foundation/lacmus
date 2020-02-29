@@ -448,3 +448,4 @@ ASALocalRun/
 # Fody files
 *.xsd
 compute_overlap.c
+snapshots/
