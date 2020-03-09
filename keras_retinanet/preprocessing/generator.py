@@ -192,7 +192,7 @@ class Generator(keras.utils.Sequence):
     def random_visual_effect_group_entry(self, image, annotations):
         """ Randomly transforms image and annotation.
         """
-        visual_effect = next(self.visual_effect_generator)
+        visual_effect = self.visual_effect_generator()
         # apply visual effect
         image = visual_effect(image)
         return image, annotations

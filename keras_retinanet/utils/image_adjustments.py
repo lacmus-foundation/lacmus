@@ -153,8 +153,7 @@ class ImageAdjustment:
         lookup_table = _clip(lookup_table)
         return lookup_table
     
-    
-    
+
 def random_adjustment_generator(
     contrast_range=(0.9, 1.1),
     brightness_range=(-.1, .1),
@@ -177,21 +176,21 @@ def random_adjustment_generator(
     _check_range(saturation_range, 0)
 
     def _generate():
-        while True:
-            yield ImageAdjustment(
-                contrast_factor=_uniform(contrast_range),
-                brightness_delta=_uniform(brightness_range),
-                hue_delta=_uniform(hue_range),
-                saturation_factor=_uniform(saturation_range),
-            )
+        return ImageAdjustment(
+            contrast_factor=_uniform(contrast_range),
+            brightness_delta=_uniform(brightness_range),
+            hue_delta=_uniform(hue_range),
+            saturation_factor=_uniform(saturation_range)
+        )
 
-    return _generate()
+    return _generate
+
 
 if __name__ == "__main__":
     from keras_retinanet.utils.image import VisualEffect, random_visual_effect_generator
     
     effect_generator = random_visual_effect_generator()
-    effect = next(effect_generator)
+    effect = effect_generator()
     
     # Test contrast
     contrast_effect = VisualEffect(effect.contrast_factor, None, None, None)
@@ -278,8 +277,7 @@ if __name__ == "__main__":
     print("\nTime tests:")
     import time
     
-    effect = next(effect_generator)
-    
+    effect = effect_generator()
     
     image = np.random.randint(0, 255, size=(800, 1333, 3), dtype=np.uint8) 
     
