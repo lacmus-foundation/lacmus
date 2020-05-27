@@ -14,7 +14,7 @@ import cv2
 import tqdm
 from joblib import Parallel, delayed
 
-from data_utils.dataset import Annotation, Rectangle, LaddDataset, ImageIdType
+from dataset import Annotation, Rectangle, LaddDataset, ImageIdType
 
 
 class GridFragment:
