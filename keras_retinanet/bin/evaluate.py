@@ -28,6 +28,7 @@ if __name__ == "__main__" and __package__ is None:
 from .. import models
 from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
+from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
 from ..utils.config import read_config_file, parse_anchor_parameters
 from ..utils.eval import evaluate
 from ..utils.gpu import setup_gpu
@@ -59,6 +60,21 @@ def create_generator(args):
             config=args.config,
             shuffle_groups=False,
         )
+    elif args.dataset_type == 'pascal-grid-crops':
+        validation_generator = PascalVocGridCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.overlap_width,
+            args.overlap_height,
+            args.min_bbox_portion,
+            args.group_by_image,
+            image_min_side=args.image_min_side,
+            image_max_side=args.image_max_side,
+            config=args.config,
+            data_dir=args.pascal_path,
+            set_name='test',
+            shuffle_groups=False
+        )
     elif args.dataset_type == 'csv':
         validation_generator = CSVGenerator(
             args.annotations,
@@ -84,12 +100,25 @@ def parse_args(args):
     coco_parser = subparsers.add_parser('coco')
     coco_parser.add_argument('coco_path', help='Path to dataset directory (ie. /tmp/COCO).')
 
-    pascal_parser = subparsers.add_parser('pascal')
-    pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
-
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for evaluation.')
     csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
+
+    pascal_parser = subparsers.add_parser('pascal')
+    pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
+    pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_grid_crops_parser.add_argument('--crop-width', help='Width of each crop', type=int)
+    pascal_grid_crops_parser.add_argument('--crop-height', help='Height of each crop', type=int)
+    pascal_grid_crops_parser.add_argument('--overlap-width', help='Width of crops overlap', type=int, default=160)
+    pascal_grid_crops_parser.add_argument('--overlap-height', help='Height of crops overlap', type=int, default=160)
+    pascal_grid_crops_parser.add_argument('--min-bbox-portion',
+                                          help='Min portion of original bbox to be considered new cropped bbox',
+                                          type=float, default=0.75)
+    pascal_grid_crops_parser.add_argument('--group-by-image',
+                                          help='Group crops by image. If specified, --batch-size parameter is ignored. '
+                                               'Crops groups can differ in size',
+                                          action='store_true')
 
     parser.add_argument('model',              help='Path to RetinaNet model.')
     parser.add_argument('--convert-model',    help='Convert the model to an inference model (ie. the input is a training model).', action='store_true')
