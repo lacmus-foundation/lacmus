@@ -44,6 +44,7 @@ from ..preprocessing.kitti import KittiGenerator
 from ..preprocessing.open_images import OpenImagesGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
+from ..preprocessing.pascal_voc_balanced_crops import PascalVocBalancedCropsGenerator
 from ..utils.anchors import make_shapes_callback
 from ..utils.config import read_config_file, parse_anchor_parameters, parse_random_transform_parameters, \
     parse_visual_effect_parameters
@@ -341,6 +342,30 @@ def create_generators(args, preprocess_image):
             shuffle_groups=False,
             **common_args
         )
+    elif args.dataset_type == 'pascal-crops-balanced':
+
+        common_args['no_resize'] = True
+
+        train_generator = PascalVocBalancedCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.negatives_per_positive,
+            data_dir=args.pascal_path,
+            set_name='trainval',
+            transform_generator=transform_generator,
+            visual_effect_generator=visual_effect_generator,
+            **common_args
+        )
+
+        validation_generator = PascalVocBalancedCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.negatives_per_positive,
+            data_dir=args.pascal_path,
+            set_name='test',
+            shuffle_groups=False,
+            **common_args
+        )
     elif args.dataset_type == 'csv':
         train_generator = CSVGenerator(
             args.annotations,
@@ -465,6 +490,14 @@ def parse_args(args):
                                           help='Group crops by image. If specified, --batch-size parameter is ignored. '
                                                'Crops groups can differ in size',
                                           action='store_true')
+
+    pascal_crops_balanced_parser = subparsers.add_parser('pascal-crops-balanced')
+    pascal_crops_balanced_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_crops_balanced_parser.add_argument('--crop-width', help='Width of each crop', type=int)
+    pascal_crops_balanced_parser.add_argument('--crop-height', help='Height of each crop', type=int)
+    pascal_crops_balanced_parser.add_argument('--negatives-per-positive',
+                                          help='Amount of empty crops per crop with bounding box',
+                                          type=int, default=0)
 
     def csv_list(string):
         return string.split(',')
