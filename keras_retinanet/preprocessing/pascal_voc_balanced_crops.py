@@ -212,8 +212,7 @@ class PascalVocBalancedCropsGenerator(PascalVocGenerator):
     @staticmethod
     def _get_offset_inside(coordinate, min_border, size):
         offset = max(0, coordinate - min_border)
-        max_border = min_border + size
-        return min(max_border, offset)
+        return min(size, offset)
 
     def load_annotations_group(self, group):
         group_annotations = []
@@ -357,3 +356,20 @@ if __name__ == '__main__':
     else:
         print('[FAILED] Testing re-balancing sampling with negatives')
         sys.exit(-1)
+
+
+    crop = (100, 100, 200, 200)
+    bbox = (150, 150, 250, 250)
+    width = crop[2] - crop[0]
+    height = crop[3] - crop[1]
+    x_min = PascalVocBalancedCropsGenerator._get_offset_inside(bbox[0], crop[0], width)
+    y_min = PascalVocBalancedCropsGenerator._get_offset_inside(bbox[1], crop[1], height)
+    x_max = PascalVocBalancedCropsGenerator._get_offset_inside(bbox[2], crop[2], width)
+    y_max = PascalVocBalancedCropsGenerator._get_offset_inside(bbox[3], crop[3], height)
+    if (x_min == 50) and (y_min == 50) and (x_max == 50) and (y_max == 50):
+        print("[OK] Testing coordinate offset inside a crop")
+    else:
+        print("[FAILED] Testing coordinate offset inside a crop")
+        sys.exit(-1)
+
+
