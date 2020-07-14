@@ -134,6 +134,17 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
         """
         return [self._load_crop(crop_ref) for crop_ref in group]
 
+
+    def load_annotations(self, crop_index):
+        crop_reference = self.crop_references[crop_index]
+        width, height, scale = self.image_sizes[crop_reference.image_index]
+        image_annotations = super().load_annotations(crop_reference.image_index)
+        image_annotations['bboxes'] *= scale
+        crop_rectangle = self._get_crop_from_grid(crop_reference.crop_number, width, height)
+        return self.cropper.calc_annotations(image_annotations['labels'], image_annotations['bboxes'],
+                                                        crop_rectangle)
+
+
     def load_annotations_group(self, group):
         """ Load annotations for all images in group and cut them corresponding to crops.
         """
@@ -143,7 +154,7 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
             width, height, scale = self.image_sizes[crop.image_index]
 
             if crop.image_index not in image_annotations:
-                image_annotations[crop.image_index] = self.load_annotations(crop.image_index)
+                image_annotations[crop.image_index] = super().load_annotations(crop.image_index)
                 image_annotations[crop.image_index]['bboxes'] *= scale
 
             annotations = image_annotations[crop.image_index]
