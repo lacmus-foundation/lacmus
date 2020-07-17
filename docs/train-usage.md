@@ -6,15 +6,14 @@ This code is borrowed from Keras Implementation of this model at https://github.
 
 ## Installation
 
-1) Clone this repository.
-2) `cd RetinaNet`
-3) Ensure numpy is installed using `pip install numpy --user`
-4) In the repository, execute `pip install . --user`.
+1) Clone this repository.`
+2) Ensure numpy is installed using `pip install numpy --user`
+3) In the repository, execute `pip install . --user`.
    Note that due to inconsistencies with how `tensorflow` should be installed,
    this package does not define a dependency on `tensorflow` as it will try to install that (which at least on Arch Linux results in an incorrect installation).
    Please make sure `tensorflow` is installed as per your systems requirements.
-5) Alternatively, you can run the code directly from the cloned  repository, however you need to run `python setup.py build_ext --inplace` to compile Cython code first.
-6) Optionally, install `pycocotools` if you want to train / test on the MS COCO dataset by running `pip install --user git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI`.
+4) To run the code directly from the cloned  repository, you need to run `python setup.py build_ext --inplace` to compile Cython code first.
+5) Optionally, install `pycocotools` if you want to train / test on the MS COCO dataset by running `pip install --user git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI`.
 
 
 ## Training on custom data set (added by Priyanka Dwivedi, Georgy Perevozchikov)
@@ -55,7 +54,7 @@ Here:
 
 If your dataset is small, you can also use the `--freeze-backbone argument` to freeze the backbone layers.
 
-You can find more arguments directly in parse_args function of [train.py](../RetinaNet/keras_retinanet/bin/train.py) file.
+You can find more arguments directly in parse_args function of [train.py](../keras_retinanet/bin/train.py) file.
 
 A model trained on a LADD dataset can be found [here](https://github.com/lizaalert/lacmus/releases/tag/0.1.1).
 
@@ -113,6 +112,6 @@ Here first path is the path to the trained model and the second would be the pat
 I created two notebooks from the original code that can be used to run inference on images and on videos.
 
 The notebooks are:
-* [RetinaNet/ResNet50RetinaNet-Image.ipynb](../RetinaNet/ResNet50RetinaNet-Image.ipynb) : For inference on a batch of images
-* [RetinaNet/ResNet50RetinaNet-Video.ipynb](../RetinaNet/ResNet50RetinaNet-Video.ipynb) : For inference on a video
+* [RetinaNet/ResNet50RetinaNet-Image.ipynb](../ResNet50RetinaNet-Image.ipynb) : For inference on a batch of images
+* [RetinaNet/ResNet50RetinaNet-Video.ipynb](../ResNet50RetinaNet-Video.ipynb) : For inference on a video
 

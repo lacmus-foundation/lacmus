@@ -10,6 +10,7 @@ namespace LaddGenerator
         {
             {"--src", "source path"},
             {"--dst", "destination path"},
+            {"--cnt", "start count with"},
         };
         
         static void Main(string[] args)
@@ -26,6 +27,8 @@ namespace LaddGenerator
             var imgDstPatch = parsedArgs["dst"] + "JPEGImages/";
             var annDstPatch = parsedArgs["dst"] + "Annotations/";
             var spltDstPatch = parsedArgs["dst"] + "ImageSets/Main/";
+            int beginCount = int.Parse(parsedArgs["cnt"]);
+            
             if (!Directory.Exists(imgSrcPatch))
             {
                 Console.Write("unable to open: " + imgSrcPatch);
@@ -52,7 +55,7 @@ namespace LaddGenerator
             var srcFiles = Directory.GetFiles(annSrcPatch);
             var dstImgFileNames = Directory.GetFiles(imgDstPatch);
             int count = 0; //420;
-            int beginCount = 769;
+            
             if (dstImgFileNames == null || dstImgFileNames.Length == 0)
                 count = beginCount;
             else
@@ -103,7 +106,8 @@ namespace LaddGenerator
                 files.Add(i);
             }
             Shuffle(files);
-            int trainSplit = 45;
+            int trainSplit = Convert.ToInt32((double)files.Count / 100 * 20);
+            if (trainSplit == 0 && files.Count > 2) trainSplit = 1;
             List<string> lines = new List<string>();
             for (int i = 0; i < files.Count-trainSplit; i++)
             {

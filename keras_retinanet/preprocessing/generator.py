@@ -192,7 +192,7 @@ class Generator(keras.utils.Sequence):
     def random_visual_effect_group_entry(self, image, annotations):
         """ Randomly transforms image and annotation.
         """
-        visual_effect = next(self.visual_effect_generator)
+        visual_effect = self.visual_effect_generator()
         # apply visual effect
         image = visual_effect(image)
         return image, annotations
@@ -300,7 +300,7 @@ class Generator(keras.utils.Sequence):
         max_shape = tuple(max(image.shape[x] for image in image_group) for x in range(3))
 
         # construct an image batch object
-        image_batch = np.zeros((self.batch_size,) + max_shape, dtype=keras.backend.floatx())
+        image_batch = np.zeros((len(image_group),) + max_shape, dtype=keras.backend.floatx())
 
         # copy all images to the upper left part of the image batch object
         for image_index, image in enumerate(image_group):
