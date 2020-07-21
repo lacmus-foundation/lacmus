@@ -21,5 +21,6 @@ jobs:
         pip install -U numpy==1.16
         pip install .
         python setup.py build_ext --inplace
+        pip install pytest
     - name: Run tests
       run: pytest tests
