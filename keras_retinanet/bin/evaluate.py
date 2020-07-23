@@ -29,6 +29,7 @@ from .. import models
 from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
+from ..preprocessing.pascal_voc_balanced_crops import PascalVocBalancedCropsGenerator
 from ..utils.config import read_config_file, parse_anchor_parameters
 from ..utils.eval import evaluate
 from ..utils.gpu import setup_gpu
@@ -75,6 +76,16 @@ def create_generator(args):
             group_by_image=True,
             shuffle_groups=False
         )
+    elif args.dataset_type == 'pascal-crops-balanced':
+        validation_generator = PascalVocBalancedCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.negatives_per_positive,
+            data_dir=args.pascal_path,
+            set_name='test',
+            shuffle_groups=False,
+            no_resize=True
+        )
     elif args.dataset_type == 'csv':
         validation_generator = CSVGenerator(
             args.annotations,
@@ -106,6 +117,7 @@ def parse_args(args):
 
     pascal_parser = subparsers.add_parser('pascal')
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+
     pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
     pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
     pascal_grid_crops_parser.add_argument('--crop-width', help='Width of each crop', type=int)
@@ -116,6 +128,14 @@ def parse_args(args):
                                           help='Min portion of original bbox to be considered new cropped bbox',
                                           type=float, default=0.75)
 
+
+    pascal_crops_balanced_parser = subparsers.add_parser('pascal-crops-balanced')
+    pascal_crops_balanced_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_crops_balanced_parser.add_argument('--crop-width', help='Width of each crop', type=int)
+    pascal_crops_balanced_parser.add_argument('--crop-height', help='Height of each crop', type=int)
+    pascal_crops_balanced_parser.add_argument('--negatives-per-positive',
+                                              help='Amount of empty crops per crop with bounding box',
+                                              type=int, default=0)
 
     parser.add_argument('model',              help='Path to RetinaNet model.')
     parser.add_argument('--convert-model',    help='Convert the model to an inference model (ie. the input is a training model).', action='store_true')

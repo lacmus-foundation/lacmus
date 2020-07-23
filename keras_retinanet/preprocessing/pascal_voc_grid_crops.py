@@ -102,14 +102,9 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
         """
         Overload of Generator base method. Forms groups of crops instead of image groups
         """
-        images_indexes = list(range(super().size()))
-
         # determine the order of the images
-        order = list(images_indexes)
-        if self.group_method == 'random':
-            random.shuffle(order)
-        elif self.group_method == 'ratio':
-            order.sort(key=lambda img: self._calc_aspect_ratio(*self._get_image_size(img)))
+        order = self.get_images_order(
+            super().size(), lambda img: self._calc_aspect_ratio(*self._get_image_size(img)))
 
         # calculate continuous crops references list,
         # with indexes of the crop's image and position of the crop inside it
