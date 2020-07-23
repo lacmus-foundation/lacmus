@@ -67,12 +67,12 @@ def create_generator(args):
             args.overlap_width,
             args.overlap_height,
             args.min_bbox_portion,
-            args.group_by_image,
             image_min_side=args.image_min_side,
             image_max_side=args.image_max_side,
             config=args.config,
             data_dir=args.pascal_path,
             set_name='test',
+            group_by_image=True,
             shuffle_groups=False
         )
     elif args.dataset_type == 'csv':
@@ -115,10 +115,7 @@ def parse_args(args):
     pascal_grid_crops_parser.add_argument('--min-bbox-portion',
                                           help='Min portion of original bbox to be considered new cropped bbox',
                                           type=float, default=0.75)
-    pascal_grid_crops_parser.add_argument('--group-by-image',
-                                          help='Group crops by image. If specified, --batch-size parameter is ignored. '
-                                               'Crops groups can differ in size',
-                                          action='store_true')
+
 
     parser.add_argument('model',              help='Path to RetinaNet model.')
     parser.add_argument('--convert-model',    help='Convert the model to an inference model (ie. the input is a training model).', action='store_true')
@@ -181,14 +178,25 @@ def main(args=None):
         from ..utils.coco_eval import evaluate_coco
         evaluate_coco(generator, model, args.score_threshold)
     else:
-        average_precisions, inference_time = evaluate(
-            generator,
-            model,
-            iou_threshold=args.iou_threshold,
-            score_threshold=args.score_threshold,
-            max_detections=args.max_detections,
-            save_path=args.save_path
-        )
+        if args.dataset_type == 'pascal-grid-crops':
+            from ..utils.crops_eval import evaluate as evaluate_crops
+            average_precisions, inference_time = evaluate_crops(
+                generator,
+                model,
+                iou_threshold=args.iou_threshold,
+                score_threshold=args.score_threshold,
+                max_detections=args.max_detections,
+                save_path=args.save_path
+            )
+        else:
+            average_precisions, inference_time = evaluate(
+                generator,
+                model,
+                iou_threshold=args.iou_threshold,
+                score_threshold=args.score_threshold,
+                max_detections=args.max_detections,
+                save_path=args.save_path
+            )
 
         # print evaluation
         total_instances = []

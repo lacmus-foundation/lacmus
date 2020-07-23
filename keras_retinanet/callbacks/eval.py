@@ -25,6 +25,7 @@ class Evaluate(keras.callbacks.Callback):
     def __init__(
         self,
         generator,
+        evaluate_func=evaluate,
         iou_threshold=0.5,
         score_threshold=0.05,
         max_detections=100,
@@ -46,6 +47,7 @@ class Evaluate(keras.callbacks.Callback):
             verbose          : Set the verbosity level, by default this is set to 1.
         """
         self.generator       = generator
+        self.evaluate = evaluate_func
         self.iou_threshold   = iou_threshold
         self.score_threshold = score_threshold
         self.max_detections  = max_detections
@@ -60,7 +62,7 @@ class Evaluate(keras.callbacks.Callback):
         logs = logs or {}
 
         # run evaluation
-        average_precisions, _ = evaluate(
+        average_precisions, _ = self.evaluate(
             self.generator,
             self.model,
             iou_threshold=self.iou_threshold,

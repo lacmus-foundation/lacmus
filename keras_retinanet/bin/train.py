@@ -191,8 +191,15 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
 
             # use prediction model for evaluation
             evaluation = CocoEval(validation_generator, tensorboard=tensorboard_callback)
+        elif args.dataset_type == 'pascal-grid-crops':
+            from ..utils.crops_eval import evaluate as crops_evaluate
+            evaluation = Evaluate(validation_generator,
+                                  evaluate_func=crops_evaluate,
+                                  tensorboard=tensorboard_callback,
+                                  weighted_average=args.weighted_average)
         else:
-            evaluation = Evaluate(validation_generator, tensorboard=tensorboard_callback,
+            evaluation = Evaluate(validation_generator,
+                                  tensorboard=tensorboard_callback,
                                   weighted_average=args.weighted_average)
         evaluation = RedirectModel(evaluation, prediction_model)
         callbacks.append(evaluation)
@@ -335,7 +342,8 @@ def create_generators(args, preprocess_image):
             args.overlap_width,
             args.overlap_height,
             args.min_bbox_portion,
-            args.group_by_image,
+            # validation should be performed on the whole image
+            group_by_image=True,
             data_dir=args.pascal_path,
             set_name='test',
             shuffle_groups=False,
