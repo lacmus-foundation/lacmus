@@ -118,6 +118,7 @@ def parse_args(args):
     pascal_parser = subparsers.add_parser('pascal')
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
 
+    # Is expected to be used for validation of both grid crops and balanced crops training
     pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
     pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
     pascal_grid_crops_parser.add_argument('--crop-width', help='Width of each crop', type=int)
@@ -127,15 +128,6 @@ def parse_args(args):
     pascal_grid_crops_parser.add_argument('--min-bbox-portion',
                                           help='Min portion of original bbox to be considered new cropped bbox',
                                           type=float, default=0.75)
-
-
-    pascal_crops_balanced_parser = subparsers.add_parser('pascal-crops-balanced')
-    pascal_crops_balanced_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
-    pascal_crops_balanced_parser.add_argument('--crop-width', help='Width of each crop', type=int)
-    pascal_crops_balanced_parser.add_argument('--crop-height', help='Height of each crop', type=int)
-    pascal_crops_balanced_parser.add_argument('--negatives-per-positive',
-                                              help='Amount of empty crops per crop with bounding box',
-                                              type=int, default=0)
 
     parser.add_argument('model',              help='Path to RetinaNet model.')
     parser.add_argument('--convert-model',    help='Convert the model to an inference model (ie. the input is a training model).', action='store_true')

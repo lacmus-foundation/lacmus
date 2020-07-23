@@ -192,7 +192,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
 
             # use prediction model for evaluation
             evaluation = CocoEval(validation_generator, tensorboard=tensorboard_callback)
-        elif args.dataset_type == 'pascal-grid-crops':
+        elif args.dataset_type in ['pascal-grid-crops', 'pascal-crops-balanced']:
             from ..utils.crops_eval import evaluate as crops_evaluate
             evaluation = Evaluate(validation_generator,
                                   evaluate_func=crops_evaluate,
@@ -365,10 +365,12 @@ def create_generators(args, preprocess_image):
             **common_args
         )
 
-        validation_generator = PascalVocBalancedCropsGenerator(
+        # Will evaluate using GridCrops generator and merging whole image as well
+        validation_generator = PascalVocGridCropsGenerator(
             args.crop_width,
             args.crop_height,
-            args.negatives_per_positive,
+            # validation should be performed on the whole image
+            group_by_image=True,
             data_dir=args.pascal_path,
             set_name='test',
             shuffle_groups=False,

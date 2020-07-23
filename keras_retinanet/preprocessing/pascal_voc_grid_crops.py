@@ -20,9 +20,9 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
     def __init__(self,
                  window_w,
                  window_h,
-                 overlap_w,
-                 overlap_h,
-                 min_cropped_bbox_square,
+                 overlap_w=200,
+                 overlap_h=200,
+                 min_cropped_bbox_square=0.75,
                  group_by_image=True,
                  **kwargs):
         self.cropper = ImageGridCropper(window_w, window_h, overlap_w, overlap_h, min_cropped_bbox_square)
