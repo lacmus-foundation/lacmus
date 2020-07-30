@@ -163,6 +163,7 @@ def main(args=None):
         start_time = time.time()
         res = OpenVinoExecutable.infer(inputs={input_blob: image})
         print("\t{} s".format(time.time() - start_time))
+    print("prepoocess image at {} s".format(time.time() - start_time))
     
     print("*"*20)
     boxes, scores, labels = decode_openvino_detections(res[OutputLayer])
