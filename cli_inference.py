@@ -45,6 +45,12 @@ def parse_args(args):
         required=False,
         default=3
     )
+    parser.add_argument(
+        '--gpu',
+        help='use gpu',
+        action='store_true',
+        required=False,
+    )
     return parser.parse_args(args)
 
 def create_model(backbone_name, num_classes=1):
@@ -115,6 +121,8 @@ def main(args=None):
     backbone = args.backbone
 
     print("loading model...")
+    if args.gpu:
+        setup_gpu(0)
 
     model = models.load_model(model_bin, backbone_name=backbone)
 

@@ -51,7 +51,7 @@ def main(args=None):
     basename = os.path.basename(weights_name)
     fn, ext = os.path.splitext(basename)
 
-    model = models.load_model(weights_name, backbone_name=backbone))
+    model = models.load_model(weights_name, backbone_name=backbone)
     frozen_graph = freeze_session(K.get_session(), output_names=[out.op.name for out in model.outputs])
     tf.train.write_graph(frozen_graph, dirname, f'{fn}.pb', as_text=False)
     print(f'weights saved: {dirname}')
