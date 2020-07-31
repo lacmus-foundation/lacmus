@@ -44,8 +44,8 @@ def run_detection_image(model, labels_to_names, data):
             image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
             # preprocess image for network
-            image = preprocess_image(image)
             image, scale = resize_image(image)
+            image = preprocess_image(image)
 
             # process image
             boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))

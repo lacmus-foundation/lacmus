@@ -131,13 +131,13 @@ def main(args=None):
     h = 800
     w = 1333
     start_time = time.time()
-    image = cv2.imread(img_fn)
-    image = preprocess_image(image)
 
+    image = cv2.imread(img_fn)
     if image.shape[:-1] != (h, w):
         print("image {} is resized from {} to {}".format(img_fn, image.shape[:-1], (h, w)))
         scale = compute_resize_scale(image.shape)
         image = cv2.resize(image, (w, h))
+    image = preprocess_image(image)
     print("prepoocess image at {} s".format(time.time() - start_time))
 
     labels_to_names = {0: 'Pedestrian'}

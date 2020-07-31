@@ -146,12 +146,11 @@ def main(args=None):
 
     # load images
     image = cv2.imread(img_fn)
-    image = preprocess_image(image)
-
     if image.shape[:-1] != (h, w):
         print("image {} is resized from {} to {}".format(img_fn, image.shape[:-1], (h, w)))
         scale = compute_resize_scale(image.shape)
         image = cv2.resize(image, (w, h))
+    image = preprocess_image(image)
 
     image = image.transpose((2, 0, 1))  # Change data layout from HWC to CHW
     image = np.expand_dims(image, axis=0)
