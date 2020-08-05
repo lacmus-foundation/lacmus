@@ -6,19 +6,6 @@ from keras_retinanet.utils.anchors import anchors_for_shape, AnchorParameters
 from keras_retinanet.utils.config import read_config_file, parse_anchor_parameters
 
 
-def test_config_read():
-    config = read_config_file('tests/test-data/config/config.ini')
-    assert 'anchor_parameters' in config
-    assert 'sizes' in config['anchor_parameters']
-    assert 'strides' in config['anchor_parameters']
-    assert 'ratios' in config['anchor_parameters']
-    assert 'scales' in config['anchor_parameters']
-    assert config['anchor_parameters']['sizes']   == '32 64 128 256 512'
-    assert config['anchor_parameters']['strides'] == '8 16 32 64 128'
-    assert config['anchor_parameters']['ratios']  == '0.5 1 2 3'
-    assert config['anchor_parameters']['scales']  == '1 1.2 1.6'
-
-
 def create_anchor_params_config():
     config = configparser.ConfigParser()
     config['anchor_parameters'] = {}
