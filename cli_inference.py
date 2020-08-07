@@ -4,9 +4,9 @@ import keras
 import tensorflow as tf
 import keras_retinanet
 from keras_retinanet import models
+from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize_image, compute_resize_scale
 from keras_retinanet.utils.visualization import draw_box, draw_caption
 from keras_retinanet.utils.colors import label_color
-from keras_retinanet.utils.gpu import setup_gpu
 # import miscellaneous modules
 import cv2
 import argparse
@@ -112,6 +112,22 @@ def preprocess_image(x, mode='caffe'):
 
     return x
 
+def setup_gpu(gpu_id: int):
+    if gpu_id == -1:
+        tf.config.experimental.set_visible_devices([], 'GPU')
+        return
+
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            tf.config.experimental.set_virtual_device_configuration(
+                gpus[gpu_id],
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+        except RuntimeError as e:
+            print(e)
+
 def main(args=None):
     args=parse_args(args)
 
@@ -128,15 +144,10 @@ def main(args=None):
 
     print(f'model input shape: {model.inputs[0].shape}')
 
-    h = 800
-    w = 1333
     start_time = time.time()
 
     image = cv2.imread(img_fn)
-    if image.shape[:-1] != (h, w):
-        print("image {} is resized from {} to {}".format(img_fn, image.shape[:-1], (h, w)))
-        scale = compute_resize_scale(image.shape)
-        image = cv2.resize(image, (w, h))
+    image, scale = resize_image(image)
     image = preprocess_image(image)
     print("prepoocess image at {} s".format(time.time() - start_time))
 

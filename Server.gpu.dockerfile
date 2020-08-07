@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:1.14.0-gpu-py3
+FROM tensorflow/tensorflow:2.1.1-gpu
 
 # install debian packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -36,7 +36,7 @@ RUN pip3 install --upgrade setuptools \
     && pip3 install . --user \
     && pip3 install flask pybase64 \
     && python3 setup.py build_ext --inplace \
-    && cd /app/snapshots \
+    && mkdir /app/snapshots && cd /app/snapshots \
     && wget -O resnet50_liza_alert_v1_interface.h5 https://github.com/lizaalert/lacmus/releases/download/0.1.1/resnet50_liza_alert_v1_interface.h5
 
 EXPOSE 5000/tcp

@@ -1,44 +1,16 @@
-#!/usr/bin/env python
-
-import os
-import time
-import argparse
-
-import cv2
-import numpy as np
 from openvino.inference_engine import IENetwork, IECore
+import cv2
+from io import BytesIO
+import pybase64
+import argparse
+import sys
+import os
+import numpy as np
+import time
 import json
+from flask import Flask, jsonify, request, abort
 
-
-def parse_args(args):
-    parser = argparse.ArgumentParser(description='convert model')
-    parser.add_argument(
-        '--img',
-        help='path to image',
-        type=str,
-        required=True
-    )
-    parser.add_argument(
-        '--bin',
-        help='path to bin openVINO inference model',
-        type=str,
-        required=True
-    )
-    parser.add_argument(
-        '--xml',
-        help='path to xml model sheme',
-        type=str,
-        required=True
-    )
-    parser.add_argument(
-        '--count',
-        help='iference count',
-        type=int,
-        required=False,
-        default=3
-    )
-    return parser.parse_args(args)
-
+app = Flask(__name__)
 
 def decode_openvino_detections(detections, input_shape = (800, 1333)):
     """
@@ -143,72 +115,109 @@ def create_blank(image, w, h, color=(0, 0, 0)):
     r_image[:image.shape[0],:image.shape[1],:image.shape[2]] = image
     return r_image
 
-def main(args=None):
-    args=parse_args(args)
+@app.route('/')
+def index():
+    return jsonify({'status': "server is running"}), 200
 
-    model_xml = args.xml
-    model_bin = args.bin
-    img_fn = args.img
-    predict_count = args.count
+
+@app.route('/image', methods=['POST'])
+def predict_image():
+    if not request.json or not 'data' in request.json:
+        abort(400)
     
-    print("initialize OpenVino...")
-    OpenVinoIE = IECore()
-    print("available devices: ", OpenVinoIE.available_devices)
-    
-    OpenVinoIE.set_config({"CPU_BIND_THREAD": "YES"}, "CPU")
-
-    print("loading model...")
-    net = IENetwork(model=model_xml, weights=model_bin)
-    config = {}
-    OutputLayer = next(iter(net.outputs))
-    OpenVinoExecutable = OpenVinoIE.load_network(network=net, config=config, device_name="CPU")
-
-    input_blob = 'input_1'
-    net.batch_size = 1
-    _, _, h, w = net.inputs[input_blob].shape
-    print(f'model input shape: {net.inputs[input_blob].shape}')
+    caption = run_detection_image(OpenVinoExecutable, InputLayer, OutputLayer, h, w, labels_to_names, request.json['data'])
+    return caption, 200
 
 
-    # load images
-    image = cv2.imread(img_fn)
+def run_detection_image(OpenVinoExecutable, InputLayer, OutputLayer, h, w, labels_to_names, data):
+    print("start predict...")
+    start_time = time.time()
+    imgdata = pybase64.b64decode(data)
+    file_bytes = np.asarray(bytearray(imgdata), dtype=np.uint8)
+    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     image, scale = resize_image(image)
     image = create_blank(image, w, h)
     image = preprocess_image(image)
-
-    image = image.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+    image = image.transpose((2, 0, 1))
     image = np.expand_dims(image, axis=0)
-    labels_to_names = {0: 'Pedestrian'}
+    print("preprocess in {} s".format(time.time() - start_time), flush=True)
 
-    print(f'make {predict_count} predictions:')
-
-    for _ in range(0, predict_count):
-        start_time = time.time()
-        res = OpenVinoExecutable.infer(inputs={input_blob: image})
-        print("\t{} s".format(time.time() - start_time))
-    print("prepoocess image at {} s".format(time.time() - start_time))
-    
-    print("*"*20)
+    res = OpenVinoExecutable.infer(inputs={InputLayer: image})
     boxes, scores, labels = decode_openvino_detections(res[OutputLayer])
-    print('bboxes:', boxes.shape)
-    print('scores:', scores.shape)
-    print('labels:', labels.shape)
-    
     boxes /= scale
-    objects_count = 0
 
-    print("*"*20)
+    objects = []
+    reaponse = {
+        'objects': objects
+    }
+    
+    # visualize detections
     for box, score, label in zip(boxes[0], scores[0], labels[0]):
         # scores are sorted so we can break
-        if score < 0.5:
+        if score < 0.4:
             break
         b = np.array(box.astype(int)).astype(int)
         # x1 y1 x2 y2
-        print(f'{labels_to_names[label]}:')
-        print(f'\tscore: {score}')
-        print(f'\tbox: {b[0]} {b[1]} {b[2]} {b[3]}')
-        objects_count = objects_count + 1
-    print(f'found objects: {objects_count}')
+        obj = {
+          'name': labels_to_names[label],
+          'score': str(score),
+          'xmin': str(b[0]),
+          'ymin': str(b[1]),
+          'xmax': str(b[2]),
+          'ymax': str(b[3])
+        }
+        objects.append(obj)
+    
+    reaponse_json = json.dumps(reaponse)
+    print("done in {} s".format(time.time() - start_time), flush=True)
+    return reaponse_json
 
+def load_model(args):
+    global OpenVinoExecutable
+    global InputLayer
+    global OutputLayer
+    global w
+    global h
+    global labels_to_names
+
+    model_xml = args.xml
+    model_bin = args.bin
+
+    OpenVinoIE = IECore()
+    OpenVinoIE.set_config({"CPU_BIND_THREAD": "YES"}, "CPU")
+    net = IENetwork(model=model_xml, weights=model_bin)
+    config = {}
+    InputLayer = 'input_1'
+    OutputLayer = next(iter(net.outputs))
+    OpenVinoExecutable = OpenVinoIE.load_network(network=net, config=config, device_name="CPU")
+    net.batch_size = 1
+    _, _, h, w = net.inputs[InputLayer].shape
+    labels_to_names = {0: 'Pedestrian'}
+    return OpenVinoExecutable, InputLayer, OutputLayer, h, w, labels_to_names
+
+def parse_args(args):
+    """ Parse the arguments.
+    """
+    parser = argparse.ArgumentParser(description='Evaluation script for a RetinaNet network.')
+    parser.add_argument(
+        '--bin',
+        help='path to bin openVINO inference model',
+        type=str,
+        default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.bin')
+    )
+    parser.add_argument(
+        '--xml',
+        help='path to xml model sheme',
+        type=str,
+        default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.xml')
+    )
+    return parser.parse_args(args)
+
+def main(args=None):
+    args = parse_args(args)
+    load_model(args)
+    print('model loaded')
+    app.run(debug=False, host='0.0.0.0', port=5000)    
 
 if __name__ == '__main__':
     main()
