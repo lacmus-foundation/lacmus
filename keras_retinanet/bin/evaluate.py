@@ -28,17 +28,21 @@ if __name__ == "__main__" and __package__ is None:
 from .. import models
 from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
-from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
-from ..utils.config import read_config_file, parse_anchor_parameters
+from ..utils.anchors import make_shapes_callback
+from ..utils.config import read_config_file, parse_anchor_parameters, parse_pyramid_levels
 from ..utils.eval import evaluate
 from ..utils.gpu import setup_gpu
 from ..utils.keras_version import check_keras_version
 from ..utils.tf_version import check_tf_version
 
 
-def create_generator(args):
+def create_generator(args, preprocess_image):
     """ Create generators for evaluation.
     """
+    common_args = {
+        'preprocess_image': preprocess_image,
+    }
+
     if args.dataset_type == 'coco':
         # import here to prevent unnecessary dependency on cocoapi
         from ..preprocessing.coco import CocoGenerator
@@ -50,30 +54,18 @@ def create_generator(args):
             image_max_side=args.image_max_side,
             config=args.config,
             shuffle_groups=False,
+            **common_args
         )
     elif args.dataset_type == 'pascal':
         validation_generator = PascalVocGenerator(
             args.pascal_path,
             'test',
+            image_extension=args.image_extension,
             image_min_side=args.image_min_side,
             image_max_side=args.image_max_side,
             config=args.config,
             shuffle_groups=False,
-        )
-    elif args.dataset_type == 'pascal-grid-crops':
-        validation_generator = PascalVocGridCropsGenerator(
-            args.crop_width,
-            args.crop_height,
-            args.overlap_width,
-            args.overlap_height,
-            args.min_bbox_portion,
-            args.group_by_image,
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side,
-            config=args.config,
-            data_dir=args.pascal_path,
-            set_name='test',
-            shuffle_groups=False
+            **common_args
         )
     elif args.dataset_type == 'csv':
         validation_generator = CSVGenerator(
@@ -83,6 +75,7 @@ def create_generator(args):
             image_max_side=args.image_max_side,
             config=args.config,
             shuffle_groups=False,
+            **common_args
         )
     else:
         raise ValueError('Invalid data type received: {}'.format(args.dataset_type))
@@ -100,30 +93,18 @@ def parse_args(args):
     coco_parser = subparsers.add_parser('coco')
     coco_parser.add_argument('coco_path', help='Path to dataset directory (ie. /tmp/COCO).')
 
+    pascal_parser = subparsers.add_parser('pascal')
+    pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_parser.add_argument('--image-extension',   help='Declares the dataset images\' extension.', default='.jpg')
+
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for evaluation.')
     csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
 
-    pascal_parser = subparsers.add_parser('pascal')
-    pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
-    pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
-    pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
-    pascal_grid_crops_parser.add_argument('--crop-width', help='Width of each crop', type=int)
-    pascal_grid_crops_parser.add_argument('--crop-height', help='Height of each crop', type=int)
-    pascal_grid_crops_parser.add_argument('--overlap-width', help='Width of crops overlap', type=int, default=160)
-    pascal_grid_crops_parser.add_argument('--overlap-height', help='Height of crops overlap', type=int, default=160)
-    pascal_grid_crops_parser.add_argument('--min-bbox-portion',
-                                          help='Min portion of original bbox to be considered new cropped bbox',
-                                          type=float, default=0.75)
-    pascal_grid_crops_parser.add_argument('--group-by-image',
-                                          help='Group crops by image. If specified, --batch-size parameter is ignored. '
-                                               'Crops groups can differ in size',
-                                          action='store_true')
-
     parser.add_argument('model',              help='Path to RetinaNet model.')
     parser.add_argument('--convert-model',    help='Convert the model to an inference model (ie. the input is a training model).', action='store_true')
     parser.add_argument('--backbone',         help='The backbone of the model.', default='resnet50')
-    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).')
+    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).', type=int)
     parser.add_argument('--score-threshold',  help='Threshold on score to filter detections with (defaults to 0.05).', default=0.05, type=float)
     parser.add_argument('--iou-threshold',    help='IoU Threshold to count for a positive detection (defaults to 0.5).', default=0.5, type=float)
     parser.add_argument('--max-detections',   help='Max Detections per image (defaults to 100).', default=100, type=int)
@@ -158,20 +139,25 @@ def main(args=None):
         args.config = read_config_file(args.config)
 
     # create the generator
-    generator = create_generator(args)
+    backbone = models.backbone(args.backbone)
+    generator = create_generator(args, backbone.preprocess_image)
 
     # optionally load anchor parameters
     anchor_params = None
+    pyramid_levels = None
     if args.config and 'anchor_parameters' in args.config:
         anchor_params = parse_anchor_parameters(args.config)
+    if args.config and 'pyramid_levels' in args.config:
+        pyramid_levels = parse_pyramid_levels(args.config)
 
     # load the model
     print('Loading model, this may take a second...')
     model = models.load_model(args.model, backbone_name=args.backbone)
+    generator.compute_shapes = make_shapes_callback(model)
 
     # optionally convert the model
     if args.convert_model:
-        model = models.convert_model(model, anchor_params=anchor_params)
+        model = models.convert_model(model, anchor_params=anchor_params, pyramid_levels=pyramid_levels)
 
     # print model summary
     # print(model.summary())
