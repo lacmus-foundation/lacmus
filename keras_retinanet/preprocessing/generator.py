@@ -71,19 +71,19 @@ class Generator(keras.utils.Sequence):
             compute_shapes         : Function handler for computing the shapes of the pyramid for a given input.
             preprocess_image       : Function handler for preprocessing an image (scaling / normalizing) for passing through a network.
         """
-        self.transform_generator    = transform_generator
-        self.visual_effect_generator = visual_effect_generator
-        self.batch_size             = int(batch_size)
-        self.group_method           = group_method
-        self.shuffle_groups         = shuffle_groups
-        self.image_min_side         = image_min_side
-        self.image_max_side         = image_max_side
-        self.no_resize              = no_resize
-        self.transform_parameters   = transform_parameters or TransformParameters()
-        self.compute_anchor_targets = compute_anchor_targets
-        self.compute_shapes         = compute_shapes
-        self.preprocess_image       = preprocess_image
-        self.config                 = config
+        self.transform_generator            = transform_generator
+        self.visual_effect_generator        = visual_effect_generator
+        self.batch_size                     = int(batch_size)
+        self.group_method                   = group_method
+        self.shuffle_groups                 = shuffle_groups
+        self.image_min_side                 = image_min_side
+        self.image_max_side                 = image_max_side
+        self.no_resize                      = no_resize
+        self.transform_parameters           = transform_parameters or TransformParameters()
+        self.compute_anchor_targets         = compute_anchor_targets
+        self.compute_shapes                 = compute_shapes
+        self.preprocess_image               = preprocess_image
+        self.config                         = config
 
         # Define groups
         self.group_images()
@@ -255,11 +255,11 @@ class Generator(keras.utils.Sequence):
     def preprocess_group_entry(self, image, annotations):
         """ Preprocess image and its annotations.
         """
-        # preprocess the image
-        image = self.preprocess_image(image)
-
         # resize image
         image, image_scale = self.resize_image(image)
+
+        # preprocess the image
+        image = self.preprocess_image(image)
 
         # apply resizing to annotations too
         annotations['bboxes'] *= image_scale
@@ -280,15 +280,22 @@ class Generator(keras.utils.Sequence):
 
         return image_group, annotations_group
 
+    def get_images_order(self, count, ratio_order_func):
+        """ Order the images according to self.order.
+        """
+        order = list(range(count))
+        if self.group_method == 'random':
+            random.shuffle(order)
+        elif self.group_method == 'ratio':
+            order.sort(key=ratio_order_func)
+
+        return order
+
     def group_images(self):
         """ Order the images according to self.order and makes groups of self.batch_size.
         """
         # determine the order of the images
-        order = list(range(self.size()))
-        if self.group_method == 'random':
-            random.shuffle(order)
-        elif self.group_method == 'ratio':
-            order.sort(key=lambda x: self.image_aspect_ratio(x))
+        order = self.get_images_order(self.size(), lambda x: self.image_aspect_ratio(x))
 
         # divide into groups, one group = one batch
         self.groups = [[order[x % len(order)] for x in range(i, i + self.batch_size)] for i in range(0, len(order), self.batch_size)]

@@ -20,9 +20,9 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
     def __init__(self,
                  window_w,
                  window_h,
-                 overlap_w,
-                 overlap_h,
-                 min_cropped_bbox_square,
+                 overlap_w=200,
+                 overlap_h=200,
+                 min_cropped_bbox_square=0.75,
                  group_by_image=True,
                  **kwargs):
         self.cropper = ImageGridCropper(window_w, window_h, overlap_w, overlap_h, min_cropped_bbox_square)
@@ -80,26 +80,31 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
             self.image_cache[image_index] = (scale, image)
         return self.image_cache[image_index]
 
-    def _load_crop(self, crop_reference):
+    def load_crop(self, crop_reference):
         scale, crop_image = self._get_image_cached(crop_reference.image_index)
         height, width, _ = crop_image.shape
 
         crop = self._get_crop_from_grid(crop_reference.crop_number, width, height)
         return crop_image[crop.ymin:crop.ymax, crop.xmin:crop.xmax]
 
+    def get_crop_transformations(self, crop_reference):
+        """
+        Return crop offset and scale relative to the scaled image
+        """
+        scale, crop_image = self._get_image_cached(crop_reference.image_index)
+        height, width, _ = crop_image.shape
+        crop = self._get_crop_from_grid(crop_reference.crop_number, width, height)
+        return crop.xmin, crop.ymin, scale
+
+
     def group_images(self):
 
         """
         Overload of Generator base method. Forms groups of crops instead of image groups
         """
-        images_indexes = list(range(super().size()))
-
         # determine the order of the images
-        order = list(images_indexes)
-        if self.group_method == 'random':
-            random.shuffle(order)
-        elif self.group_method == 'ratio':
-            order.sort(key=lambda img: self._calc_aspect_ratio(*self._get_image_size(img)))
+        order = self.get_images_order(
+            super().size(), lambda img: self._calc_aspect_ratio(*self._get_image_size(img)))
 
         # calculate continuous crops references list,
         # with indexes of the crop's image and position of the crop inside it
@@ -116,23 +121,17 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
             batch_borders = range(0, crops_count, self.batch_size)
             self.groups = [[crops[c % crops_count] for c in range(b, b + self.batch_size)] for b in batch_borders]
 
-        self.crop_references = [crop for group in self.groups for crop in group]
 
     def resize_image(self, image):
         """ Overloads base generator method, does nothing as only crop, not whole image is passed here
         """
         return image, 1
 
-    def load_image(self, image_index):
-        """ Overloads base method, loading an crop instead of image with image_index.
-        """
-        crop_reference = self.crop_references[image_index]
-        return self._load_crop(crop_reference)
-
     def load_image_group(self, group):
         """ Overloads base method, loading an crops group instead of images group.
         """
-        return [self._load_crop(crop_ref) for crop_ref in group]
+        return [self.load_crop(crop_ref) for crop_ref in group]
+
 
     def load_annotations_group(self, group):
         """ Load annotations for all images in group and cut them corresponding to crops.
@@ -143,7 +142,7 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
             width, height, scale = self.image_sizes[crop.image_index]
 
             if crop.image_index not in image_annotations:
-                image_annotations[crop.image_index] = self.load_annotations(crop.image_index)
+                image_annotations[crop.image_index] = super().load_annotations(crop.image_index)
                 image_annotations[crop.image_index]['bboxes'] *= scale
 
             annotations = image_annotations[crop.image_index]
@@ -162,17 +161,20 @@ class PascalVocGridCropsGenerator(PascalVocGenerator):
 
         return group_annotations
 
-    def size(self):
+    def total_size(self):
         """ Size of the cropped dataset.
         """
         return sum([len(group) for group in self.groups])
 
 if __name__ == '__main__':
+    import sys
+
     generator = PascalVocGridCropsGenerator(
         500, 500, 150, 150, 0.75, group_by_image=True, data_dir="../../../data/laddv4/spring", set_name='test')
 
-    group_index = 41
-    group = generator.groups[group_index]
-    crops_group = generator.load_image_group(group)
-    annotations_group = generator.load_annotations_group(group)
-    print(annotations_group)
+    images_count = generator.size()
+    if images_count == len(generator.groups):
+        print('[OK] Testing group_by_image flag')
+    else:
+        print('[FAILED] Testing group_by_image flag')
+        sys.exit(-1)

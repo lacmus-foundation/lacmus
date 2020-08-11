@@ -30,6 +30,7 @@ from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
 from ..utils.anchors import make_shapes_callback
+from ..preprocessing.pascal_voc_balanced_crops import PascalVocBalancedCropsGenerator
 from ..utils.config import read_config_file, parse_anchor_parameters, parse_pyramid_levels
 from ..utils.eval import evaluate
 from ..utils.gpu import setup_gpu
@@ -75,15 +76,24 @@ def create_generator(args, preprocess_image):
             args.overlap_width,
             args.overlap_height,
             args.min_bbox_portion,
-            args.group_by_image,
-            image_min_side = args.image_min_side,
-            image_max_side = args.image_max_side,
-            config = args.config,
-            data_dir = args.pascal_path,
-            set_name = 'test',
-            shuffle_groups = False,
+            image_min_side=args.image_min_side,
+            image_max_side=args.image_max_side,
+            config=args.config,
+            data_dir=args.pascal_path,
+            set_name='test',
+            shuffle_groups=False,
             **common_args
-    )
+        )
+    elif args.dataset_type == 'pascal-crops-balanced':
+        validation_generator = PascalVocBalancedCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.negatives_per_positive,
+            data_dir=args.pascal_path,
+            set_name='test',
+            shuffle_groups=False,
+            no_resize=True
+        )
     elif args.dataset_type == 'csv':
         validation_generator = CSVGenerator(
             args.annotations,
@@ -114,6 +124,7 @@ def parse_args(args):
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
     pascal_parser.add_argument('--image-extension',   help='Declares the dataset images\' extension.', default='.jpg')
 
+    # Is expected to be used for validation of both grid crops and balanced crops training
     pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
     pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
     pascal_grid_crops_parser.add_argument('--crop-width', help='Width of each crop', type=int)
@@ -123,10 +134,6 @@ def parse_args(args):
     pascal_grid_crops_parser.add_argument('--min-bbox-portion',
                                           help='Min portion of original bbox to be considered new cropped bbox',
                                           type=float, default=0.75)
-    pascal_grid_crops_parser.add_argument('--group-by-image',
-                                          help='Group crops by image. If specified, --batch-size parameter is ignored. '
-                                               'Crops groups can differ in size',
-                                          action='store_true')
 
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for evaluation.')
@@ -198,14 +205,25 @@ def main(args=None):
         from ..utils.coco_eval import evaluate_coco
         evaluate_coco(generator, model, args.score_threshold)
     else:
-        average_precisions, inference_time = evaluate(
-            generator,
-            model,
-            iou_threshold=args.iou_threshold,
-            score_threshold=args.score_threshold,
-            max_detections=args.max_detections,
-            save_path=args.save_path
-        )
+        if args.dataset_type == 'pascal-grid-crops':
+            from ..utils.crops_eval import evaluate as evaluate_crops
+            average_precisions, inference_time = evaluate_crops(
+                generator,
+                model,
+                iou_threshold=args.iou_threshold,
+                score_threshold=args.score_threshold,
+                max_detections=args.max_detections,
+                save_path=args.save_path
+            )
+        else:
+            average_precisions, inference_time = evaluate(
+                generator,
+                model,
+                iou_threshold=args.iou_threshold,
+                score_threshold=args.score_threshold,
+                max_detections=args.max_detections,
+                save_path=args.save_path
+            )
 
         # print evaluation
         total_instances = []
