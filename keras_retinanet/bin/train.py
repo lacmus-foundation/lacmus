@@ -42,14 +42,17 @@ from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.kitti import KittiGenerator
 from ..preprocessing.open_images import OpenImagesGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
+from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
 from ..utils.anchors import make_shapes_callback
-from ..utils.config import read_config_file, parse_anchor_parameters, parse_pyramid_levels
+from ..utils.config import read_config_file, parse_anchor_parameters,\
+    parse_random_transform_parameters, parse_visual_effect_parameters, parse_pyramid_levels
 from ..utils.gpu import setup_gpu
 from ..utils.image import random_visual_effect_generator
 from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
+from ..utils.image_adjustments import random_adjustment_generator
 
 
 def makedirs(path):
@@ -76,8 +79,18 @@ def model_with_weights(model, weights, skip_mismatch):
     return model
 
 
-def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
-                  freeze_backbone=False, lr=1e-5, config=None):
+def create_models(backbone_retinanet,
+                  num_classes,
+                  weights,
+                  multi_gpu=0,
+                  freeze_backbone=False,
+                  lr=1e-5,
+                  optimizer_clipnorm=0.001,
+                  focal_alpha=0.25,
+                  focal_gamma=2.0,
+                  regression_weight=1.0,
+                  classification_weight=1.0,
+                  config=None):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -123,10 +136,14 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     # compile model
     training_model.compile(
         loss={
-            'regression'    : losses.smooth_l1(),
-            'classification': losses.focal()
+            'regression': losses.smooth_l1(),
+            'classification': losses.focal(focal_alpha, focal_gamma)
         },
-        optimizer=keras.optimizers.adam(lr=lr, clipnorm=0.001)
+        loss_weights={
+            'regression': regression_weight,
+            'classification': classification_weight
+        },
+        optimizer=keras.optimizers.adam(lr=lr, clipnorm=optimizer_clipnorm)
     )
 
     return model, training_model, prediction_model
@@ -151,16 +168,21 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
 
     if args.tensorboard_dir:
         makedirs(args.tensorboard_dir)
+        update_freq = args.tensorboard_freq
+        if update_freq not in ['epoch', 'batch']:
+            update_freq = int(update_freq)
+
         tensorboard_callback = keras.callbacks.TensorBoard(
-            log_dir                = args.tensorboard_dir,
-            histogram_freq         = 0,
-            batch_size             = args.batch_size,
-            write_graph            = True,
-            write_grads            = False,
-            write_images           = False,
-            embeddings_freq        = 0,
-            embeddings_layer_names = None,
-            embeddings_metadata    = None
+            log_dir=args.tensorboard_dir,
+            histogram_freq=0,
+            batch_size=args.batch_size,
+            write_graph=True,
+            write_grads=False,
+            write_images=False,
+            update_freq=update_freq,
+            embeddings_freq=0,
+            embeddings_layer_names=None,
+            embeddings_metadata=None
         )
 
     if args.evaluation and validation_generator:
@@ -232,28 +254,37 @@ def create_generators(args, preprocess_image):
     }
 
     # create random transform generator for augmenting training data
-    if args.random_transform:
-        transform_generator = random_transform_generator(
-            min_rotation=-0.1,
-            max_rotation=0.1,
-            min_translation=(-0.1, -0.1),
-            max_translation=(0.1, 0.1),
-            min_shear=-0.1,
-            max_shear=0.1,
-            min_scaling=(0.9, 0.9),
-            max_scaling=(1.1, 1.1),
-            flip_x_chance=0.5,
-            flip_y_chance=0.5,
-        )
-        visual_effect_generator = random_visual_effect_generator(
-            contrast_range=(0.9, 1.1),
-            brightness_range=(-.1, .1),
-            hue_range=(-0.05, 0.05),
-            saturation_range=(0.95, 1.05)
-        )
-    else:
+    if args.no_random_transform:
         transform_generator = random_transform_generator(flip_x_chance=0.5)
         visual_effect_generator = None
+    else:
+        if args.config and 'random_transform_parameters' in args.config:
+            kwargs = parse_random_transform_parameters(args.config)
+            transform_generator = random_transform_generator(**kwargs)
+        else:
+            transform_generator = random_transform_generator(
+                min_rotation=-0.1,
+                max_rotation=0.1,
+                min_translation=(-0.1, -0.1),
+                max_translation=(0.1, 0.1),
+                min_shear=-0.1,
+                max_shear=0.1,
+                min_scaling=(0.9, 0.9),
+                max_scaling=(1.1, 1.1),
+                flip_x_chance=0.5,
+                flip_y_chance=0.1,
+            )
+
+        if args.config and 'visual_effect_parameters' in args.config:
+            kwargs = parse_visual_effect_parameters(args.config)
+            visual_effect_generator = random_adjustment_generator(**kwargs)
+        else:
+            visual_effect_generator = random_adjustment_generator(
+                contrast_range=(0.9, 1.1),
+                brightness_range=(-.1, .1),
+                hue_range=(-0.05, 0.05),
+                saturation_range=(0.95, 1.05)
+            )
 
     if args.dataset_type == 'coco':
         # import here to prevent unnecessary dependency on cocoapi
@@ -276,7 +307,7 @@ def create_generators(args, preprocess_image):
     elif args.dataset_type == 'pascal':
         train_generator = PascalVocGenerator(
             args.pascal_path,
-            'train',
+            'trainval',
             image_extension=args.image_extension,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
@@ -285,8 +316,35 @@ def create_generators(args, preprocess_image):
 
         validation_generator = PascalVocGenerator(
             args.pascal_path,
-            'val',
+            'test',
             image_extension=args.image_extension,
+            shuffle_groups=False,
+            **common_args
+        )
+    elif args.dataset_type == 'pascal-grid-crops':
+        train_generator = PascalVocGridCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.overlap_width,
+            args.overlap_height,
+            args.min_bbox_portion,
+            args.group_by_image,
+            data_dir=args.pascal_path,
+            set_name='trainval',
+            transform_generator=transform_generator,
+            visual_effect_generator=visual_effect_generator,
+            **common_args
+        )
+
+        validation_generator = PascalVocGridCropsGenerator(
+            args.crop_width,
+            args.crop_height,
+            args.overlap_width,
+            args.overlap_height,
+            args.min_bbox_portion,
+            args.group_by_image,
+            data_dir=args.pascal_path,
+            set_name='test',
             shuffle_groups=False,
             **common_args
         )
@@ -397,6 +455,20 @@ def parse_args(args):
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
     pascal_parser.add_argument('--image-extension',   help='Declares the dataset images\' extension.', default='.jpg')
 
+    pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
+    pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_grid_crops_parser.add_argument('--crop-width', help='Width of each crop', type=int)
+    pascal_grid_crops_parser.add_argument('--crop-height', help='Height of each crop', type=int)
+    pascal_grid_crops_parser.add_argument('--overlap-width', help='Width of crops overlap', type=int, default=160)
+    pascal_grid_crops_parser.add_argument('--overlap-height', help='Height of crops overlap', type=int, default=160)
+    pascal_grid_crops_parser.add_argument('--min-bbox-portion',
+                                          help='Min portion of original bbox to be considered new cropped bbox',
+                                          type=float, default=0.75)
+    pascal_grid_crops_parser.add_argument('--group-by-image',
+                                          help='Group crops by image. If specified, --batch-size parameter is ignored. '
+                                               'Crops groups can differ in size',
+                                          action='store_true')
+
     kitti_parser = subparsers.add_parser('kitti')
     kitti_parser.add_argument('kitti_path', help='Path to dataset directory (ie. /tmp/kitti).')
 
@@ -429,12 +501,23 @@ def parse_args(args):
     parser.add_argument('--epochs',           help='Number of epochs to train.', type=int, default=50)
     parser.add_argument('--steps',            help='Number of steps per epoch.', type=int, default=10000)
     parser.add_argument('--lr',               help='Learning rate.', type=float, default=1e-5)
+    parser.add_argument('--optimizer-clipnorm', help='Clipnorm parameter for  optimizer.', type=float, default=0.001)
+    parser.add_argument('--regression-weight', help='Weight of regression subnet in the total loss.', type=float,
+                        default=1.0)
+    parser.add_argument('--classification-weight', help='Weight of classification subnet in the total loss.',
+                        type=float, default=1.0)
+    parser.add_argument('--focal-alpha', help='Value of alpha parameter for focal loss.', type=float, default=0.25)
+    parser.add_argument('--focal-gamma', help='Value of gamma parameter for focal loss.', type=float, default=2.0)
     parser.add_argument('--snapshot-path',    help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
     parser.add_argument('--tensorboard-dir',  help='Log directory for Tensorboard output', default='')  # default='./logs') => https://github.com/tensorflow/tensorflow/pull/34870
+    parser.add_argument('--tensorboard-freq',
+                        help='Update frequency for Tensorboard output. Values \'epoch\', \'batch\' or int', type=str,
+                        default='epoch')
     parser.add_argument('--no-snapshots',     help='Disable saving snapshots.', dest='snapshots', action='store_false')
     parser.add_argument('--no-evaluation',    help='Disable per epoch evaluation.', dest='evaluation', action='store_false')
     parser.add_argument('--freeze-backbone',  help='Freeze training of backbone layers.', action='store_true')
-    parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
+    parser.add_argument('--no-random-transform', help='Do not randomly transform image and annotations.',
+                        action='store_true')
     parser.add_argument('--image-min-side',   help='Rescale the image so the smallest side is min_side.', type=int, default=800)
     parser.add_argument('--image-max-side',   help='Rescale the image if the largest side is larger than max_side.', type=int, default=1333)
     parser.add_argument('--no-resize',        help='Don''t rescale the image.', action='store_true')
@@ -503,6 +586,11 @@ def main(args=None):
             multi_gpu=args.multi_gpu,
             freeze_backbone=args.freeze_backbone,
             lr=args.lr,
+            optimizer_clipnorm=args.optimizer_clipnorm,
+            focal_alpha=args.focal_alpha,
+            focal_gamma=args.focal_gamma,
+            regression_weight=args.regression_weight,
+            classification_weight=args.classification_weight,
             config=args.config
         )
 
@@ -532,7 +620,7 @@ def main(args=None):
         generator=train_generator,
         steps_per_epoch=args.steps,
         epochs=args.epochs,
-        verbose=1,
+        verbose=int(args.silent),
         callbacks=callbacks,
         workers=args.workers,
         use_multiprocessing=args.multiprocessing,
