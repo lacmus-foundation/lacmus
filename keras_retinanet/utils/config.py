@@ -35,6 +35,9 @@ def read_config_file(config_path):
     assert config_keys <= default_keys, \
         "Malformed config file. These keys are not valid: {}".format(config_keys - default_keys)
 
+    if 'pyramid_levels' in config:
+        assert('levels' in config['pyramid_levels']), "pyramid levels specified by levels key"
+
     return config
 
 
@@ -43,31 +46,12 @@ def parse_anchor_parameters(config):
     scales  = np.array(list(map(float, config['anchor_parameters']['scales'].split(' '))), keras.backend.floatx())
     sizes   = list(map(int, config['anchor_parameters']['sizes'].split(' ')))
     strides = list(map(int, config['anchor_parameters']['strides'].split(' ')))
+    assert (len(sizes) == len(strides)), "sizes and strides should have an equal number of values"
 
     return AnchorParameters(sizes, strides, ratios, scales)
 
 
-def parse_random_transform_parameters(config):
-    kwargs = dict()
-    kwargs['min_rotation'] = float(config['random_transform_parameters']['min_rotation'])
-    kwargs['max_rotation'] = float(config['random_transform_parameters']['max_rotation'])
-    kwargs['min_translation'] = tuple(map(float, config['random_transform_parameters']['min_translation'].split()))
-    kwargs['max_translation'] = tuple(map(float, config['random_transform_parameters']['max_translation'].split()))
-    kwargs['min_shear'] = float(config['random_transform_parameters']['min_shear'])
-    kwargs['max_shear'] = float(config['random_transform_parameters']['max_shear'])
-    kwargs['min_scaling'] = tuple(map(float, config['random_transform_parameters']['min_scaling'].split()))
-    kwargs['max_scaling'] = tuple(map(float, config['random_transform_parameters']['max_scaling'].split()))
-    kwargs['flip_x_chance'] = float(config['random_transform_parameters']['flip_x_chance'])
-    kwargs['flip_y_chance'] = float(config['random_transform_parameters']['flip_y_chance'])
+def parse_pyramid_levels(config):
+    levels = list(map(int, config['pyramid_levels']['levels'].split(' ')))
 
-    return kwargs
-
-
-def parse_visual_effect_parameters(config):
-    kwargs = dict()
-    kwargs['contrast_range'] = tuple(map(float, config['visual_effect_parameters']['contrast_range'].split()))
-    kwargs['brightness_range'] = tuple(map(float, config['visual_effect_parameters']['brightness_range'].split()))
-    kwargs['hue_range'] = tuple(map(float, config['visual_effect_parameters']['hue_range'].split()))
-    kwargs['saturation_range'] = tuple(map(float, config['visual_effect_parameters']['saturation_range'].split()))
-
-    return kwargs
+    return levels
