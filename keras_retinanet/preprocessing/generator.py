@@ -25,7 +25,7 @@ from ..utils.anchors import (
     anchors_for_shape,
     guess_shapes
 )
-from ..utils.config import parse_anchor_parameters
+from ..utils.config import parse_anchor_parameters, parse_pyramid_levels
 from ..utils.image import (
     TransformParameters,
     adjust_transform_for_image,
@@ -174,14 +174,14 @@ class Generator(keras.utils.Sequence):
 
             # delete invalid indices
             if len(invalid_indices):
-                warnings.warn('Image with id {} (shape {}) contains the following invalid boxes: {}.'.format(
+                warnings.warn('Image {} with id {} (shape {}) contains the following invalid boxes: {}.'.format(
+                    self.image_path(group[index]),
                     group[index],
                     image.shape,
                     annotations['bboxes'][invalid_indices, :]
                 ))
                 for k in annotations_group[index].keys():
                     annotations_group[index][k] = np.delete(annotations[k], invalid_indices, axis=0)
-
         return image_group, annotations_group
 
     def load_image_group(self, group):
@@ -192,7 +192,7 @@ class Generator(keras.utils.Sequence):
     def random_visual_effect_group_entry(self, image, annotations):
         """ Randomly transforms image and annotation.
         """
-        visual_effect = self.visual_effect_generator()
+        visual_effect = next(self.visual_effect_generator)
         # apply visual effect
         image = visual_effect(image)
         return image, annotations
@@ -300,7 +300,7 @@ class Generator(keras.utils.Sequence):
         max_shape = tuple(max(image.shape[x] for image in image_group) for x in range(3))
 
         # construct an image batch object
-        image_batch = np.zeros((len(image_group),) + max_shape, dtype=keras.backend.floatx())
+        image_batch = np.zeros((self.batch_size,) + max_shape, dtype=keras.backend.floatx())
 
         # copy all images to the upper left part of the image batch object
         for image_index, image in enumerate(image_group):
@@ -313,9 +313,13 @@ class Generator(keras.utils.Sequence):
 
     def generate_anchors(self, image_shape):
         anchor_params = None
+        pyramid_levels = None
         if self.config and 'anchor_parameters' in self.config:
             anchor_params = parse_anchor_parameters(self.config)
-        return anchors_for_shape(image_shape, anchor_params=anchor_params, shapes_callback=self.compute_shapes)
+        if self.config and 'pyramid_levels' in self.config:
+            pyramid_levels = parse_pyramid_levels(self.config)
+
+        return anchors_for_shape(image_shape, anchor_params=anchor_params, pyramid_levels=pyramid_levels, shapes_callback=self.compute_shapes)
 
     def compute_targets(self, image_group, annotations_group):
         """ Compute target outputs for the network using images and their annotations.
