@@ -28,7 +28,7 @@ if __name__ == "__main__" and __package__ is None:
 
 # Change these to absolute imports if you copy this script outside the keras_retinanet package.
 from .. import models
-from ..utils.config import read_config_file, parse_anchor_parameters
+from ..utils.config import read_config_file, parse_anchor_parameters, parse_pyramid_levels
 from ..utils.gpu import setup_gpu
 from ..utils.keras_version import check_keras_version
 from ..utils.tf_version import check_tf_version
@@ -43,6 +43,10 @@ def parse_args(args):
     parser.add_argument('--no-nms', help='Disables non maximum suppression.', dest='nms', action='store_false')
     parser.add_argument('--no-class-specific-filter', help='Disables class specific filtering.', dest='class_specific_filter', action='store_false')
     parser.add_argument('--config', help='Path to a configuration parameters .ini file.')
+    parser.add_argument('--nms-threshold', help='Value for non maximum suppression threshold.', type=float, default=0.5)
+    parser.add_argument('--score-threshold', help='Threshold for prefiltering boxes.', type=float, default=0.05)
+    parser.add_argument('--max-detections', help='Maximum number of detections to keep.', type=int, default=300)
+    parser.add_argument('--parallel-iterations', help='Number of batch items to process in parallel.', type=int, default=32)
 
     return parser.parse_args(args)
 
@@ -62,10 +66,14 @@ def main(args=None):
 
     # optionally load config parameters
     anchor_parameters = None
+    pyramid_levels = None
     if args.config:
         args.config = read_config_file(args.config)
         if 'anchor_parameters' in args.config:
             anchor_parameters = parse_anchor_parameters(args.config)
+
+        if 'pyramid_levels' in args.config:
+            pyramid_levels = parse_pyramid_levels(args.config)
 
     # load the model
     model = models.load_model(args.model_in, backbone_name=args.backbone)
@@ -74,7 +82,17 @@ def main(args=None):
     models.check_training_model(model)
 
     # convert the model
-    model = models.convert_model(model, nms=args.nms, class_specific_filter=args.class_specific_filter, anchor_params=anchor_parameters)
+    model = models.convert_model(
+        model,
+        nms=args.nms,
+        class_specific_filter=args.class_specific_filter,
+        anchor_params=anchor_parameters,
+        pyramid_levels=pyramid_levels,
+        nms_threshold=args.nms_threshold,
+        score_threshold=args.score_threshold,
+        max_detections=args.max_detections,
+        parallel_iterations=args.parallel_iterations
+    )
 
     # save model
     model.save(args.model_out)
