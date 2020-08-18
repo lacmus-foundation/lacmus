@@ -174,8 +174,7 @@ class Generator(keras.utils.Sequence):
 
             # delete invalid indices
             if len(invalid_indices):
-                warnings.warn('Image {} with id {} (shape {}) contains the following invalid boxes: {}.'.format(
-                    self.image_path(group[index]),
+                warnings.warn('Image with id {} (shape {}) contains the following invalid boxes: {}.'.format(
                     group[index],
                     image.shape,
                     annotations['bboxes'][invalid_indices, :]
