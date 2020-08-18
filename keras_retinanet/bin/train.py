@@ -29,7 +29,6 @@ import tensorflow as tf
 if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
     import keras_retinanet.bin  # noqa: F401
-
     __package__ = "keras_retinanet.bin"
 
 # Change these to absolute imports if you copy this script outside the keras_retinanet package.
@@ -46,14 +45,14 @@ from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
 from ..preprocessing.pascal_voc_balanced_crops import PascalVocBalancedCropsGenerator
 from ..utils.anchors import make_shapes_callback
-from ..utils.config import read_config_file, parse_anchor_parameters, parse_random_transform_parameters, \
-    parse_visual_effect_parameters
+from ..utils.config import read_config_file, parse_anchor_parameters,\
+    parse_random_transform_parameters, parse_visual_effect_parameters, parse_pyramid_levels
 from ..utils.gpu import setup_gpu
+from ..utils.image import random_visual_effect_generator
 from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
-# from ..utils.image import random_visual_effect_generator
 from ..utils.image_adjustments import random_adjustment_generator
 
 
@@ -113,26 +112,27 @@ def create_models(backbone_retinanet,
 
     # load anchor parameters, or pass None (so that defaults will be used)
     anchor_params = None
-    num_anchors = None
+    num_anchors   = None
+    pyramid_levels = None
     if config and 'anchor_parameters' in config:
         anchor_params = parse_anchor_parameters(config)
-        num_anchors = anchor_params.num_anchors()
+        num_anchors   = anchor_params.num_anchors()
+    if config and 'pyramid_levels' in config:
+        pyramid_levels = parse_pyramid_levels(config)
 
     # Keras recommends initialising a multi-gpu model on the CPU to ease weight sharing, and to prevent OOM errors.
     # optionally wrap in a parallel model
     if multi_gpu > 1:
         from keras.utils import multi_gpu_model
         with tf.device('/cpu:0'):
-            model = model_with_weights(backbone_retinanet(num_classes, num_anchors=num_anchors, modifier=modifier),
-                                       weights=weights, skip_mismatch=True)
+            model = model_with_weights(backbone_retinanet(num_classes, num_anchors=num_anchors, modifier=modifier, pyramid_levels=pyramid_levels), weights=weights, skip_mismatch=True)
         training_model = multi_gpu_model(model, gpus=multi_gpu)
     else:
-        model = model_with_weights(backbone_retinanet(num_classes, num_anchors=num_anchors, modifier=modifier),
-                                   weights=weights, skip_mismatch=True)
+        model          = model_with_weights(backbone_retinanet(num_classes, num_anchors=num_anchors, modifier=modifier, pyramid_levels=pyramid_levels), weights=weights, skip_mismatch=True)
         training_model = model
 
     # make prediction model
-    prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
+    prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params, pyramid_levels=pyramid_levels)
 
     # compile model
     training_model.compile(
@@ -212,8 +212,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         checkpoint = keras.callbacks.ModelCheckpoint(
             os.path.join(
                 args.snapshot_path,
-                '{backbone}_{dataset_type}_{{epoch:02d}}.h5'.format(backbone=args.backbone,
-                                                                    dataset_type=args.dataset_type)
+                '{backbone}_{dataset_type}_{{epoch:02d}}.h5'.format(backbone=args.backbone, dataset_type=args.dataset_type)
             ),
             verbose=1,
             # save_best_only=True,
@@ -224,14 +223,21 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         callbacks.append(checkpoint)
 
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
-        monitor='loss',
-        factor=0.1,
-        patience=2,
-        verbose=1,
-        mode='auto',
-        min_delta=0.0001,
-        cooldown=0,
-        min_lr=0
+        monitor    = 'loss',
+        factor     = args.reduce_lr_factor,
+        patience   = args.reduce_lr_patience,
+        verbose    = 1,
+        mode       = 'auto',
+        min_delta  = 0.0001,
+        cooldown   = 0,
+        min_lr     = 0
+    ))
+
+    callbacks.append(keras.callbacks.EarlyStopping(
+        monitor    = 'mAP',
+        patience   = 5,
+        mode       = 'max',
+        min_delta  = 0.01
     ))
 
     if args.tensorboard_dir:
@@ -248,12 +254,12 @@ def create_generators(args, preprocess_image):
         preprocess_image : Function that preprocesses an image for the network.
     """
     common_args = {
-        'batch_size': args.batch_size,
-        'config': args.config,
-        'image_min_side': args.image_min_side,
-        'image_max_side': args.image_max_side,
-        'no_resize': args.no_resize,
-        'preprocess_image': preprocess_image,
+        'batch_size'       : args.batch_size,
+        'config'           : args.config,
+        'image_min_side'   : args.image_min_side,
+        'image_max_side'   : args.image_max_side,
+        'no_resize'        : args.no_resize,
+        'preprocess_image' : preprocess_image,
     }
 
     # create random transform generator for augmenting training data
@@ -311,6 +317,7 @@ def create_generators(args, preprocess_image):
         train_generator = PascalVocGenerator(
             args.pascal_path,
             'trainval',
+            image_extension=args.image_extension,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
             **common_args
@@ -319,6 +326,7 @@ def create_generators(args, preprocess_image):
         validation_generator = PascalVocGenerator(
             args.pascal_path,
             'test',
+            image_extension=args.image_extension,
             shuffle_groups=False,
             **common_args
         )
@@ -461,12 +469,10 @@ def check_args(parsed_args):
                                                                                                 parsed_args.snapshot))
 
     if parsed_args.multi_gpu > 1 and not parsed_args.multi_gpu_force:
-        raise ValueError(
-            "Multi-GPU support is experimental, use at own risk! Run with --multi-gpu-force if you wish to continue.")
+        raise ValueError("Multi-GPU support is experimental, use at own risk! Run with --multi-gpu-force if you wish to continue.")
 
     if 'resnet' not in parsed_args.backbone:
-        warnings.warn(
-            'Using experimental backbone {}. Only resnet50 has been properly tested.'.format(parsed_args.backbone))
+        warnings.warn('Using experimental backbone {}. Only resnet50 has been properly tested.'.format(parsed_args.backbone))
 
     return parsed_args
 
@@ -474,7 +480,7 @@ def check_args(parsed_args):
 def parse_args(args):
     """ Parse the arguments.
     """
-    parser = argparse.ArgumentParser(description='Simple training script for training a RetinaNet network.')
+    parser     = argparse.ArgumentParser(description='Simple training script for training a RetinaNet network.')
     subparsers = parser.add_subparsers(help='Arguments for specific dataset types.', dest='dataset_type')
     subparsers.required = True
 
@@ -486,6 +492,7 @@ def parse_args(args):
 
     pascal_parser = subparsers.add_parser('pascal')
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_parser.add_argument('--image-extension',   help='Declares the dataset images\' extension.', default='.jpg')
 
     pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
     pascal_grid_crops_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
@@ -514,37 +521,30 @@ def parse_args(args):
 
     oid_parser = subparsers.add_parser('oid')
     oid_parser.add_argument('main_dir', help='Path to dataset directory.')
-    oid_parser.add_argument('--version', help='The current dataset version is v4.', default='v4')
-    oid_parser.add_argument('--labels-filter', help='A list of labels to filter.', type=csv_list, default=None)
+    oid_parser.add_argument('--version',  help='The current dataset version is v4.', default='v4')
+    oid_parser.add_argument('--labels-filter',  help='A list of labels to filter.', type=csv_list, default=None)
     oid_parser.add_argument('--annotation-cache-dir', help='Path to store annotation cache.', default='.')
     oid_parser.add_argument('--parent-label', help='Use the hierarchy children of this label.', default=None)
 
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for training.')
     csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
-    csv_parser.add_argument('--val-annotations',
-                            help='Path to CSV file containing annotations for validation (optional).')
+    csv_parser.add_argument('--val-annotations', help='Path to CSV file containing annotations for validation (optional).')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--snapshot', help='Resume training from a snapshot.')
-    group.add_argument('--imagenet-weights',
-                       help='Initialize the model with pretrained imagenet weights. This is the default behaviour.',
-                       action='store_const', const=True, default=True)
-    group.add_argument('--weights', help='Initialize the model with weights from a file.')
-    group.add_argument('--no-weights', help='Don\'t initialize the model with any weights.', dest='imagenet_weights',
-                       action='store_const', const=False)
-    parser.add_argument('--backbone', help='Backbone model used by retinanet.', default='resnet50', type=str)
-    parser.add_argument('--batch-size', help='Size of the batches.', default=1, type=int)
-    parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
-    parser.add_argument('--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
-    parser.add_argument('--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.',
-                        action='store_true')
-    parser.add_argument('--initial-epoch',
-                        help='Epoch from which to begin the train, useful if resuming from snapshot.', type=int,
-                        default=0)
-    parser.add_argument('--epochs', help='Number of epochs to train.', type=int, default=50)
-    parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=10000)
-    parser.add_argument('--lr', help='Learning rate.', type=float, default=1e-5)
+    group.add_argument('--snapshot',          help='Resume training from a snapshot.')
+    group.add_argument('--imagenet-weights',  help='Initialize the model with pretrained imagenet weights. This is the default behaviour.', action='store_const', const=True, default=True)
+    group.add_argument('--weights',           help='Initialize the model with weights from a file.')
+    group.add_argument('--no-weights',        help='Don\'t initialize the model with any weights.', dest='imagenet_weights', action='store_const', const=False)
+    parser.add_argument('--backbone',         help='Backbone model used by retinanet.', default='resnet50', type=str)
+    parser.add_argument('--batch-size',       help='Size of the batches.', default=1, type=int)
+    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).', type=int)
+    parser.add_argument('--multi-gpu',        help='Number of GPUs to use for parallel processing.', type=int, default=0)
+    parser.add_argument('--multi-gpu-force',  help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
+    parser.add_argument('--initial-epoch',    help='Epoch from which to begin the train, useful if resuming from snapshot.', type=int, default=0)
+    parser.add_argument('--epochs',           help='Number of epochs to train.', type=int, default=50)
+    parser.add_argument('--steps',            help='Number of steps per epoch.', type=int, default=10000)
+    parser.add_argument('--lr',               help='Learning rate.', type=float, default=1e-5)
     parser.add_argument('--optimizer-clipnorm', help='Clipnorm parameter for  optimizer.', type=float, default=0.001)
     parser.add_argument('--regression-weight', help='Weight of regression subnet in the total loss.', type=float,
                         default=1.0)
@@ -552,38 +552,30 @@ def parse_args(args):
                         type=float, default=1.0)
     parser.add_argument('--focal-alpha', help='Value of alpha parameter for focal loss.', type=float, default=0.25)
     parser.add_argument('--focal-gamma', help='Value of gamma parameter for focal loss.', type=float, default=2.0)
-    parser.add_argument('--snapshot-path',
-                        help='Path to store snapshots of models during training (defaults to \'./snapshots\')',
-                        default='./snapshots')
-    parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
+    parser.add_argument('--snapshot-path',    help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
+    parser.add_argument('--tensorboard-dir',  help='Log directory for Tensorboard output', default='')  # default='./logs') => https://github.com/tensorflow/tensorflow/pull/34870
     parser.add_argument('--tensorboard-freq',
                         help='Update frequency for Tensorboard output. Values \'epoch\', \'batch\' or int', type=str,
                         default='epoch')
-    parser.add_argument('--no-snapshots', help='Disable saving snapshots.', dest='snapshots', action='store_false')
-    parser.add_argument('--no-evaluation', help='Disable per epoch evaluation.', dest='evaluation',
-                        action='store_false')
-    parser.add_argument('--freeze-backbone', help='Freeze training of backbone layers.', action='store_true')
+    parser.add_argument('--no-snapshots',     help='Disable saving snapshots.', dest='snapshots', action='store_false')
+    parser.add_argument('--no-evaluation',    help='Disable per epoch evaluation.', dest='evaluation', action='store_false')
+    parser.add_argument('--freeze-backbone',  help='Freeze training of backbone layers.', action='store_true')
     parser.add_argument('--no-random-transform', help='Do not randomly transform image and annotations.',
                         action='store_true')
-    parser.add_argument('--image-min-side', help='Rescale the image so the smallest side is min_side.', type=int,
-                        default=800)
-    parser.add_argument('--image-max-side', help='Rescale the image if the largest side is larger than max_side.',
-                        type=int, default=1333)
-    parser.add_argument('--no-resize', help='Don''t rescale the image.', action='store_true')
-    parser.add_argument('--config', help='Path to a configuration parameters .ini file.')
-    parser.add_argument('--weighted-average',
-                        help='Compute the mAP using the weighted average of precisions among classes.',
-                        action='store_true')
-    parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss',
-                        action='store_true')
+    parser.add_argument('--image-min-side',   help='Rescale the image so the smallest side is min_side.', type=int, default=800)
+    parser.add_argument('--image-max-side',   help='Rescale the image if the largest side is larger than max_side.', type=int, default=1333)
+    parser.add_argument('--no-resize',        help='Don''t rescale the image.', action='store_true')
+    parser.add_argument('--config',           help='Path to a configuration parameters .ini file.')
+    parser.add_argument('--weighted-average', help='Compute the mAP using the weighted average of precisions among classes.', action='store_true')
+    parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss', action='store_true')
+    parser.add_argument('--reduce-lr-patience', help='Reduce learning rate after validation loss decreases over reduce_lr_patience epochs', type=int, default=2)
+    parser.add_argument('--reduce-lr-factor', help='When learning rate is reduced due to reduce_lr_patience, multiply by reduce_lr_factor', type=float, default=0.1)
 
     # Fit generator arguments
-    parser.add_argument('--multiprocessing', help='Use multiprocessing in fit_generator.', action='store_true')
-    parser.add_argument('--workers', help='Number of generator workers.', type=int, default=1)
-    parser.add_argument('--max-queue-size', help='Queue length for multiprocessing workers in fit_generator.', type=int,
-                        default=10)
+    parser.add_argument('--multiprocessing',  help='Use multiprocessing in fit_generator.', action='store_true')
+    parser.add_argument('--workers',          help='Number of generator workers.', type=int, default=1)
+    parser.add_argument('--max-queue-size',   help='Queue length for multiprocessing workers in fit_generator.', type=int, default=10)
 
-    # Finetuning arguments
     parser.add_argument('--silent', help='Do not print training progress.', action='store_false')
 
     return check_args(parser.parse_args(args))
@@ -603,7 +595,7 @@ def main(args=None):
     check_tf_version()
 
     # optionally choose specific GPU
-    if args.gpu:
+    if args.gpu is not None:
         setup_gpu(args.gpu)
 
     # optionally load config parameters
@@ -616,12 +608,16 @@ def main(args=None):
     # create the model
     if args.snapshot is not None:
         print('Loading model, this may take a second...')
-        model = models.load_model(args.snapshot, backbone_name=args.backbone)
-        training_model = model
-        anchor_params = None
+        model            = models.load_model(args.snapshot, backbone_name=args.backbone)
+        training_model   = model
+        anchor_params    = None
+        pyramid_levels   = None
         if args.config and 'anchor_parameters' in args.config:
             anchor_params = parse_anchor_parameters(args.config)
-        prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
+        if args.config and 'pyramid_levels' in args.config:
+            pyramid_levels = parse_pyramid_levels(args.config)
+
+        prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params, pyramid_levels=pyramid_levels)
     else:
         weights = args.weights
         # default to imagenet if nothing else is specified

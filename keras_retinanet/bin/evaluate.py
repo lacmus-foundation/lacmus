@@ -31,7 +31,7 @@ from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..preprocessing.pascal_voc_grid_crops import PascalVocGridCropsGenerator
 from ..utils.anchors import make_shapes_callback
 from ..preprocessing.pascal_voc_balanced_crops import PascalVocBalancedCropsGenerator
-from ..utils.config import read_config_file, parse_anchor_parameters
+from ..utils.config import read_config_file, parse_anchor_parameters, parse_pyramid_levels
 from ..utils.eval import evaluate
 from ..utils.gpu import setup_gpu
 from ..utils.keras_version import check_keras_version
@@ -62,6 +62,7 @@ def create_generator(args, preprocess_image):
         validation_generator = PascalVocGenerator(
             args.pascal_path,
             'test',
+            image_extension=args.image_extension,
             image_min_side=args.image_min_side,
             image_max_side=args.image_max_side,
             config=args.config,
@@ -69,7 +70,7 @@ def create_generator(args, preprocess_image):
             **common_args
         )
     elif args.dataset_type == 'pascal-grid-crops':
-        validation_generator = PascalVocGridCropsGenerator(
+            validation_generator = PascalVocGridCropsGenerator(
             args.crop_width,
             args.crop_height,
             args.overlap_width,
@@ -119,12 +120,9 @@ def parse_args(args):
     coco_parser = subparsers.add_parser('coco')
     coco_parser.add_argument('coco_path', help='Path to dataset directory (ie. /tmp/COCO).')
 
-    csv_parser = subparsers.add_parser('csv')
-    csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for evaluation.')
-    csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
-
     pascal_parser = subparsers.add_parser('pascal')
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    pascal_parser.add_argument('--image-extension',   help='Declares the dataset images\' extension.', default='.jpg')
 
     # Is expected to be used for validation of both grid crops and balanced crops training
     pascal_grid_crops_parser = subparsers.add_parser('pascal-grid-crops')
@@ -137,10 +135,14 @@ def parse_args(args):
                                           help='Min portion of original bbox to be considered new cropped bbox',
                                           type=float, default=0.75)
 
+    csv_parser = subparsers.add_parser('csv')
+    csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for evaluation.')
+    csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
+
     parser.add_argument('model',              help='Path to RetinaNet model.')
     parser.add_argument('--convert-model',    help='Convert the model to an inference model (ie. the input is a training model).', action='store_true')
     parser.add_argument('--backbone',         help='The backbone of the model.', default='resnet50')
-    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).')
+    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).', type=int)
     parser.add_argument('--score-threshold',  help='Threshold on score to filter detections with (defaults to 0.05).', default=0.05, type=float)
     parser.add_argument('--iou-threshold',    help='IoU Threshold to count for a positive detection (defaults to 0.5).', default=0.5, type=float)
     parser.add_argument('--max-detections',   help='Max Detections per image (defaults to 100).', default=100, type=int)
@@ -180,8 +182,11 @@ def main(args=None):
 
     # optionally load anchor parameters
     anchor_params = None
+    pyramid_levels = None
     if args.config and 'anchor_parameters' in args.config:
         anchor_params = parse_anchor_parameters(args.config)
+    if args.config and 'pyramid_levels' in args.config:
+        pyramid_levels = parse_pyramid_levels(args.config)
 
     # load the model
     print('Loading model, this may take a second...')
@@ -190,7 +195,7 @@ def main(args=None):
 
     # optionally convert the model
     if args.convert_model:
-        model = models.convert_model(model, anchor_params=anchor_params)
+        model = models.convert_model(model, anchor_params=anchor_params, pyramid_levels=pyramid_levels)
 
     # print model summary
     # print(model.summary())

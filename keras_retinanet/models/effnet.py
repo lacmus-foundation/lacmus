@@ -1,27 +1,25 @@
-''' 
-https://github.com/lacmus-foundation/lacmus
-Copyright (C) 2019-2020 lacmus-foundation
+"""
+Copyright 2017-2018 Fizyr (https://fizyr.com)
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+    http://www.apache.org/licenses/LICENSE-2.0
 
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
-'''
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 import keras
 from keras.utils import get_file
 
 from . import retinanet
 from . import Backbone
-import efficientnet.keras as effnet
+import efficientnet.keras as efn
 
 
 class EfficientNetBackbone(Backbone):
@@ -40,13 +38,13 @@ class EfficientNetBackbone(Backbone):
     def download_imagenet(self):
         """ Downloads ImageNet weights and returns path to weights file.
         """
-        from efficientnet.model import BASE_WEIGHTS_PATH
-        from efficientnet.model import WEIGHTS_HASHES
+        from efficientnet.weights import IMAGENET_WEIGHTS_PATH
+        from efficientnet.weights import IMAGENET_WEIGHTS_HASHES
 
         model_name = 'efficientnet-b' + self.backbone[-1]
         file_name = model_name + '_weights_tf_dim_ordering_tf_kernels_autoaugment_notop.h5'
-        file_hash = WEIGHTS_HASHES[model_name][1]
-        weights_path = get_file(file_name, BASE_WEIGHTS_PATH + file_name, cache_subdir='models', file_hash=file_hash)
+        file_hash = IMAGENET_WEIGHTS_HASHES[model_name][1]
+        weights_path = get_file(file_name, IMAGENET_WEIGHTS_PATH + file_name, cache_subdir='models', file_hash=file_hash)
         return weights_path
 
     def validate(self):
@@ -62,7 +60,7 @@ class EfficientNetBackbone(Backbone):
     def preprocess_image(self, inputs):
         """ Takes as input an image and prepares it for being passed through the network.
         """
-        return effnet.preprocess_input(inputs)
+        return efn.preprocess_input(inputs)
 
 
 def effnet_retinanet(num_classes, backbone='EfficientNetB0', inputs=None, modifier=None, **kwargs):
@@ -70,12 +68,12 @@ def effnet_retinanet(num_classes, backbone='EfficientNetB0', inputs=None, modifi
 
     Args
         num_classes: Number of classes to predict.
-        backbone: Which backbone to use (one of ('EfficientNetB0', 'EfficientNetB1', ... , 'EfficientNetB7')).
+        backbone: Which backbone to use (one of ('resnet50', 'resnet101', 'resnet152')).
         inputs: The inputs to the network (defaults to a Tensor of shape (None, None, 3)).
         modifier: A function handler which can modify the backbone before using it in retinanet (this can be used to freeze backbone layers for example).
 
     Returns
-        RetinaNet model with a EfficientNet backbone.
+        RetinaNet model with a ResNet backbone.
     """
     # choose default input
     if inputs is None:
@@ -87,21 +85,21 @@ def effnet_retinanet(num_classes, backbone='EfficientNetB0', inputs=None, modifi
 
     # get last conv layer from the end of each block [28x28, 14x14, 7x7]
     if backbone == 'EfficientNetB0':
-        model = effnet.EfficientNetB0(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB0(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB1':
-        model = effnet.EfficientNetB1(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB1(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB2':
-        model = effnet.EfficientNetB2(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB2(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB3':
-        model = effnet.EfficientNetB3(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB3(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB4':
-        model = effnet.EfficientNetB4(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB4(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB5':
-        model = effnet.EfficientNetB5(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB5(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB6':
-        model = effnet.EfficientNetB6(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB6(input_tensor=inputs, include_top=False, weights=None)
     elif backbone == 'EfficientNetB7':
-        model = effnet.EfficientNetB7(input_tensor=inputs, include_top=False, weights=None)
+        model = efn.EfficientNetB7(input_tensor=inputs, include_top=False, weights=None)
     else:
         raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
 
@@ -119,8 +117,15 @@ def effnet_retinanet(num_classes, backbone='EfficientNetB0', inputs=None, modifi
     if modifier:
         model = modifier(model)
 
+    # C2 not provided
+    backbone_layers = {
+        'C3': model.outputs[0],
+        'C4': model.outputs[1],
+        'C5': model.outputs[2]
+    }
+
     # create the full model
-    return retinanet.retinanet(inputs=inputs, num_classes=num_classes, backbone_layers=model.outputs, **kwargs)
+    return retinanet.retinanet(inputs=inputs, num_classes=num_classes, backbone_layers=backbone_layers, **kwargs)
 
 
 def EfficientNetB0_retinanet(num_classes, inputs=None, **kwargs):
