@@ -17,7 +17,7 @@ limitations under the License.
 import warnings
 import pytest
 import numpy as np
-import keras
+from tensorflow import keras
 from keras_retinanet import losses
 from keras_retinanet.models.densenet import DenseNetBackbone
 
@@ -46,6 +46,6 @@ def test_backbone(backbone):
             'regression': losses.smooth_l1(),
             'classification': losses.focal()
         },
-        optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001))
+        optimizer=keras.optimizers.Adam(lr=1e-5, clipnorm=0.001))
 
     model.fit(inputs, targets, batch_size=1)

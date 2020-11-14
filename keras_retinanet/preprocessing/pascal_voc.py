@@ -21,7 +21,6 @@ import os
 import numpy as np
 from six import raise_from
 from PIL import Image
-#import cv2
 
 try:
     import xml.etree.cElementTree as ET
@@ -29,7 +28,26 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 voc_classes = {
-    'Pedestrian'   : 0
+    'aeroplane'   : 0,
+    'bicycle'     : 1,
+    'bird'        : 2,
+    'boat'        : 3,
+    'bottle'      : 4,
+    'bus'         : 5,
+    'car'         : 6,
+    'cat'         : 7,
+    'chair'       : 8,
+    'cow'         : 9,
+    'diningtable' : 10,
+    'dog'         : 11,
+    'horse'       : 12,
+    'motorbike'   : 13,
+    'person'      : 14,
+    'pottedplant' : 15,
+    'sheep'       : 16,
+    'sofa'        : 17,
+    'train'       : 18,
+    'tvmonitor'   : 19
 }
 
 
@@ -73,7 +91,7 @@ class PascalVocGenerator(Generator):
         self.data_dir             = data_dir
         self.set_name             = set_name
         self.classes              = classes
-        self.image_names          = [l.strip().split(None, 1)[0] for l in open(os.path.join(data_dir, 'ImageSets', 'Main', set_name + '.txt')).readlines()]
+        self.image_names          = [line.strip().split(None, 1)[0] for line in open(os.path.join(data_dir, 'ImageSets', 'Main', set_name + '.txt')).readlines()]
         self.image_extension      = image_extension
         self.skip_truncated       = skip_truncated
         self.skip_difficult       = skip_difficult
@@ -120,9 +138,6 @@ class PascalVocGenerator(Generator):
         path  = os.path.join(self.data_dir, 'JPEGImages', self.image_names[image_index] + self.image_extension)
         image = Image.open(path)
         return float(image.width) / float(image.height)
-        #img = cv2.imread(path)
-        #height, width, _ = img.shape
-        #return float(width) / float(height)
 
     def image_path(self, image_index):
         """ Get the path to an image.
@@ -149,11 +164,7 @@ class PascalVocGenerator(Generator):
 
         bndbox    = _findNode(element, 'bndbox')
         box[0] = _findNode(bndbox, 'xmin', 'bndbox.xmin', parse=float) - 1
-        if box[0] < 0:
-            box[0] = 0.0
         box[1] = _findNode(bndbox, 'ymin', 'bndbox.ymin', parse=float) - 1
-        if box[1] < 0:
-            box[1] = 0.0
         box[2] = _findNode(bndbox, 'xmax', 'bndbox.xmax', parse=float) - 1
         box[3] = _findNode(bndbox, 'ymax', 'bndbox.ymax', parse=float) - 1
 

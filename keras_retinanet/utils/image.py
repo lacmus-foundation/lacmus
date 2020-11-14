@@ -17,7 +17,7 @@ limitations under the License.
 from __future__ import division
 import numpy as np
 import cv2
-#from PIL import Image
+from PIL import Image
 
 from .transform import change_transform_origin
 
@@ -29,11 +29,8 @@ def read_image_bgr(path):
         path: Path to the image.
     """
     # We deliberately don't use cv2.imread here, since it gives no feedback on errors while reading the image.
-    #image = np.asarray(Image.open(path).convert('RGB'))
-    
-    img_bgr = cv2.imread(path)
-    image = np.asarray(img_bgr)
-    return image
+    image = np.ascontiguousarray(Image.open(path).convert('RGB'))
+    return image[:, :, ::-1]
 
 
 def preprocess_image(x, mode='caffe'):
@@ -59,9 +56,7 @@ def preprocess_image(x, mode='caffe'):
         x /= 127.5
         x -= 1.
     elif mode == 'caffe':
-        x[..., 0] -= 103.939
-        x[..., 1] -= 116.779
-        x[..., 2] -= 123.68
+        x -= [103.939, 116.779, 123.68]
 
     return x
 
@@ -306,14 +301,15 @@ def random_visual_effect_generator(
     _check_range(saturation_range, 0)
 
     def _generate():
-        return VisualEffect(
-            contrast_factor=_uniform(contrast_range),
-            brightness_delta=_uniform(brightness_range),
-            hue_delta=_uniform(hue_range),
-            saturation_factor=_uniform(saturation_range)
-        )
+        while True:
+            yield VisualEffect(
+                contrast_factor=_uniform(contrast_range),
+                brightness_delta=_uniform(brightness_range),
+                hue_delta=_uniform(hue_range),
+                saturation_factor=_uniform(saturation_range),
+            )
 
-    return _generate
+    return _generate()
 
 
 def adjust_contrast(image, factor):

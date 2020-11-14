@@ -21,8 +21,7 @@ import os
 import sys
 import warnings
 
-import keras
-import keras.preprocessing.image
+from tensorflow import keras
 import tensorflow as tf
 
 # Allow relative imports when being executed as script.
@@ -49,7 +48,6 @@ from ..utils.config import read_config_file, parse_anchor_parameters,\
     parse_random_transform_parameters, parse_visual_effect_parameters, parse_pyramid_levels
 from ..utils.gpu import setup_gpu
 from ..utils.image import random_visual_effect_generator
-from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
@@ -137,14 +135,14 @@ def create_models(backbone_retinanet,
     # compile model
     training_model.compile(
         loss={
-            'regression': losses.smooth_l1(),
+            'regression'    : losses.smooth_l1(),
             'classification': losses.focal(focal_alpha, focal_gamma)
         },
         loss_weights={
             'regression': regression_weight,
             'classification': classification_weight
         },
-        optimizer=keras.optimizers.adam(lr=lr, clipnorm=optimizer_clipnorm)
+        optimizer=keras.optimizers.Adam(lr=lr, clipnorm=optimizer_clipnorm)
     )
 
     return model, training_model, prediction_model
@@ -172,18 +170,17 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         update_freq = args.tensorboard_freq
         if update_freq not in ['epoch', 'batch']:
             update_freq = int(update_freq)
-
         tensorboard_callback = keras.callbacks.TensorBoard(
-            log_dir=args.tensorboard_dir,
-            histogram_freq=0,
-            batch_size=args.batch_size,
-            write_graph=True,
-            write_grads=False,
-            write_images=False,
-            update_freq=update_freq,
-            embeddings_freq=0,
-            embeddings_layer_names=None,
-            embeddings_metadata=None
+            log_dir                = args.tensorboard_dir,
+            histogram_freq         = 0,
+            batch_size             = args.batch_size,
+            write_graph            = True,
+            write_grads            = False,
+            write_images           = False,
+            update_freq            = update_freq,
+            embeddings_freq        = 0,
+            embeddings_layer_names = None,
+            embeddings_metadata    = None
         )
 
     if args.evaluation and validation_generator:
@@ -233,12 +230,13 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         min_lr     = 0
     ))
 
-    callbacks.append(keras.callbacks.EarlyStopping(
-        monitor    = 'mAP',
-        patience   = 5,
-        mode       = 'max',
-        min_delta  = 0.01
-    ))
+    if args.evaluation and validation_generator:
+        callbacks.append(keras.callbacks.EarlyStopping(
+            monitor    = 'mAP',
+            patience   = 5,
+            mode       = 'max',
+            min_delta  = 0.01
+        ))
 
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
@@ -260,6 +258,7 @@ def create_generators(args, preprocess_image):
         'image_max_side'   : args.image_max_side,
         'no_resize'        : args.no_resize,
         'preprocess_image' : preprocess_image,
+        'group_method'     : args.group_method
     }
 
     # create random transform generator for augmenting training data
@@ -316,7 +315,7 @@ def create_generators(args, preprocess_image):
     elif args.dataset_type == 'pascal':
         train_generator = PascalVocGenerator(
             args.pascal_path,
-            'trainval',
+            'train',
             image_extension=args.image_extension,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
@@ -325,7 +324,7 @@ def create_generators(args, preprocess_image):
 
         validation_generator = PascalVocGenerator(
             args.pascal_path,
-            'test',
+            'val',
             image_extension=args.image_extension,
             shuffle_groups=False,
             **common_args
@@ -538,7 +537,7 @@ def parse_args(args):
     group.add_argument('--no-weights',        help='Don\'t initialize the model with any weights.', dest='imagenet_weights', action='store_const', const=False)
     parser.add_argument('--backbone',         help='Backbone model used by retinanet.', default='resnet50', type=str)
     parser.add_argument('--batch-size',       help='Size of the batches.', default=1, type=int)
-    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).', type=int)
+    parser.add_argument('--gpu',              help='Id of the GPU to use (as reported by nvidia-smi).')
     parser.add_argument('--multi-gpu',        help='Number of GPUs to use for parallel processing.', type=int, default=0)
     parser.add_argument('--multi-gpu-force',  help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
     parser.add_argument('--initial-epoch',    help='Epoch from which to begin the train, useful if resuming from snapshot.', type=int, default=0)
@@ -554,14 +553,11 @@ def parse_args(args):
     parser.add_argument('--focal-gamma', help='Value of gamma parameter for focal loss.', type=float, default=2.0)
     parser.add_argument('--snapshot-path',    help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
     parser.add_argument('--tensorboard-dir',  help='Log directory for Tensorboard output', default='')  # default='./logs') => https://github.com/tensorflow/tensorflow/pull/34870
-    parser.add_argument('--tensorboard-freq',
-                        help='Update frequency for Tensorboard output. Values \'epoch\', \'batch\' or int', type=str,
-                        default='epoch')
+    parser.add_argument('--tensorboard-freq', help='Update frequency for Tensorboard output. Values \'epoch\', \'batch\' or int', default='epoch')
     parser.add_argument('--no-snapshots',     help='Disable saving snapshots.', dest='snapshots', action='store_false')
     parser.add_argument('--no-evaluation',    help='Disable per epoch evaluation.', dest='evaluation', action='store_false')
     parser.add_argument('--freeze-backbone',  help='Freeze training of backbone layers.', action='store_true')
-    parser.add_argument('--no-random-transform', help='Do not randomly transform image and annotations.',
-                        action='store_true')
+    parser.add_argument('--no-random-transform', help='Do not randomly transform image and annotations.', action='store_true')
     parser.add_argument('--image-min-side',   help='Rescale the image so the smallest side is min_side.', type=int, default=800)
     parser.add_argument('--image-max-side',   help='Rescale the image if the largest side is larger than max_side.', type=int, default=1333)
     parser.add_argument('--no-resize',        help='Don''t rescale the image.', action='store_true')
@@ -570,14 +566,14 @@ def parse_args(args):
     parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss', action='store_true')
     parser.add_argument('--reduce-lr-patience', help='Reduce learning rate after validation loss decreases over reduce_lr_patience epochs', type=int, default=2)
     parser.add_argument('--reduce-lr-factor', help='When learning rate is reduced due to reduce_lr_patience, multiply by reduce_lr_factor', type=float, default=0.1)
+    parser.add_argument('--group-method',     help='Determines how images are grouped together', type=str, default='ratio', choices=['none', 'random', 'ratio'])
 
     # Fit generator arguments
     parser.add_argument('--multiprocessing',  help='Use multiprocessing in fit_generator.', action='store_true')
     parser.add_argument('--workers',          help='Number of generator workers.', type=int, default=1)
     parser.add_argument('--max-queue-size',   help='Queue length for multiprocessing workers in fit_generator.', type=int, default=10)
-
     parser.add_argument('--silent', help='Do not print training progress.', action='store_false')
-
+    
     return check_args(parser.parse_args(args))
 
 
@@ -590,8 +586,7 @@ def main(args=None):
     # create object that stores backbone information
     backbone = models.backbone(args.backbone)
 
-    # make sure keras and tensorflow are the minimum required version
-    check_keras_version()
+    # make sure tensorflow is the minimum required version
     check_tf_version()
 
     # optionally choose specific GPU

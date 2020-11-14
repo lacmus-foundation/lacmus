@@ -17,14 +17,13 @@ limitations under the License.
 from .anchors import compute_overlap
 from .visualization import draw_detections, draw_annotations
 
-import keras
+from tensorflow import keras
 import numpy as np
 import os
 import time
 
 import cv2
 import progressbar
-
 assert(callable(progressbar.progressbar)), "Using wrong progressbar module, install 'progressbar2' instead."
 
 
@@ -76,8 +75,8 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
     all_inferences = [None for i in range(generator.size())]
 
     for i in progressbar.progressbar(range(generator.size()), prefix='Running network: '):
-        image    = generator.load_image(i)
-        image, scale = generator.resize_image(image)
+        raw_image    = generator.load_image(i)
+        image, scale = generator.resize_image(raw_image.copy())
         image = generator.preprocess_image(image)
 
         if keras.backend.image_data_format() == 'channels_first':
@@ -107,7 +106,6 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
         image_detections = np.concatenate([image_boxes, np.expand_dims(image_scores, axis=1), np.expand_dims(image_labels, axis=1)], axis=1)
 
         if save_path is not None:
-            raw_image = generator.load_image(i)
             draw_annotations(raw_image, generator.load_annotations(i), label_to_name=generator.label_to_name)
             draw_detections(raw_image, image_boxes, image_scores, image_labels, label_to_name=generator.label_to_name, score_threshold=score_threshold)
 
@@ -240,7 +238,7 @@ def evaluate(
         average_precision  = _compute_ap(recall, precision)
         average_precisions[label] = average_precision, num_annotations
 
-        # inference time
-        inference_time = np.sum(all_inferences) / generator.size()
+    # inference time
+    inference_time = np.sum(all_inferences) / generator.size()
 
     return average_precisions, inference_time

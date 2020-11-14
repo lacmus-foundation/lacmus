@@ -18,7 +18,7 @@ import numpy as np
 import random
 import warnings
 
-import keras
+from tensorflow import keras
 
 from ..utils.anchors import (
     anchor_targets_bbox,
@@ -174,7 +174,8 @@ class Generator(keras.utils.Sequence):
 
             # delete invalid indices
             if len(invalid_indices):
-                warnings.warn('Image with id {} (shape {}) contains the following invalid boxes: {}.'.format(
+                warnings.warn('Image {} with id {} (shape {}) contains the following invalid boxes: {}.'.format(
+                    self.image_path(group[index]),
                     group[index],
                     image.shape,
                     annotations['bboxes'][invalid_indices, :]
@@ -192,6 +193,7 @@ class Generator(keras.utils.Sequence):
         """ Randomly transforms image and annotation.
         """
         visual_effect = self.visual_effect_generator()
+        #visual_effect = next(self.visual_effect_generator)
         # apply visual effect
         image = visual_effect(image)
         return image, annotations
@@ -279,22 +281,15 @@ class Generator(keras.utils.Sequence):
 
         return image_group, annotations_group
 
-    def get_images_order(self, count, ratio_order_func):
-        """ Order the images according to self.order.
-        """
-        order = list(range(count))
-        if self.group_method == 'random':
-            random.shuffle(order)
-        elif self.group_method == 'ratio':
-            order.sort(key=ratio_order_func)
-
-        return order
-
     def group_images(self):
         """ Order the images according to self.order and makes groups of self.batch_size.
         """
         # determine the order of the images
-        order = self.get_images_order(self.size(), lambda x: self.image_aspect_ratio(x))
+        order = list(range(self.size()))
+        if self.group_method == 'random':
+            random.shuffle(order)
+        elif self.group_method == 'ratio':
+            order.sort(key=lambda x: self.image_aspect_ratio(x))
 
         # divide into groups, one group = one batch
         self.groups = [[order[x % len(order)] for x in range(i, i + self.batch_size)] for i in range(0, len(order), self.batch_size)]
@@ -306,7 +301,7 @@ class Generator(keras.utils.Sequence):
         max_shape = tuple(max(image.shape[x] for image in image_group) for x in range(3))
 
         # construct an image batch object
-        image_batch = np.zeros((len(image_group),) + max_shape, dtype=keras.backend.floatx())
+        image_batch = np.zeros((self.batch_size,) + max_shape, dtype=keras.backend.floatx())
 
         # copy all images to the upper left part of the image batch object
         for image_index, image in enumerate(image_group):
