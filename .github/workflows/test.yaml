@@ -21,6 +21,7 @@ jobs:
         pip install .
         python setup.py build_ext --inplace
         pip install pytest
+        pip install pycocotools
         git clone https://github.com/lacmus-foundation/lacmus-test-data.git tests/test-data
     - name: Run tests
       run: pytest tests
