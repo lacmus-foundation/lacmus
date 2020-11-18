@@ -16,8 +16,25 @@ import numpy as np
 import time
 import json
 from flask import Flask, jsonify, request, abort
+from typing import NamedTuple, List
 
 app = Flask(__name__)
+
+class Prediction:
+    def __init__(self, 
+                xmin: int,
+                ymin: int, 
+                xmax: int,
+                ymax: int,
+                score: float,
+                label: str) -> None:
+
+        self.xmin: int = xmin
+        self.ymin: int = ymin
+        self.xmax: int = xmax
+        self.ymax: int = ymax
+        self.score: float = score
+        self.label: str = label
 
 def run_detection_image(data):
     start_time = time.time()
@@ -25,7 +42,7 @@ def run_detection_image(data):
     file_bytes = np.asarray(bytearray(imgdata), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     # preprocess image for network
-    image, scale = resize_image(image)
+    image, scale = resize_image(image, min_side=2100, max_side=2100)
     image = preprocess_image(image)
     print("preprocess in {} s".format(time.time() - start_time), flush=True)
     # process image
@@ -36,20 +53,65 @@ def run_detection_image(data):
     reaponse = {
       'objects': objects
     }
-    # visualize detections
+    result_bboxes: List[Prediction] = []
+
+    # filter detections
     for box, score, label in zip(boxes[0], scores[0], labels[0]):
-        # scores are sorted so we can break
-        if score < 0.5:
+        if score < 0.15:
             break
+        
         b = np.array(box.astype(int)).astype(int)
-        # x1 y1 x2 y2
+        # x0 y0 x1 y1
+        tagret = Prediction(
+            xmin=b[0],
+            ymin=b[1],
+            xmax=b[2],
+            ymax=b[3],
+            score=score,
+            label=labels_to_names[label]
+        )
+        is_merged = False
+
+        for res in result_bboxes:
+            if res.label != tagret.label:
+                continue
+
+            if res.xmin <= tagret.xmin and res.xmax >= tagret.xmin:
+                res.xmax = max(res.xmax, tagret.xmax)
+                is_merged = True
+            if res.xmin <= tagret.xmax and res.xmax >= tagret.xmax:
+                res.xmin = min(res.xmin, tagret.xmin)
+                is_merged = True
+            if res.ymin <= tagret.ymin and res.ymax >= tagret.ymin:
+                res.ymax = max(res.ymax, tagret.ymax)
+                is_merged = True
+            if res.ymin <= tagret.ymax and res.ymax >= tagret.ymax:
+                res.ymin = min(res.ymin, tagret.ymin)
+                is_merged = True
+            if tagret.xmin <= res.xmin and tagret.xmax >= res.xmax:
+                res.xmax = max(res.xmax, tagret.xmax)
+                res.xmin = min(res.xmin, tagret.xmin)
+                is_merged = True
+            if tagret.ymin <= res.ymin and tagret.ymax >= res.ymax:
+                res.ymax = max(res.ymax, tagret.ymax)
+                res.ymin = min(res.ymin, tagret.ymin)
+                is_merged = True
+            
+            if is_merged:
+                res.score = max(res.score, tagret.score)
+        
+        if not is_merged:
+            result_bboxes.append(tagret)
+
+    # visualize detections
+    for res in result_bboxes:
         obj = {
-          'name': labels_to_names[label],
-          'score': str(score),
-          'xmin': str(b[0]),
-          'ymin': str(b[1]),
-          'xmax': str(b[2]),
-          'ymax': str(b[3])
+          'name': res.label,
+          'score': str(res.score),
+          'xmin': str(res.xmin),
+          'ymin': str(res.ymin),
+          'xmax': str(res.xmax),
+          'ymax': str(res.ymax)
         }
         objects.append(obj)
     reaponse_json = json.dumps(reaponse)
@@ -99,7 +161,7 @@ def parse_args(args):
     """ Parse the arguments.
     """
     parser = argparse.ArgumentParser(description='Evaluation script for a RetinaNet network.')
-    parser.add_argument('--model', help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.h5'))
+    parser.add_argument('--model', help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v5_interface.h5'))
     parser.add_argument('--gpu', help='Visile gpu device. Set to -1 if CPU', type=int, default=0)
     return parser.parse_args(args)
 
