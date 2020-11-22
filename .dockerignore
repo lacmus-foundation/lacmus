@@ -452,6 +452,6 @@ ASALocalRun/
 *.xsd
 compute_overlap.c
 snapshots/
-!snapshots/resnet50_liza_alert_v5_interface.h5
+!snapshots/lacmus_v5_interface.h5
 .git
 *.bin
