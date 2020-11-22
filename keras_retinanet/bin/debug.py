@@ -44,7 +44,6 @@ from ..preprocessing.open_images import OpenImagesGenerator
 from ..utils.anchors import anchors_for_shape, compute_gt_annotations
 from ..utils.config import read_config_file, parse_anchor_parameters, parse_pyramid_levels
 from ..utils.image import random_visual_effect_generator
-from ..utils.keras_version import check_keras_version
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
 from ..utils.visualization import draw_annotations, draw_boxes, draw_caption
@@ -56,6 +55,13 @@ def create_generator(args):
     Args:
         args: parseargs arguments object.
     """
+    common_args = {
+        'config'           : args.config,
+        'image_min_side'   : args.image_min_side,
+        'image_max_side'   : args.image_max_side,
+        'group_method'     : args.group_method
+    }
+
     # create random transform generator for augmenting training data
     transform_generator = random_transform_generator(
         min_rotation=-0.1,
@@ -86,9 +92,7 @@ def create_generator(args):
             args.coco_set,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side,
-            config=args.config
+            **common_args
         )
     elif args.dataset_type == 'pascal':
         generator = PascalVocGenerator(
@@ -97,9 +101,7 @@ def create_generator(args):
             image_extension=args.image_extension,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side,
-            config=args.config
+            **common_args
         )
     elif args.dataset_type == 'csv':
         generator = CSVGenerator(
@@ -107,9 +109,7 @@ def create_generator(args):
             args.classes,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side,
-            config=args.config
+            **common_args
         )
     elif args.dataset_type == 'oid':
         generator = OpenImagesGenerator(
@@ -121,9 +121,7 @@ def create_generator(args):
             annotation_cache_dir=args.annotation_cache_dir,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side,
-            config=args.config
+            **common_args
         )
     elif args.dataset_type == 'kitti':
         generator = KittiGenerator(
@@ -131,9 +129,7 @@ def create_generator(args):
             subset=args.subset,
             transform_generator=transform_generator,
             visual_effect_generator=visual_effect_generator,
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side,
-            config=args.config
+            **common_args
         )
     else:
         raise ValueError('Invalid data type received: {}'.format(args.dataset_type))
@@ -187,6 +183,7 @@ def parse_args(args):
     parser.add_argument('--no-gui', help='Do not open a GUI window. Save images to an output directory instead.', action='store_true')
     parser.add_argument('--output-dir', help='The output directory to save images to if --no-gui is specified.', default='.')
     parser.add_argument('--flatten-output', help='Flatten the folder structure of saved output images into a single folder.', action='store_true')
+    parser.add_argument('--group-method', help='Determines how images are grouped together', type=str, default='ratio', choices=['none', 'random', 'ratio'])
 
     return parser.parse_args(args)
 
@@ -295,8 +292,7 @@ def main(args=None):
         args = sys.argv[1:]
     args = parse_args(args)
 
-    # make sure keras and tensorflow are the minimum required version
-    check_keras_version()
+    # make sure tensorflow is the minimum required version
     check_tf_version()
 
     # create the generator

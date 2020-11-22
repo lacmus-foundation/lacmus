@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import keras
+from tensorflow import keras
 from ..utils.eval import evaluate
 
 
@@ -25,7 +25,6 @@ class Evaluate(keras.callbacks.Callback):
     def __init__(
         self,
         generator,
-        evaluate_func=evaluate,
         iou_threshold=0.5,
         score_threshold=0.05,
         max_detections=100,
@@ -47,7 +46,6 @@ class Evaluate(keras.callbacks.Callback):
             verbose          : Set the verbosity level, by default this is set to 1.
         """
         self.generator       = generator
-        self.evaluate = evaluate_func
         self.iou_threshold   = iou_threshold
         self.score_threshold = score_threshold
         self.max_detections  = max_detections
@@ -62,7 +60,7 @@ class Evaluate(keras.callbacks.Callback):
         logs = logs or {}
 
         # run evaluation
-        average_precisions, _ = self.evaluate(
+        average_precisions, _ = evaluate(
             self.generator,
             self.model,
             iou_threshold=self.iou_threshold,
@@ -87,12 +85,13 @@ class Evaluate(keras.callbacks.Callback):
 
         if self.tensorboard:
             import tensorflow as tf
-            if tf.version.VERSION < '1.14.0' and self.tensorboard.writer:
-                summary = tf.Summary()
-                summary_value = summary.value.add()
-                summary_value.simple_value = self.mean_ap
-                summary_value.tag = "mAP"
-                self.tensorboard.writer.add_summary(summary, epoch)
+            writer = tf.summary.create_file_writer(self.tensorboard.log_dir)
+            with writer.as_default():
+                tf.summary.scalar("mAP", self.mean_ap, step=epoch)
+                if self.verbose == 1:
+                    for label, (average_precision, num_annotations) in average_precisions.items():
+                        tf.summary.scalar("AP_" + self.generator.label_to_name(label), average_precision, step=epoch)
+                writer.flush()
 
         logs['mAP'] = self.mean_ap
 

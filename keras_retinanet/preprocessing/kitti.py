@@ -18,8 +18,7 @@ import csv
 import os.path
 
 import numpy as np
-#from PIL import Image
-import cv2
+from PIL import Image
 
 from .generator import Generator
 from ..utils.image import read_image_bgr
@@ -140,11 +139,8 @@ class KittiGenerator(Generator):
         """ Compute the aspect ratio for an image with image_index.
         """
         # PIL is fast for metadata
-        #image = Image.open(self.images[image_index])
-        #return float(image.width) / float(image.height)
-        img = cv2.imread(self.images[image_index])
-        height, width, _ = img.shape
-        return float(width) / float(height)
+        image = Image.open(self.images[image_index])
+        return float(image.width) / float(image.height)
 
     def image_path(self, image_index):
         """ Get the path to an image.

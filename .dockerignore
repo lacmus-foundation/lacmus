@@ -452,5 +452,6 @@ ASALocalRun/
 *.xsd
 compute_overlap.c
 snapshots/
+!snapshots/lacmus_v5_interface.h5
 .git
 *.bin

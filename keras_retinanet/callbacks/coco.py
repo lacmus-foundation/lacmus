@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import keras
+from tensorflow import keras
 from ..utils.coco_eval import evaluate_coco
 
 
@@ -58,10 +58,8 @@ class CocoEval(keras.callbacks.Callback):
 
             if self.tensorboard:
                 import tensorflow as tf
-                if tf.version.VERSION < '1.14.0' and self.tensorboard.writer:
-                    summary = tf.Summary()
+                writer = tf.summary.create_file_writer(self.tensorboard.log_dir)
+                with writer.as_default():
                     for index, result in enumerate(coco_eval_stats):
-                        summary_value = summary.value.add()
-                        summary_value.simple_value = result
-                        summary_value.tag = '{}. {}'.format(index + 1, coco_tag[index])
-                        self.tensorboard.writer.add_summary(summary, epoch)
+                        tf.summary.scalar('{}. {}'.format(index + 1, coco_tag[index]), result, step=epoch)
+                    writer.flush()

@@ -1,0 +1,4 @@
+fastapi
+fastapi-utils
+python-multipart
+uvicorn

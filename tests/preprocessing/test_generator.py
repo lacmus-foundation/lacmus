@@ -32,11 +32,11 @@ class SimpleGenerator(Generator):
     def num_classes(self):
         return self.num_classes_
 
-    def image_path(self, image_index):
-        return ''
-
     def load_image(self, image_index):
         return self.image
+
+    def image_path(self, image_index):
+        return ''
 
     def size(self):
         return len(self.bboxes)
@@ -270,10 +270,3 @@ class TestFilterAnnotations(object):
         # test that only object with class 5 is present in labels_batch
         labels = np.unique(np.argmax(labels_batch == 5, axis=2))
         assert(len(labels) == 1 and labels[0] == 0), 'Expected only class 0 to be present, but got classes {}'.format(labels)
-
-
-if __name__ == '__main__':
-    test = TestFilterAnnotations()
-    test.test_simple_filter()
-    test.test_multiple_filter()
-    test.test_complete()

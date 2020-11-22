@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 import numpy as np
-import keras
+from tensorflow import keras
 
 from ..utils.compute_overlap import compute_overlap
 
@@ -63,7 +63,7 @@ def anchor_targets_bbox(
     Args
         anchors: np.array of annotations of shape (N, 4) for (x1, y1, x2, y2).
         image_group: List of BGR images.
-        annotations_group: List of annotations (np.array of shape (N, 5) for (x1, y1, x2, y2, label)).
+        annotations_group: List of annotation dictionaries with each annotation containing 'labels' and 'bboxes' of an image.
         num_classes: Number of classes to predict.
         mask_shape: If the image is padded with zeros, mask_shape can be used to mark the relevant part of the image.
         negative_overlap: IoU overlap for negative anchors (all anchors with overlap < negative_overlap are negative).
@@ -164,7 +164,10 @@ def layer_shapes(image_shape, model):
     for layer in model.layers[1:]:
         nodes = layer._inbound_nodes
         for node in nodes:
-            inputs = [shape[lr.name] for lr in node.inbound_layers]
+            if isinstance(node.inbound_layers, keras.layers.Layer):
+                inputs = [shape[node.inbound_layers.name]]
+            else:
+                inputs = [shape[lr.name] for lr in node.inbound_layers]
             if not inputs:
                 continue
             shape[layer.name] = layer.compute_output_shape(inputs[0] if len(inputs) == 1 else inputs)
@@ -309,6 +312,9 @@ def generate_anchors(base_size=16, ratios=None, scales=None):
 def bbox_transform(anchors, gt_boxes, mean=None, std=None):
     """Compute bounding-box regression targets for an image."""
 
+    # The Mean and std are calculated from COCO dataset.
+    # Bounding box normalization was firstly introduced in the Fast R-CNN paper.
+    # See https://github.com/fizyr/keras-retinanet/issues/1273#issuecomment-585828825  for more details
     if mean is None:
         mean = np.array([0, 0, 0, 0])
     if std is None:
@@ -327,6 +333,9 @@ def bbox_transform(anchors, gt_boxes, mean=None, std=None):
     anchor_widths  = anchors[:, 2] - anchors[:, 0]
     anchor_heights = anchors[:, 3] - anchors[:, 1]
 
+    # According to the information provided by a keras-retinanet author, they got marginally better results using
+    # the following way of bounding box parametrization.
+    # See https://github.com/fizyr/keras-retinanet/issues/1273#issuecomment-585828825 for more details
     targets_dx1 = (gt_boxes[:, 0] - anchors[:, 0]) / anchor_widths
     targets_dy1 = (gt_boxes[:, 1] - anchors[:, 1]) / anchor_heights
     targets_dx2 = (gt_boxes[:, 2] - anchors[:, 2]) / anchor_widths
