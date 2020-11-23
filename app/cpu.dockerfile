@@ -42,6 +42,5 @@ RUN pip3 install . --user \
 WORKDIR /opt/lacmus/app
 EXPOSE 5000/tcp
 EXPOSE 5000/udp
-ENV TEST="test"
 
-ENTRYPOINT ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "5000"]
