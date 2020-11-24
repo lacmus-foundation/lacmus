@@ -171,7 +171,7 @@ def main(args=None):
 
     # load images
     image = cv2.imread(img_fn)
-    image, scale = resize_image(image)
+    image, scale = resize_image(image, min_side=min(h, w), max_side=max(h, w))
     image = create_blank(image, w, h)
     image = preprocess_image(image)
 
