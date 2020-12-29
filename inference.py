@@ -161,7 +161,7 @@ def parse_args(args):
     """ Parse the arguments.
     """
     parser = argparse.ArgumentParser(description='Evaluation script for a RetinaNet network.')
-    parser.add_argument('--model', help='Path to RetinaNet model.', default=os.path.join('snapshots', 'resnet50_liza_alert_v5_interface.h5'))
+    parser.add_argument('--model', help='Path to RetinaNet model.', default=os.path.join('snapshots', 'lacmus_v5_interface.h5'))
     parser.add_argument('--gpu', help='Visile gpu device. Set to -1 if CPU', type=int, default=0)
     return parser.parse_args(args)
 

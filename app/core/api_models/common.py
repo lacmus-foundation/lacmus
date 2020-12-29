@@ -1,19 +1,16 @@
 from pydantic import BaseModel
-from fastapi_utils.enums import StrEnum
-from core.config import get_config
 from typing import List
-from enum import auto
 
 class Pong(BaseModel):
     pong: str = "Lacmus web API, version X.Y.Z"
 
-class Object(BaseModel):
+class Prediction(BaseModel):
     xmin: int
-    xmax: int
     ymin: int
+    xmax: int
     ymax: int
-    label: str
     score: float
+    label: str = 'Pedestrian'
 
 class Result(BaseModel):
-    objects: List[Object] = None
+    objects: List[Prediction] = None

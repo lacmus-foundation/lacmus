@@ -12,6 +12,22 @@ from flask import Flask, jsonify, request, abort
 
 app = Flask(__name__)
 
+class Prediction:
+    def __init__(self, 
+                xmin: int,
+                ymin: int, 
+                xmax: int,
+                ymax: int,
+                score: float,
+                label: str) -> None:
+
+        self.xmin: int = xmin
+        self.ymin: int = ymin
+        self.xmax: int = xmax
+        self.ymax: int = ymax
+        self.score: float = score
+        self.label: str = label
+
 def decode_openvino_detections(detections, input_shape = (800, 1333)):
     """
     Converts openvino detections to understandable format
@@ -130,12 +146,11 @@ def predict_image():
 
 
 def run_detection_image(OpenVinoExecutable, InputLayer, OutputLayer, h, w, labels_to_names, data):
-    print("start predict...")
     start_time = time.time()
     imgdata = pybase64.b64decode(data)
     file_bytes = np.asarray(bytearray(imgdata), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    image, scale = resize_image(image)
+    image, scale = resize_image(image, min_side=min(h, w), max_side=max(h, w))
     image = create_blank(image, w, h)
     image = preprocess_image(image)
     image = image.transpose((2, 0, 1))
@@ -150,24 +165,67 @@ def run_detection_image(OpenVinoExecutable, InputLayer, OutputLayer, h, w, label
     reaponse = {
         'objects': objects
     }
-    
-    # visualize detections
+    result_bboxes: List[Prediction] = []
+
+    # filter detections
     for box, score, label in zip(boxes[0], scores[0], labels[0]):
-        # scores are sorted so we can break
-        if score < 0.4:
+        if score < 0.15:
             break
+        
         b = np.array(box.astype(int)).astype(int)
-        # x1 y1 x2 y2
+        # x0 y0 x1 y1
+        tagret = Prediction(
+            xmin=b[0],
+            ymin=b[1],
+            xmax=b[2],
+            ymax=b[3],
+            score=score,
+            label=labels_to_names[label]
+        )
+        is_merged = False
+
+        for res in result_bboxes:
+            if res.label != tagret.label:
+                continue
+
+            if res.xmin <= tagret.xmin and res.xmax >= tagret.xmin:
+                res.xmax = max(res.xmax, tagret.xmax)
+                is_merged = True
+            if res.xmin <= tagret.xmax and res.xmax >= tagret.xmax:
+                res.xmin = min(res.xmin, tagret.xmin)
+                is_merged = True
+            if res.ymin <= tagret.ymin and res.ymax >= tagret.ymin:
+                res.ymax = max(res.ymax, tagret.ymax)
+                is_merged = True
+            if res.ymin <= tagret.ymax and res.ymax >= tagret.ymax:
+                res.ymin = min(res.ymin, tagret.ymin)
+                is_merged = True
+            if tagret.xmin <= res.xmin and tagret.xmax >= res.xmax:
+                res.xmax = max(res.xmax, tagret.xmax)
+                res.xmin = min(res.xmin, tagret.xmin)
+                is_merged = True
+            if tagret.ymin <= res.ymin and tagret.ymax >= res.ymax:
+                res.ymax = max(res.ymax, tagret.ymax)
+                res.ymin = min(res.ymin, tagret.ymin)
+                is_merged = True
+            
+            if is_merged:
+                res.score = max(res.score, tagret.score)
+        
+        if not is_merged:
+            result_bboxes.append(tagret)
+
+    # visualize detections
+    for res in result_bboxes:
         obj = {
-          'name': labels_to_names[label],
-          'score': str(score),
-          'xmin': str(b[0]),
-          'ymin': str(b[1]),
-          'xmax': str(b[2]),
-          'ymax': str(b[3])
+          'name': res.label,
+          'score': str(res.score),
+          'xmin': str(res.xmin),
+          'ymin': str(res.ymin),
+          'xmax': str(res.xmax),
+          'ymax': str(res.ymax)
         }
         objects.append(obj)
-    
     reaponse_json = json.dumps(reaponse)
     print("done in {} s".format(time.time() - start_time), flush=True)
     return reaponse_json
@@ -203,13 +261,13 @@ def parse_args(args):
         '--bin',
         help='path to bin openVINO inference model',
         type=str,
-        default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.bin')
+        default=os.path.join('snapshots', 'lacmus_v5_interface.bin')
     )
     parser.add_argument(
         '--xml',
         help='path to xml model sheme',
         type=str,
-        default=os.path.join('snapshots', 'resnet50_liza_alert_v1_interface.xml')
+        default=os.path.join('snapshots', 'lacmus_v5_interface.xml')
     )
     return parser.parse_args(args)
 
