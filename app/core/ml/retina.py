@@ -4,6 +4,8 @@ from keras_retinanet import models
 from keras_retinanet.utils.image import preprocess_image, resize_image
 from core.config import WorkerConfig, get_config
 from core.ml.enum import InferTypeEnum
+from core.api_models.common import Prediction
+from typing import List
 import os
 import cv2
 import time
@@ -37,7 +39,7 @@ class Model:
             f"\timage max side: {self.config.max_side}\n", flush=True 
             )
 
-    def infer(self, in_data: bytes) -> dict:
+    async def infer(self, in_data: bytes) -> List[Prediction]:
         # pre-processing
         img_bytes = np.asarray(bytearray(in_data), dtype=np.uint8)
         image = cv2.imdecode(img_bytes, cv2.IMREAD_COLOR)
@@ -51,25 +53,56 @@ class Model:
 
         # post-processing
         boxes /= scale
-        objects = []
-        result = {
-            'objects': objects
-        }
+        result_bboxes: List[Prediction] = []
+
+        # filter detections
         for box, score, label in zip(boxes[0], scores[0], labels[0]):
-            if score < 0.5:
+            if score < 0.15:
                 break
+            
             b = np.array(box.astype(int)).astype(int)
-            # x1 y1 x2 y2
-            obj = {
-                'label': self.config.labels[label],
-                'xmin': b[0],
-                'ymin': b[1],
-                'xmax': b[2],
-                'ymax': b[3],
-                'score': score
-            }
-            objects.append(obj)
-        return result
+            # x0 y0 x1 y1
+            tagret = Prediction(
+                xmin=b[0],
+                ymin=b[1],
+                xmax=b[2],
+                ymax=b[3],
+                score=score,
+                label=self.config.labels[label]
+            )
+            is_merged = False
+
+            for res in result_bboxes:
+                if res.label != tagret.label:
+                    continue
+
+                if res.xmin <= tagret.xmin and res.xmax >= tagret.xmin:
+                    res.xmax = max(res.xmax, tagret.xmax)
+                    is_merged = True
+                if res.xmin <= tagret.xmax and res.xmax >= tagret.xmax:
+                    res.xmin = min(res.xmin, tagret.xmin)
+                    is_merged = True
+                if res.ymin <= tagret.ymin and res.ymax >= tagret.ymin:
+                    res.ymax = max(res.ymax, tagret.ymax)
+                    is_merged = True
+                if res.ymin <= tagret.ymax and res.ymax >= tagret.ymax:
+                    res.ymin = min(res.ymin, tagret.ymin)
+                    is_merged = True
+                if tagret.xmin <= res.xmin and tagret.xmax >= res.xmax:
+                    res.xmax = max(res.xmax, tagret.xmax)
+                    res.xmin = min(res.xmin, tagret.xmin)
+                    is_merged = True
+                if tagret.ymin <= res.ymin and tagret.ymax >= res.ymax:
+                    res.ymax = max(res.ymax, tagret.ymax)
+                    res.ymin = min(res.ymin, tagret.ymin)
+                    is_merged = True
+
+                if is_merged:
+                    res.score = max(res.score, tagret.score)
+
+            if not is_merged:
+                result_bboxes.append(tagret)
+        return result_bboxes
 
 
     def _setup_gpu(self, gpu_id: int) -> None:

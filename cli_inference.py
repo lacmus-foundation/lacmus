@@ -46,6 +46,20 @@ def parse_args(args):
         default=3
     )
     parser.add_argument(
+        '--height',
+        help='iference count',
+        type=int,
+        required=False,
+        default=2100
+    )
+    parser.add_argument(
+        '--width',
+        help='iference count',
+        type=int,
+        required=False,
+        default=2100
+    )
+    parser.add_argument(
         '--gpu',
         help='use gpu',
         action='store_true',
@@ -57,60 +71,6 @@ def create_model(backbone_name, num_classes=1):
     backbone_factory = models.backbone(backbone_name)
     model = backbone_factory.retinanet(num_classes)
     return models.convert_model(model)
-
-def compute_resize_scale(image_shape, min_side=800, max_side=1333):
-    """ Compute an image scale such that the image size is constrained to min_side and max_side.
-
-    Args
-        min_side: The image's min side will be equal to min_side after resizing.
-        max_side: If after resizing the image's max side is above max_side, resize until the max side is equal to max_side.
-
-    Returns
-        A resizing scale.
-    """
-    (rows, cols, _) = image_shape
-
-    smallest_side = min(rows, cols)
-
-    # rescale the image so the smallest side is min_side
-    scale = min_side / smallest_side
-
-    # check if the largest side is now greater than max_side, which can happen
-    # when images have a large aspect ratio
-    largest_side = max(rows, cols)
-    if largest_side * scale > max_side:
-        scale = max_side / largest_side
-
-    return scale
-
-def preprocess_image(x, mode='caffe'):
-    """ Preprocess an image by subtracting the ImageNet mean.
-
-    Args
-        x: np.array of shape (None, None, 3) or (3, None, None).
-        mode: One of "caffe" or "tf".
-            - caffe: will zero-center each color channel with
-                respect to the ImageNet dataset, without scaling.
-            - tf: will scale pixels between -1 and 1, sample-wise.
-
-    Returns
-        The input with the ImageNet mean subtracted.
-    """
-    # mostly identical to "https://github.com/keras-team/keras-applications/blob/master/keras_applications/imagenet_utils.py"
-    # except for converting RGB -> BGR since we assume BGR already
-
-    # covert always to float32 to keep compatibility with opencv
-    x = x.astype(np.float32)
-
-    if mode == 'tf':
-        x /= 127.5
-        x -= 1.
-    elif mode == 'caffe':
-        x[..., 0] -= 103.939
-        x[..., 1] -= 116.779
-        x[..., 2] -= 123.68
-
-    return x
 
 def setup_gpu(gpu_id: int):
     if gpu_id == -1:
@@ -135,6 +95,8 @@ def main(args=None):
     img_fn = args.img
     predict_count = args.count
     backbone = args.backbone
+    min_side = min(args.height, args.width)
+    max_side = max(args.height, args.width)
 
     print("loading model...")
     if args.gpu:
@@ -147,7 +109,7 @@ def main(args=None):
     start_time = time.time()
 
     image = cv2.imread(img_fn)
-    image, scale = resize_image(image)
+    image, scale = resize_image(image, min_side=min_side, max_side=max_side)
     image = preprocess_image(image)
     print("prepoocess image at {} s".format(time.time() - start_time))
 

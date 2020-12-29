@@ -3,8 +3,8 @@ FROM openvino/ubuntu18_runtime:latest
 RUN mkdir /home/openvino/app && mkdir /home/openvino/app/snapshots
 WORKDIR /home/openvino/app
 COPY inference_openvino.py /home/openvino/app/inference_openvino.py
-COPY snapshots/resnet50_liza_alert_v1_interface.bin /home/openvino/app/snapshots/resnet50_liza_alert_v1_interface.bin
-COPY snapshots/resnet50_liza_alert_v1_interface.xml /home/openvino/app/snapshots/resnet50_liza_alert_v1_interface.xml
+COPY snapshots/lacmus_v5_interface.bin /home/openvino/app/snapshots/lacmus_v5_interface.bin
+COPY snapshots/lacmus_v5_interface.xml /home/openvino/app/snapshots/lacmus_v5_interface.xml
 
 RUN pip3 install flask pybase64
 
