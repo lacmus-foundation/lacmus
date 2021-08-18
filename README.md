@@ -43,7 +43,7 @@ The models are avalable [here](https://github.com/lizaalert/lacmus/releases/tag/
 
 ## Partners
 
-[![ODS][logoODS]](https://ods.ai)    [![DTL][logoDTL]](http://immersiya.com/about)   [![JB][logoJB]](https://www.jetbrains.com/)
+[![ODS][logoODS]](https://ods.ai)    [![DTL][logoDTL]](http://immersiya.com/about)   [![JB][logoJB]](https://www.jetbrains.com/)   [![GitBook][logoGitBook]](https://www.gitbook.com/)
 								[![Liza alert][logoLA]](https://lizaalert.org/)    [![Novaya Gazeta][logoNovayaGazeta]](https://novayagazeta.ru/)    [![Teplica][logoTeplica]](https://te-st.ru/)
 
 [logoDTL]: docs/imgs/partners/dtl-logo-200px.png "DTL"
@@ -57,3 +57,5 @@ The models are avalable [here](https://github.com/lizaalert/lacmus/releases/tag/
 [logoTeplica]: docs/imgs/partners/teplica-logo-128px.png "Teplica"
 
 [logoJB]: docs/imgs/partners/jetbrains_logo_200px.png "JetBrains"
+
+[logoGitBook]: docs/imgs/partners/gitbook-logo-200px.png "JetBrains"
