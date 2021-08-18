@@ -5,15 +5,15 @@ Keras implementation of RetinaNet object detection as described in [Focal Loss f
 This code is borrowed from Keras Implementation of this model at https://github.com/fizyr/keras-retinanet and updated to run on Liza Alert Drone Dataset (LADD)
 
 ## Installation
-
-1) Clone this repository.`
-2) Ensure numpy is installed using `pip install numpy --user`
-3) In the repository, execute `pip install . --user`.
-   Note that due to inconsistencies with how `tensorflow` should be installed,
-   this package does not define a dependency on `tensorflow` as it will try to install that (which at least on Arch Linux results in an incorrect installation).
-   Please make sure `tensorflow` is installed as per your systems requirements.
-4) To run the code directly from the cloned  repository, you need to run `python setup.py build_ext --inplace` to compile Cython code first.
-5) Optionally, install `pycocotools` if you want to train / test on the MS COCO dataset by running `pip install --user git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI`.
+1. Install:
+   - tensorflow >= 2.4.2
+   - setuptools
+   - opencv-python
+   - our keras-resnet fork: `pip install git+https://github.com/lacmus-foundation/keras-resnet.git`
+2. Clone this repository.
+3. In the repository, execute `pip install .`.
+4. To run the code directly from the cloned repository, you need to run `python setup.py build_ext --inplace` to compile Cython code first.
+5. Optionally, install `pycocotools` if you want to train / test on the MS COCO dataset by running `pip install git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI`.
 
 
 ## Training on custom data set (added by Priyanka Dwivedi, Georgy Perevozchikov)

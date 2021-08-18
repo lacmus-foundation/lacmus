@@ -4,10 +4,10 @@
 """
 
 
-from keras.layers import Conv2D, DepthwiseConv2D, Dense, GlobalAveragePooling2D
-from keras.layers import Activation, BatchNormalization, Add, Multiply, Reshape
+from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Activation, BatchNormalization, Add, Multiply, Reshape
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 def relu6(x):
     """Relu 6

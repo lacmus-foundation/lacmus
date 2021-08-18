@@ -1,7 +1,7 @@
 from .eval import _compute_ap
 from .anchors import compute_overlap
 
-import keras
+from tensorflow import keras
 import numpy as np
 import time
 import cv2

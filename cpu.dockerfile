@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.3.0-gpu
+FROM tensorflow/tensorflow:2.4.2
 
 # install debian packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -8,7 +8,6 @@ RUN apt-get update -qq \
     build-essential \
     wget \
     git \
-    g++ \
     cython \
     ffmpeg \
     libsm6 \
@@ -24,21 +23,14 @@ RUN apt-get update -qq \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-# install application
-ENV KERAS_BACKEND=tensorflow
-
-RUN mkdir /app
-WORKDIR /app
+RUN mkdir /opt/lacmus
+WORKDIR /opt/lacmus
 COPY . .
 
 RUN pip3 install --upgrade setuptools \
-    && pip3 --no-cache-dir install keras==2.4.3 \
     && pip3 install opencv-python \
-    && pip3 install . --user \
-    && pip3 install flask pybase64 \
-    && python3 setup.py build_ext --inplace
+    && pip3 install git+https://github.com/lacmus-foundation/keras-resnet.git \
+    && pip3 install . \
+    && python3 setup.py build_ext --inplace 
 
-EXPOSE 5000/tcp
-EXPOSE 5000/udp
-
-ENTRYPOINT ["python3", "inference.py" , "--gpu", "0"]
+ENTRYPOINT ["bash"]

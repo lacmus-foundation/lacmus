@@ -44,16 +44,16 @@ extensions = [
 
 setuptools.setup(
     name             = 'keras-retinanet',
-    version          = '1.0.0',
+    version          = '2.5.0',
     description      = 'Keras implementation of RetinaNet object detection.',
     url              = 'https://github.com/fizyr/keras-retinanet',
     author           = 'Hans Gaiser',
     author_email     = 'h.gaiser@fizyr.com',
-    maintainer       = 'Hans Gaiser',
-    maintainer_email = 'h.gaiser@fizyr.com',
+    maintainer       = 'Georgy Perevozchikov',
+    maintainer_email = 'gosha20777@live.ru',
     cmdclass         = {'build_ext': BuildExtension},
     packages         = setuptools.find_packages(),
-    install_requires = ['keras-resnet==0.2.0', 'efficientnet', 'image-classifiers', 'six', 'numpy', 'cython', 'Pillow', 'opencv-python', 'progressbar2'],
+    install_requires = ['keras-resnet==0.2.1', 'efficientnet', 'image-classifiers', 'six', 'numpy', 'cython', 'Pillow', 'opencv-python', 'progressbar2'],
     entry_points     = {
         'console_scripts': [
             'retinanet-train=keras_retinanet.bin.train:main',

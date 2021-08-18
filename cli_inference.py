@@ -1,20 +1,13 @@
 #!/usr/bin/env python
-import keras
-# import keras_retinanet
 import tensorflow as tf
-import keras_retinanet
 from keras_retinanet import models
 from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize_image, compute_resize_scale
 from keras_retinanet.utils.visualization import draw_box, draw_caption
 from keras_retinanet.utils.colors import label_color
-# import miscellaneous modules
 import cv2
 import argparse
-import sys
-import os
 import numpy as np
 import time
-import json
 
 
 def parse_args(args):
@@ -43,7 +36,7 @@ def parse_args(args):
         help='iference count',
         type=int,
         required=False,
-        default=3
+        default=1
     )
     parser.add_argument(
         '--height',
