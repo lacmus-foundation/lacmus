@@ -1,13 +1,10 @@
 #!/usr/bin/env python
-
-import os
 import time
 import argparse
 
 import cv2
 import numpy as np
 from openvino.inference_engine import IENetwork, IECore
-import json
 
 
 def parse_args(args):
@@ -35,7 +32,7 @@ def parse_args(args):
         help='iference count',
         type=int,
         required=False,
-        default=3
+        default=1
     )
     return parser.parse_args(args)
 

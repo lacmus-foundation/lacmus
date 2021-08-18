@@ -4,9 +4,9 @@
 """
 
 
-from keras.models import Model
-from keras.layers import Input, Conv2D, GlobalAveragePooling2D, Reshape
-from keras.utils.vis_utils import plot_model
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Conv2D, GlobalAveragePooling2D, Reshape
+from tensorflow.keras.utils import plot_model
 
 from .mobilenet_v3_base import MobileNetBase
 

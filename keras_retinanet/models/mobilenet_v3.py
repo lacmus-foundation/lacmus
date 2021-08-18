@@ -21,8 +21,8 @@ from . import retinanet
 
 from ..utils.image import preprocess_image
 
-import keras
-from keras.utils import get_file
+from tensorflow import keras
+from tensorflow.keras.utils import get_file
 
 from .mobilenetv3.mobilenet_v3_base import relu6, hard_swish
 from .mobilenetv3.mobilenet_v3_large import MobileNetV3_Large
