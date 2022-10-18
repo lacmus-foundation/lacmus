@@ -2,7 +2,7 @@
 
 ![logo](docs/imgs/lacmus-logo.png)
 
-The program for searching through photos from the air of lost people in the forest using Retina Net neural nwtwork.
+The program for searching through photos from the air of lost people in the forest using Retina Net neural network.
 
 The project is being developed by a non-profit organization Liza Alert.
 
@@ -28,14 +28,14 @@ You can download `Lacmus Drone Dataset (LaDD)` from mail.ru cloud
 
 - https://cloud.mail.ru/public/2k53/2bJVwYSa7
 
-You also can download Lacmus version of `Stenford Drone Dataset (SDD)` from mail.ru cloud
+You also can download Lacmus version of `Stanford Drone Dataset (SDD)` from mail.ru cloud
 
 - https://cloud.mail.ru/public/4GKW/3FW26Sq77
 
 
 ## Usage
 
-Read more about training steps and atraining data at [train documentation](docs/train-usage.md) to learn how to train the model.
+Read more about training steps and training data at [train documentation](docs/train-usage.md) to learn how to train the model.
 
 ## Pretrained models
 
